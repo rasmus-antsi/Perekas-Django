@@ -48,7 +48,10 @@
                       <p class="task-description">{{ task.description }}</p>
                     {% endif %}
                   </div>
-                  <span class="task-points">{{ task.points }} pts</span>
+                  <span class="task-points points-chip">
+                    <span class="points-value">{{ task.points }}</span>
+                    <span class="points-label">pts</span>
+                  </span>
                 </div>
                 <div class="task-meta">
                   <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
@@ -110,7 +113,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state">No active tasks. Take a moment to relax!</p>
+            <p class="empty-state full-row">No active tasks. Take a moment to relax!</p>
           {% endif %}
         </div>
       </section>
@@ -132,7 +135,10 @@
                       on {{ task.completed_at|date:"M j, g:i a" }}
                     </p>
                   </div>
-                  <span class="task-points">{{ task.points }} pts</span>
+                  <span class="task-points points-chip">
+                    <span class="points-value">{{ task.points }}</span>
+                    <span class="points-label">pts</span>
+                  </span>
                 </div>
                 <div class="task-meta">
                   <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
@@ -172,7 +178,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state">No completed tasks waiting for approval right now.</p>
+            <p class="empty-state full-row">No completed tasks waiting for approval right now.</p>
           {% endif %}
         </div>
       </section>
@@ -194,7 +200,10 @@
                       on {{ task.approved_at|date:"M j, g:i a" }}
                     </p>
                   </div>
-                  <span class="task-points">{{ task.points }} pts</span>
+                  <span class="task-points points-chip">
+                    <span class="points-value">{{ task.points }}</span>
+                    <span class="points-label">pts</span>
+                  </span>
                 </div>
                 <div class="task-meta">
                   <span class="task-badge assigned">
@@ -221,7 +230,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state">No approved tasks yet. Keep up the great work!</p>
+            <p class="empty-state full-row">No approved tasks yet. Keep up the great work!</p>
           {% endif %}
         </div>
       </section>

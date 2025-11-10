@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Rewards | FamilyHub{% endblock %}
+
+{% block nav_rewards_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Rewards Store</h1>
+        {% if is_child %}
+          <p class="page-subtitle">You have {{ points_balance }} points to spend.</p>
+        {% elif is_parent %}
+          <p class="page-subtitle">Manage family rewards and track redeemed treats.</p>
+        {% else %}
+          <p class="page-subtitle">Sign in or join a family to access rewards.</p>
+        {% endif %}
+      </div>
+      {% if is_parent %}
+        <div class="task-toolbar">
+          <button type="button" class="primary-button" data-open-reward-modal="create">
+            <span aria-hidden="true">+</span>
+            <span>Add Reward</span>
+          </button>
+        </div>
+      {% endif %}
+    </header>
+
+    {% if not has_family %}
+      <section class="empty-state">
+        <p>No family connected yet. Create or join one to start offering rewards.</p>
+      </section>
+    {% else %}
+      <section class="points-overview-card">
+        <div class="points-card-header">
+          <div>
+            <span class="points-card-label">Your Points Balance</span>
+            <h2 class="points-card-value">{{ points_balance }}</h2>
+          </div>
+          <div class="points-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2l2.09 6.26H20l-5.18 3.77 1.98 6.09L12 14.76 7.2 18.12 9.18 12 4 8.26h5.91z"></path>
+            </svg>
+          </div>
+        </div>
+        <p class="points-card-subtext">Keep earning points by completing tasks and redeem them for special rewards.</p>
+      </section>
+
+      <section class="rewards-section">
+        <header class="list-section-header">
+          <span class="list-section-icon need-icon" aria-hidden="true"></span>
+          <h2>Available Rewards</h2>
+        </header>
+        <div class="rewards-grid">
+          {% if available_rewards %}
+            {% for reward in available_rewards %}
+              <article class="reward-card">
+                <header class="reward-card-header">
+                  <div>
+                    <h3 class="reward-name">{{ reward.name }}</h3>
+                    {% if reward.description %}
+                      <p class="reward-description">{{ reward.description }}</p>
+                    {% endif %}
+                  </div>
+                  <span class="reward-points points-chip">
+                    <span class="points-value">{{ reward.points }}</span>
+                    <span class="points-label">pts</span>
+                  </span>
+                </header>
+                <div class="reward-actions">
+                  {% if reward.can_claim %}
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="claim">
+                      <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                      <button type="submit" class="primary-button reward-button">
+                        <span>Claim Reward</span>
+                      </button>
+                    </form>
+                  {% elif is_child %}
+                    <button type="button" class="primary-button reward-button" disabled>
+                      Need {{ reward.points_shortfall }} more pts
+                    </button>
+                  {% else %}
+                    <div class="reward-note">Children can redeem when they have enough points.</div>
+                  {% endif %}
+                  {% if is_parent %}
+                    <div class="reward-manage">
+                      <button
+                        type="button"
+                        class="icon-button"
+                        data-open-reward-modal="edit"
+                        data-reward-id="{{ reward.id }}"
+                        data-reward-name="{{ reward.name|escape }}"
+                        data-reward-description="{{ reward.description|default_if_none:''|escape }}"
+                        data-reward-points="{{ reward.points }}"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                        </svg>
+                      </button>
+                      <form method="post" class="icon-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                        <button type="submit" class="icon-button" aria-label="Delete {{ reward.name }}">
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </form>
+                    </div>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state full-row">No rewards available right now. Parents can add new perks.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="rewards-section">
+        <header class="list-section-header">
+          <span class="list-section-icon cart-icon" aria-hidden="true"></span>
+          <h2>Claimed Rewards</h2>
+        </header>
+        <div class="rewards-grid">
+          {% if claimed_rewards %}
+            {% for reward in claimed_rewards %}
+              <article class="reward-card claimed">
+                <header class="reward-card-header">
+                  <div>
+                    <h3 class="reward-name">{{ reward.name }}</h3>
+                    <p class="reward-description">
+                      Claimed by {{ reward.claimed_by.get_full_name|default:reward.claimed_by.username }}
+                      {% if reward.claimed_at %}
+                        on {{ reward.claimed_at|date:"M j, g:i a" }}
+                      {% endif %}
+                    </p>
+                  </div>
+                  <span class="reward-points points-chip">
+                    <span class="points-value">{{ reward.points }}</span>
+                    <span class="points-label">pts</span>
+                  </span>
+                </header>
+                {% if is_parent %}
+                  <div class="reward-actions">
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="unclaim">
+                      <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                      <button type="submit" class="icon-button" aria-label="Mark {{ reward.name }} as available">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 12a9 9 0 1 0 9-9"></path>
+                          <polyline points="3 3 3 12 12 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                      <button type="submit" class="icon-button" aria-label="Delete {{ reward.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                {% endif %}
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state full-row">No rewards claimed yet. Start redeeming your hard-earned points!</p>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if is_parent %}
+    <div class="task-modal" id="reward-modal" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="task-modal-overlay" data-close-modal></div>
+      <div class="task-modal-content">
+        <button type="button" class="task-modal-close" data-close-modal aria-label="Close reward form">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <h2 class="task-modal-title" data-reward-modal-title>Add Reward</h2>
+        <form method="post" class="task-modal-form" id="reward-modal-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create">
+          <input type="hidden" name="reward_id" value="">
+          <label>
+            <span>Reward name</span>
+            <input type="text" name="name" placeholder="Movie Night" required>
+          </label>
+          <label>
+            <span>Description</span>
+            <textarea name="description" rows="3" placeholder="Add a short description"></textarea>
+          </label>
+          <label>
+            <span>Points cost</span>
+            <input type="number" name="points" min="0" value="100">
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="primary-button">
+              <span aria-hidden="true" data-reward-submit-icon>+</span>
+              <span data-reward-submit-label>Save Reward</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if is_parent %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('reward-modal');
+        if (!modal) return;
+
+        const form = document.getElementById('reward-modal-form');
+        const actionInput = form.querySelector('input[name="action"]');
+        const idInput = form.querySelector('input[name="reward_id"]');
+        const nameInput = form.querySelector('input[name="name"]');
+        const descriptionInput = form.querySelector('textarea[name="description"]');
+        const pointsInput = form.querySelector('input[name="points"]');
+        const titleEl = modal.querySelector('[data-reward-modal-title]');
+        const submitLabel = modal.querySelector('[data-reward-submit-label]');
+        const submitIcon = modal.querySelector('[data-reward-submit-icon]');
+
+        submitIcon.dataset.createIcon = '+';
+        submitIcon.dataset.editIcon = '✔';
+
+        function openModal(mode, data = {}) {
+          modal.classList.add('is-visible');
+          document.body.classList.add('modal-open');
+          form.reset();
+
+          if (mode === 'create') {
+            actionInput.value = 'create';
+            idInput.value = '';
+            titleEl.textContent = 'Add Reward';
+            submitLabel.textContent = 'Save Reward';
+            submitIcon.textContent = submitIcon.dataset.createIcon || '+';
+            pointsInput.value = 100;
+          } else {
+            actionInput.value = 'update';
+            idInput.value = data.id || '';
+            titleEl.textContent = 'Edit Reward';
+            submitLabel.textContent = 'Update Reward';
+            submitIcon.textContent = submitIcon.dataset.editIcon || '✔';
+
+            nameInput.value = data.name || '';
+            descriptionInput.value = data.description || '';
+            pointsInput.value = data.points || 0;
+          }
+        }
+
+        function closeModal() {
+          modal.classList.remove('is-visible');
+          document.body.classList.remove('modal-open');
+        }
+
+        document.querySelectorAll('[data-open-reward-modal="create"]').forEach((button) => {
+          button.addEventListener('click', () => openModal('create'));
+        });
+
+        document.querySelectorAll('[data-open-reward-modal="edit"]').forEach((button) => {
+          button.addEventListener('click', () => {
+            openModal('edit', {
+              id: button.dataset.rewardId,
+              name: button.dataset.rewardName,
+              description: button.dataset.rewardDescription,
+              points: button.dataset.rewardPoints,
+            });
+          });
+        });
+
+        modal.querySelectorAll('[data-close-modal]').forEach((el) => {
+          el.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) {
+            closeModal();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+            closeModal();
+          }
+        });
+      });
+    </script>
+  {% endif %}
+{% endblock %}
+

@@ -412,6 +412,11 @@ body {
   font-size: 0.95rem;
 }
 
+.task-grid .empty-state.full-row,
+.rewards-grid .empty-state.full-row {
+  grid-column: 1 / -1;
+}
+
 .accent-icon {
   background: linear-gradient(135deg, rgba(249, 115, 22, 0.35), rgba(192, 132, 252, 0.3));
 }
@@ -469,6 +474,12 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+@media (min-width: 1200px) {
+  .task-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .task-card {
   background: var(--color-surface);
   border-radius: var(--radius-md);
@@ -518,13 +529,50 @@ body {
   line-height: 1.6;
 }
 
+.points-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 56px;
+  padding: 0.75rem;
+  border-radius: 50%;
+  text-align: center;
+  font-weight: 700;
+  color: #f9f7ff;
+  gap: 0.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.points-chip .points-value {
+  font-size: 1.15rem;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.points-chip .points-label {
+  font-size: 0.65rem;
+  opacity: 0.75;
+}
+
 .task-points {
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--color-primary);
-  font-weight: 600;
-  font-size: 0.95rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.88), rgba(79, 70, 229, 0.92));
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.35);
+  min-width: 64px;
+  height: 64px;
+  align-self: flex-start;
+}
+
+.task-card.awaiting .task-points {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(20, 184, 166, 0.75));
+  box-shadow: 0 18px 35px rgba(59, 130, 246, 0.28);
+}
+
+.task-card.approved .task-points {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.88), rgba(16, 185, 129, 0.9));
+  box-shadow: 0 18px 35px rgba(16, 185, 129, 0.32);
 }
 
 .task-meta {
@@ -660,6 +708,169 @@ body {
 
 body.modal-open {
   overflow: hidden;
+}
+
+.points-overview-card {
+  background: linear-gradient(135deg, rgba(21, 30, 52, 0.95), rgba(18, 24, 46, 0.85));
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(59, 72, 99, 0.4);
+  padding: 2rem;
+  box-shadow: 0 25px 45px rgba(2, 6, 23, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.points-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.points-card-label {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.points-card-value {
+  margin: 0.35rem 0 0;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+}
+
+.points-card-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35), rgba(59, 130, 246, 0.25));
+  display: grid;
+  place-items: center;
+  color: var(--color-primary);
+  box-shadow: 0 15px 35px rgba(79, 70, 229, 0.35);
+}
+
+.points-card-icon svg {
+  width: 34px;
+  height: 34px;
+  stroke: none;
+  fill: currentColor;
+}
+
+.points-card-subtext {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.rewards-section {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.rewards-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+@media (min-width: 1200px) {
+  .rewards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.reward-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(59, 72, 99, 0.4);
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.reward-card.claimed {
+  background: linear-gradient(135deg, rgba(18, 46, 37, 0.6), rgba(16, 185, 129, 0.2));
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.reward-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.reward-name {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.reward-description {
+  margin: 0.4rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.reward-points {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.88), rgba(249, 168, 37, 0.7));
+  box-shadow: 0 18px 35px rgba(249, 115, 22, 0.28);
+  color: #fff8ed;
+  align-self: flex-start;
+}
+
+.reward-card.claimed .reward-points {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.88), rgba(34, 197, 94, 0.82));
+  box-shadow: 0 18px 35px rgba(34, 197, 94, 0.3);
+}
+
+.reward-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.reward-button {
+  padding: 0.8rem 1.8rem;
+  text-transform: none;
+  font-size: 0.95rem;
+}
+
+.reward-button[disabled] {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.reward-manage {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.reward-note {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.rewards-section .empty-state {
+  border-style: dashed;
 }
 
 .visually-hidden {

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'a_dashboard',
     'a_family',
     'a_shopping',
+    'a_rewards',
     'a_tasks',
     'allauth',
     'allauth.account',
