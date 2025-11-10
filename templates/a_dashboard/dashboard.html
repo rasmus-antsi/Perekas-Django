@@ -1,0 +1,7 @@
+{% if user.is_authenticated %}
+<h1>Welcome, {{ user.get_username }}!</h1>
+<p>You are now signed in.</p>
+{% else %}
+<h1>Dashboard</h1>
+<p>Please <a href="{% url 'account_login' %}">sign in</a> to view your dashboard.</p>
+{% endif %}

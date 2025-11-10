@@ -1,0 +1,24 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Sign In" %}{% endblock %}
+{% block content %}
+<h1>{% trans "Sign In" %}</h1>
+{% if form.errors %}
+    <p>Please correct the highlighted errors.</p>
+{% endif %}
+<form method="post" action="{% url 'account_login' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% trans "Sign In" %}</button>
+</form>
+<p>
+    <a href="{% url 'account_reset_password' %}">{% trans "Forgot Password?" %}</a>
+</p>
+<p>
+    {% url 'account_signup' as signup_url %}
+    {% blocktrans trimmed %}
+    Need an account? <a href="{{ signup_url }}">Register</a>.
+    {% endblocktrans %}
+</p>
+{% endblock %}
+

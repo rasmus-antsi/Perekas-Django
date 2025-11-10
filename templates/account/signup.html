@@ -1,0 +1,18 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Register" %}{% endblock %}
+{% block content %}
+<h1>{% trans "Create Your Account" %}</h1>
+<form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{% trans "Register" %}</button>
+</form>
+<p>
+    {% url 'account_login' as login_url %}
+    {% blocktrans trimmed %}
+    Already have an account? <a href="{{ login_url }}">Sign in</a>.
+    {% endblocktrans %}
+</p>
+{% endblock %}
+
