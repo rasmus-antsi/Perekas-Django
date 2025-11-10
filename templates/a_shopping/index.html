@@ -17,14 +17,23 @@
       <button class="pill-button" type="button">{{ family_name }}</button>
     </header>
 
-    <section class="add-item-card">
+    <form method="post" class="add-item-card">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add">
       <label class="visually-hidden" for="new-item-input">Add new item</label>
-      <input id="new-item-input" type="text" placeholder="Add new item..." disabled>
-      <button type="button" class="primary-button" disabled>
+      <input
+        id="new-item-input"
+        name="name"
+        type="text"
+        placeholder="Add new item..."
+        {% if not has_family %}disabled{% endif %}
+        required
+      >
+      <button type="submit" class="primary-button" {% if not has_family %}disabled{% endif %}>
         <span aria-hidden="true">+</span>
         <span>Add</span>
       </button>
-    </section>
+    </form>
 
     <section class="list-section">
       <header class="list-section-header">
@@ -41,17 +50,28 @@
                 <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
               </div>
               <div class="item-actions">
-                <button type="button" class="icon-button success" disabled aria-label="Mark {{ item.name }} as in cart">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </button>
-                <button type="button" class="icon-button" disabled aria-label="Remove {{ item.name }}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <form method="post" class="icon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle">
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <input type="hidden" name="set_in_cart" value="true">
+                  <button type="submit" class="icon-button success" aria-label="Mark {{ item.name }} as in cart">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                </form>
+                <form method="post" class="icon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <button type="submit" class="icon-button" aria-label="Remove {{ item.name }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </form>
               </div>
             </article>
           {% endfor %}
@@ -76,17 +96,28 @@
                 <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
               </div>
               <div class="item-actions">
-                <button type="button" class="icon-button success" disabled aria-label="Remove {{ item.name }} from cart">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                </button>
-                <button type="button" class="icon-button" disabled aria-label="Delete {{ item.name }}">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <form method="post" class="icon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="toggle">
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <input type="hidden" name="set_in_cart" value="false">
+                  <button type="submit" class="icon-button success" aria-label="Move {{ item.name }} back to list">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </button>
+                </form>
+                <form method="post" class="icon-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete">
+                  <input type="hidden" name="item_id" value="{{ item.id }}">
+                  <button type="submit" class="icon-button" aria-label="Delete {{ item.name }}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </form>
               </div>
             </article>
           {% endfor %}

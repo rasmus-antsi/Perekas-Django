@@ -396,6 +396,11 @@ body {
   cursor: default;
 }
 
+.icon-form {
+  display: flex;
+  margin: 0;
+}
+
 .empty-state {
   margin: 0;
   padding: 1.2rem;
