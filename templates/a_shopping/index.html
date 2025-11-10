@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping List | FamilyHub{% endblock %}
+
+{% block nav_shopping_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Shopping List</h1>
+        <p class="page-subtitle">
+          {{ to_buy_count }} item{% if to_buy_count != 1 %}s{% endif %} to buy,
+          {{ in_cart_count }} in cart
+        </p>
+      </div>
+      <button class="pill-button" type="button">{{ family_name }}</button>
+    </header>
+
+    <section class="add-item-card">
+      <label class="visually-hidden" for="new-item-input">Add new item</label>
+      <input id="new-item-input" type="text" placeholder="Add new item..." disabled>
+      <button type="button" class="primary-button" disabled>
+        <span aria-hidden="true">+</span>
+        <span>Add</span>
+      </button>
+    </section>
+
+    <section class="list-section">
+      <header class="list-section-header">
+        <span class="list-section-icon need-icon" aria-hidden="true"></span>
+        <h2>Need to Buy</h2>
+      </header>
+
+      <div class="list-items">
+        {% if to_buy_items %}
+          {% for item in to_buy_items %}
+            <article class="item-card">
+              <div>
+                <h3 class="item-name">{{ item.name }}</h3>
+                <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
+              </div>
+              <div class="item-actions">
+                <button type="button" class="icon-button success" disabled aria-label="Mark {{ item.name }} as in cart">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <button type="button" class="icon-button" disabled aria-label="Remove {{ item.name }}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          {% endfor %}
+        {% else %}
+          <p class="empty-state">Nothing on the list yet. Add the first item to get started.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="list-section">
+      <header class="list-section-header">
+        <span class="list-section-icon cart-icon" aria-hidden="true"></span>
+        <h2>In Cart</h2>
+      </header>
+
+      <div class="list-items">
+        {% if in_cart_items %}
+          {% for item in in_cart_items %}
+            <article class="item-card in-cart">
+              <div>
+                <h3 class="item-name">{{ item.name }}</h3>
+                <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
+              </div>
+              <div class="item-actions">
+                <button type="button" class="icon-button success" disabled aria-label="Remove {{ item.name }} from cart">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <button type="button" class="icon-button" disabled aria-label="Delete {{ item.name }}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          {% endfor %}
+        {% else %}
+          <p class="empty-state">No items in the cart yet.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+{% endblock %}
+

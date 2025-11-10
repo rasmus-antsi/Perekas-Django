@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FamilyHub{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body>
+    <div class="background-glow"></div>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3L3 9v12h6v-6h6v6h6V9z"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="sidebar-brand">FamilyHub</div>
+            <div class="sidebar-tagline">Together Daily</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="nav-link{% block nav_dashboard_active %}{% endblock %}" href="{% url 'a_dashboard:dashboard' %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12l2-2 3 3 7-7 6 6v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-link" href="#">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h12"></path>
+              <path d="M3 12h12"></path>
+              <path d="M3 19h12"></path>
+              <path d="M18 9l3 3-3 3"></path>
+            </svg>
+            <span>Tasks</span>
+          </a>
+          <a class="nav-link" href="#">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2l1.5 4.5H18l-3.75 2.7L15.75 14 12 11.4 8.25 14l1.5-4.8L6 6.5h4.5z"></path>
+            </svg>
+            <span>Rewards</span>
+          </a>
+          <a class="nav-link{% block nav_shopping_active %}{% endblock %}" href="{% url 'a_shopping:index' %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span>Shopping</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-footer-title">Family Account</div>
+          <div class="sidebar-footer-meta">4 members active</div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </body>
+</html>
+
