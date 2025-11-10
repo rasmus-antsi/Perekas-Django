@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks | FamilyHub{% endblock %}
+
+{% block nav_tasks_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Tasks</h1>
+        {% if has_family %}
+          <p class="page-subtitle">
+            Manage household tasks, track points, and celebrate wins.
+          </p>
+        {% else %}
+          <p class="page-subtitle">Create or join a family to start assigning tasks.</p>
+        {% endif %}
+      </div>
+      {% if is_parent %}
+        <div class="task-toolbar">
+          <button type="button" class="primary-button" data-open-task-modal="create">
+            <span aria-hidden="true">+</span>
+            <span>Add Task</span>
+          </button>
+        </div>
+      {% endif %}
+    </header>
+
+    {% if not has_family %}
+      <section class="empty-state">
+        <p>No family connected yet. Once you create or join one, you can start managing tasks.</p>
+      </section>
+    {% else %}
+      <section class="task-section">
+        <header class="list-section-header">
+          <span class="list-section-icon need-icon" aria-hidden="true"></span>
+          <h2>Active Tasks</h2>
+        </header>
+        <div class="task-grid">
+          {% if active_tasks %}
+            {% for task in active_tasks %}
+              <article class="task-card priority-{{ task.priority }}">
+                <div class="task-card-header">
+                  <div>
+                    <h3 class="task-name">{{ task.name }}</h3>
+                    {% if task.description %}
+                      <p class="task-description">{{ task.description }}</p>
+                    {% endif %}
+                  </div>
+                  <span class="task-points">{{ task.points }} pts</span>
+                </div>
+                <div class="task-meta">
+                  <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
+                  <span class="task-badge assigned">
+                    {% if task.assigned_to %}
+                      Assigned to {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                    {% else %}
+                      Open task • any child can complete
+                    {% endif %}
+                  </span>
+                  {% if task.due_date %}
+                    <span class="task-badge due">Due {{ task.due_date|date:"M j" }}</span>
+                  {% endif %}
+                </div>
+                <div class="task-actions">
+                  {% if task.can_child_complete %}
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="complete">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button success" aria-label="Mark {{ task.name }} complete">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
+                  {% if is_parent %}
+                    <button
+                      type="button"
+                      class="icon-button"
+                      data-open-task-modal="edit"
+                      data-task-id="{{ task.id }}"
+                      data-task-name="{{ task.name|escape }}"
+                      data-task-description="{{ task.description|default_if_none:''|escape }}"
+                      data-task-assigned="{{ task.assigned_to_id|default:'' }}"
+                      data-task-points="{{ task.points }}"
+                      data-task-priority="{{ task.priority }}"
+                      data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                      </svg>
+                    </button>
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button" aria-label="Delete {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No active tasks. Take a moment to relax!</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="task-section">
+        <header class="list-section-header">
+          <span class="list-section-icon accent-icon" aria-hidden="true"></span>
+          <h2>Awaiting Approval</h2>
+        </header>
+        <div class="task-grid">
+          {% if pending_tasks %}
+            {% for task in pending_tasks %}
+              <article class="task-card awaiting">
+                <div class="task-card-header">
+                  <div>
+                    <h3 class="task-name">{{ task.name }}</h3>
+                    <p class="task-description">
+                      Completed by {{ task.completed_by.get_full_name|default:task.completed_by.username }}
+                      on {{ task.completed_at|date:"M j, g:i a" }}
+                    </p>
+                  </div>
+                  <span class="task-points">{{ task.points }} pts</span>
+                </div>
+                <div class="task-meta">
+                  <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
+                  <span class="task-badge assigned">
+                    {% if task.assigned_to %}
+                      Assigned to {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                    {% else %}
+                      Open task • completed by {{ task.completed_by.get_full_name|default:task.completed_by.username }}
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="task-actions">
+                  {% if is_parent %}
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="approve">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button success" aria-label="Approve {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="reopen">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button" aria-label="Reopen {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 12a9 9 0 1 0 9-9"></path>
+                          <polyline points="3 3 3 12 12 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No completed tasks waiting for approval right now.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="task-section">
+        <header class="list-section-header">
+          <span class="list-section-icon cart-icon" aria-hidden="true"></span>
+          <h2>Approved Tasks</h2>
+        </header>
+        <div class="task-grid">
+          {% if approved_tasks %}
+            {% for task in approved_tasks %}
+              <article class="task-card approved">
+                <div class="task-card-header">
+                  <div>
+                    <h3 class="task-name">{{ task.name }}</h3>
+                    <p class="task-description">
+                      Approved by {{ task.approved_by.get_full_name|default:task.approved_by.username }}
+                      on {{ task.approved_at|date:"M j, g:i a" }}
+                    </p>
+                  </div>
+                  <span class="task-points">{{ task.points }} pts</span>
+                </div>
+                <div class="task-meta">
+                  <span class="task-badge assigned">
+                    {% with winner=task.assigned_to|default:task.completed_by %}
+                      Earned by {{ winner.get_full_name|default:winner.username }}
+                    {% endwith %}
+                  </span>
+                </div>
+                {% if is_parent %}
+                  <div class="task-actions">
+                    <form method="post" class="icon-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button" aria-label="Delete {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </form>
+                  </div>
+                {% endif %}
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No approved tasks yet. Keep up the great work!</p>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if is_parent %}
+    <div class="task-modal" id="task-modal" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="task-modal-overlay" data-close-modal></div>
+      <div class="task-modal-content">
+        <button type="button" class="task-modal-close" data-close-modal aria-label="Close task form">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <h2 class="task-modal-title" data-modal-title>Add Task</h2>
+        <form method="post" class="task-modal-form" id="task-modal-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create">
+          <input type="hidden" name="task_id" value="">
+          <label>
+            <span>Task name</span>
+            <input type="text" name="name" placeholder="Morning chores" required>
+          </label>
+          <label>
+            <span>Description</span>
+            <textarea name="description" rows="3" placeholder="Add helpful details or reminders..."></textarea>
+          </label>
+          <label>
+            <span>Assign to</span>
+            <select name="assigned_to">
+              <option value="">Open task (any child)</option>
+              {% for member in family_members %}
+                <option value="{{ member.id }}">
+                  {{ member.get_full_name|default:member.username }}
+                  {% if member.family_profile %}
+                    ({{ member.family_profile.get_role_display }})
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+          <div class="task-modal-grid">
+            <label>
+              <span>Points</span>
+              <input type="number" name="points" min="0" value="25">
+            </label>
+            <label>
+              <span>Priority</span>
+              <select name="priority">
+                <option value="0">Low</option>
+                <option value="1">Medium</option>
+                <option value="2">High</option>
+              </select>
+            </label>
+            <label>
+              <span>Due date</span>
+              <input type="date" name="due_date">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary-button">
+              <span aria-hidden="true" data-submit-icon>+</span>
+              <span data-submit-label>Save Task</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if is_parent %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('task-modal');
+        if (!modal) return;
+
+        const form = document.getElementById('task-modal-form');
+        const actionInput = form.querySelector('input[name="action"]');
+        const idInput = form.querySelector('input[name="task_id"]');
+        const nameInput = form.querySelector('input[name="name"]');
+        const descriptionInput = form.querySelector('textarea[name="description"]');
+        const assignedSelect = form.querySelector('select[name="assigned_to"]');
+        const pointsInput = form.querySelector('input[name="points"]');
+        const prioritySelect = form.querySelector('select[name="priority"]');
+        const dueInput = form.querySelector('input[name="due_date"]');
+        const titleEl = modal.querySelector('[data-modal-title]');
+        const submitLabel = modal.querySelector('[data-submit-label]');
+        const submitIcon = modal.querySelector('[data-submit-icon]');
+
+        submitIcon.dataset.createIcon = '+';
+        submitIcon.dataset.editIcon = '✔';
+
+        function openModal(mode, data = {}) {
+          modal.classList.add('is-visible');
+          document.body.classList.add('modal-open');
+          form.reset();
+
+          if (mode === 'create') {
+            actionInput.value = 'create';
+            idInput.value = '';
+            titleEl.textContent = 'Add Task';
+            submitLabel.textContent = 'Save Task';
+            submitIcon.textContent = submitIcon.dataset.createIcon || '+';
+            assignedSelect.value = '';
+          } else {
+            actionInput.value = 'update';
+            idInput.value = data.id || '';
+            titleEl.textContent = 'Edit Task';
+            submitLabel.textContent = 'Update Task';
+            submitIcon.textContent = submitIcon.dataset.editIcon || '✔';
+
+            nameInput.value = data.name || '';
+            descriptionInput.value = data.description || '';
+            pointsInput.value = data.points || 0;
+            prioritySelect.value = data.priority ?? '0';
+            dueInput.value = data.due || '';
+
+            assignedSelect.value = '';
+            if (data.assigned && assignedSelect.querySelector(`option[value="${data.assigned}"]`)) {
+              assignedSelect.value = data.assigned;
+            }
+          }
+        }
+
+        function closeModal() {
+          modal.classList.remove('is-visible');
+          document.body.classList.remove('modal-open');
+        }
+
+        document.querySelectorAll('[data-open-task-modal="create"]').forEach((button) => {
+          button.addEventListener('click', () => openModal('create'));
+        });
+
+        document.querySelectorAll('[data-open-task-modal="edit"]').forEach((button) => {
+          button.addEventListener('click', () => {
+            openModal('edit', {
+              id: button.dataset.taskId,
+              name: button.dataset.taskName,
+              description: button.dataset.taskDescription,
+              assigned: button.dataset.taskAssigned,
+              points: button.dataset.taskPoints,
+              priority: button.dataset.taskPriority,
+              due: button.dataset.taskDue,
+            });
+          });
+        });
+
+        modal.querySelectorAll('[data-close-modal]').forEach((el) => {
+          el.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', (event) => {
+          if (event.target === modal) {
+            closeModal();
+          }
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+            closeModal();
+          }
+        });
+      });
+    </script>
+  {% endif %}
+{% endblock %}
+
