@@ -1,7 +1,153 @@
-{% if user.is_authenticated %}
-<h1>Welcome, {{ user.get_username }}!</h1>
-<p>You are now signed in.</p>
-{% else %}
-<h1>Dashboard</h1>
-<p>Please <a href="{% url 'account_login' %}">sign in</a> to view your dashboard.</p>
-{% endif %}
+{% extends "base.html" %}
+
+{% block title %}Dashboard | FamilyHub{% endblock %}
+
+{% block nav_dashboard_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container dashboard-page">
+    <section class="dashboard-header">
+      <div>
+        <h1 class="page-title">Welcome back, {{ family.name|default:"Family" }}</h1>
+        <p class="page-subtitle">Here&apos;s your household overview for today</p>
+      </div>
+    </section>
+
+    {% if not family %}
+      <section class="empty-state full-row">
+        <p>No family profile found. Create or join a family to see shared activity.</p>
+      </section>
+    {% else %}
+      <section class="stats-grid">
+        <article class="stat-card">
+          <div class="stat-card-icon icon-purple">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 4h16v6H4z"></path>
+              <path d="M4 14h10v6H4z"></path>
+              <path d="M16 14h4v6h-4z"></path>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-label">Active Tasks</span>
+            <div class="stat-value">{{ stats.active_tasks }}</div>
+            <div class="stat-change">+{{ stats.tasks_change }} this week</div>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-card-icon icon-green">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3v18"></path>
+              <path d="M5 12h14"></path>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-label">Points Earned</span>
+            <div class="stat-value">{{ stats.points_earned }}</div>
+            <div class="stat-change">+{{ stats.points_change }} this month</div>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-card-icon icon-orange">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2l1.5 4.5H18l-3.75 2.7L15.75 14 12 11.4 8.25 14l1.5-4.8L6 6.5h4.5z"></path>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-label">Rewards Available</span>
+            <div class="stat-value">{{ stats.rewards_available }}</div>
+            <div class="stat-change">{{ stats.rewards_change }} new rewards</div>
+          </div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-card-icon icon-teal">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 3h18l-2 14H5z"></path>
+              <circle cx="9" cy="20" r="1"></circle>
+              <circle cx="18" cy="20" r="1"></circle>
+            </svg>
+          </div>
+          <div class="stat-card-body">
+            <span class="stat-label">Shopping Items</span>
+            <div class="stat-value">{{ stats.shopping_items }}</div>
+            <div class="stat-change">{{ stats.shopping_needed }} items needed</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="members-card">
+          <header class="card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-purple"></span>
+              <h2>Family Members</h2>
+            </div>
+          </header>
+          {% if family_members %}
+            <div class="members-grid">
+              {% for member in family_members %}
+                <div class="member-card">
+                  <div class="member-header">
+                    <div class="member-avatar">{{ member.initials }}</div>
+                    <div>
+                      <h3>{{ member.name }}</h3>
+                      <p>{{ member.points }} points · {{ member.role }}</p>
+                    </div>
+                  </div>
+                  <div class="member-stats">
+                    <div class="member-progress-bar">
+                      <div class="member-progress-fill" style="--progress: {{ member.progress|default:0 }};"></div>
+                    </div>
+                      <span class="member-progress-label">{{ member.tasks_completed }}/{{ member.total_tasks }} tasks</span>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty-state full-row">No family members loaded yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="recent-card">
+          <header class="card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-green"></span>
+              <h2>Recent Tasks</h2>
+            </div>
+            <a href="{% url 'a_tasks:index' %}" class="card-link">View all tasks →</a>
+          </header>
+          {% if recent_tasks %}
+            <ul class="recent-task-list">
+              {% for task in recent_tasks %}
+                <li class="recent-task">
+                  <div class="recent-task-info">
+                    <h3>{{ task.name }}</h3>
+                    <p>
+                      {{ task.completed_by.get_full_name|default:task.completed_by.username }}
+                      · {{ task.completed_at|timesince }} ago
+                    </p>
+                  </div>
+                  <span class="recent-task-points">{{ task.points }} pts</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="empty-state full-row">No recent task activity.</p>
+          {% endif %}
+        </article>
+      </section>
+
+      <section class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="quick-grid">
+          {% for action in quick_actions %}
+            <a href="{% url action.url %}" class="quick-card">
+              <div class="quick-icon quick-{{ action.icon }}"></div>
+              <h3>{{ action.label }}</h3>
+              <p>{{ action.description }}</p>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </div>
+{% endblock %}
