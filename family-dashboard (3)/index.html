@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Dashboard - Home</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">🏠</div>
+        <h1 class="sidebar-title">Family Hub</h1>
+      </div>
+      
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="index.html" class="active">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="tasks.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              Tasks
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="rewards.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+              Rewards
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="shopping.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Shopping List
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div class="user-info">
+            <div class="user-name">John Doe</div>
+            <div class="user-role">Parent</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Family Dashboard</h1>
+        <p class="page-description">Welcome back! Here's what's happening with your family today.</p>
+      </div>
+      
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Tasks Completed</span>
+            <div class="stat-icon primary">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">24</div>
+          <div class="stat-change">↑ 12% from last week</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Points</span>
+            <div class="stat-icon secondary">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">1,250</div>
+          <div class="stat-change">↑ 8% from last week</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Shopping Items</span>
+            <div class="stat-icon accent">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">12</div>
+          <div class="stat-change">3 items added today</div>
+        </div>
+      </div>
+      
+      <!-- Content Grid -->
+      <div class="content-grid">
+        <!-- Family Members -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Family Members</h2>
+          </div>
+          <div class="family-grid">
+            <div class="family-member">
+              <div class="member-avatar">JD</div>
+              <div class="member-name">John</div>
+              <div class="member-stats">
+                <div class="member-stat">
+                  <div class="member-stat-value">8</div>
+                  <div class="member-stat-label">Tasks</div>
+                </div>
+                <div class="member-stat">
+                  <div class="member-stat-value">420</div>
+                  <div class="member-stat-label">Points</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="family-member">
+              <div class="member-avatar">SD</div>
+              <div class="member-name">Sarah</div>
+              <div class="member-stats">
+                <div class="member-stat">
+                  <div class="member-stat-value">12</div>
+                  <div class="member-stat-label">Tasks</div>
+                </div>
+                <div class="member-stat">
+                  <div class="member-stat-value">580</div>
+                  <div class="member-stat-label">Points</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="family-member">
+              <div class="member-avatar">EM</div>
+              <div class="member-name">Emma</div>
+              <div class="member-stats">
+                <div class="member-stat">
+                  <div class="member-stat-value">4</div>
+                  <div class="member-stat-label">Tasks</div>
+                </div>
+                <div class="member-stat">
+                  <div class="member-stat-value">250</div>
+                  <div class="member-stat-label">Points</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Tasks -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Recent Tasks</h2>
+            <a href="tasks.html" class="btn btn-ghost">View All</a>
+          </div>
+          <div class="item-list">
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Clean your room</div>
+                <div class="item-meta">
+                  <span class="badge badge-primary">Chores</span>
+                  <span>Emma • 50 pts</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Math homework</div>
+                <div class="item-meta">
+                  <span class="badge badge-secondary">Homework</span>
+                  <span>Sarah • 30 pts</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Walk the dog</div>
+                <div class="item-meta">
+                  <span class="badge badge-accent">Exercise</span>
+                  <span>John • 40 pts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Available Rewards -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Available Rewards</h2>
+            <a href="rewards.html" class="btn btn-ghost">View All</a>
+          </div>
+          <div class="item-list">
+            <div class="item">
+              <div class="item-content">
+                <div class="item-title">Extra Screen Time</div>
+                <div class="item-meta">
+                  <span class="badge badge-primary">100 pts</span>
+                  <span>30 minutes</span>
+                </div>
+              </div>
+              <button class="btn btn-primary">Claim</button>
+            </div>
+            
+            <div class="item">
+              <div class="item-content">
+                <div class="item-title">Choose Dinner</div>
+                <div class="item-meta">
+                  <span class="badge badge-secondary">150 pts</span>
+                  <span>One night</span>
+                </div>
+              </div>
+              <button class="btn btn-primary">Claim</button>
+            </div>
+            
+            <div class="item">
+              <div class="item-content">
+                <div class="item-title">Movie Night</div>
+                <div class="item-meta">
+                  <span class="badge badge-accent">200 pts</span>
+                  <span>Family activity</span>
+                </div>
+              </div>
+              <button class="btn btn-primary">Claim</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Shopping List Preview -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Shopping List</h2>
+            <a href="shopping.html" class="btn btn-ghost">View All</a>
+          </div>
+          <div class="item-list">
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Milk</div>
+                <div class="item-meta">
+                  <span>2 gallons</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Bread</div>
+                <div class="item-meta">
+                  <span>Whole wheat</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="item">
+              <div class="item-checkbox"></div>
+              <div class="item-content">
+                <div class="item-title">Apples</div>
+                <div class="item-meta">
+                  <span>1 bag</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

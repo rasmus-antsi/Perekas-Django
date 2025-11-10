@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Dashboard - Shopping List</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">🏠</div>
+        <h1 class="sidebar-title">Family Hub</h1>
+      </div>
+      
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="index.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="tasks.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              Tasks
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="rewards.html">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+              Rewards
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="shopping.html" class="active">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Shopping List
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div class="user-info">
+            <div class="user-name">John Doe</div>
+            <div class="user-role">Parent</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Shopping List</h1>
+        <p class="page-description">Keep track of items the family needs to buy.</p>
+      </div>
+      
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Total Items</span>
+            <div class="stat-icon primary">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">12</div>
+          <div class="stat-change">On the list</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Checked Off</span>
+            <div class="stat-icon secondary">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">5</div>
+          <div class="stat-change">Items purchased</div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-header">
+            <span class="stat-label">Remaining</span>
+            <div class="stat-icon accent">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-value">7</div>
+          <div class="stat-change">Still need to buy</div>
+        </div>
+      </div>
+      
+      <!-- Shopping List -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Items to Buy</h2>
+          <button class="btn btn-primary">
+            <svg class="nav-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px;">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Item
+          </button>
+        </div>
+        
+        <div class="item-list">
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Milk</div>
+              <div class="item-meta">
+                <span>2 gallons • Dairy</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Bread</div>
+              <div class="item-meta">
+                <span>Whole wheat • Bakery</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Apples</div>
+              <div class="item-meta">
+                <span>1 bag • Produce</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Chicken Breast</div>
+              <div class="item-meta">
+                <span>2 lbs • Meat</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Pasta</div>
+              <div class="item-meta">
+                <span>2 boxes • Pantry</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Tomato Sauce</div>
+              <div class="item-meta">
+                <span>3 jars • Pantry</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Bananas</div>
+              <div class="item-meta">
+                <span>1 bunch • Produce</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Orange Juice</div>
+              <div class="item-meta">
+                <span>1 carton • Beverages</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Eggs</div>
+              <div class="item-meta">
+                <span>1 dozen • Dairy</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Yogurt</div>
+              <div class="item-meta">
+                <span>6 pack • Dairy</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Cereal</div>
+              <div class="item-meta">
+                <span>2 boxes • Breakfast</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="item">
+            <div class="item-checkbox"></div>
+            <div class="item-content">
+              <div class="item-title">Cheese</div>
+              <div class="item-meta">
+                <span>Cheddar block • Dairy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
