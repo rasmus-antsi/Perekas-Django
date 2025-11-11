@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FamilyHub Plans</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body class="landing-body">
+    <div class="landing-background"></div>
+    {% include 'a_landing/partials/nav.html' with current='plans' %}
+
+    <main class="landing-main">
+      <section class="landing-section hero-narrow glass">
+        <span class="section-eyebrow">Flexible pricing</span>
+        <h1>Plans for every rhythm of family life</h1>
+        <p>Start free and grow into advanced automations, insights, and priority celebration tools.</p>
+      </section>
+
+      <section class="landing-section plans-grid glass">
+        <article class="plan-card">
+          <h2>Starter</h2>
+          <p class="plan-price">Free</p>
+          <p>No credit card required</p>
+          <ul>
+            <li>Up to three family members</li>
+            <li>Core chores + rewards</li>
+            <li>Shared shopping list</li>
+            <li>Weekly summary email</li>
+          </ul>
+          <a class="landing-button secondary" href="{% url 'account_signup' %}">Create free account</a>
+        </article>
+
+        <article class="plan-card plan-featured">
+          <div class="plan-badge">Popular</div>
+          <h2>Family Plus</h2>
+          <p class="plan-price">$9<span>/month</span></p>
+          <p>Perfect for busy households</p>
+          <ul>
+            <li>Unlimited family members</li>
+            <li>Automated routines & reminders</li>
+            <li>Custom rewards marketplace</li>
+            <li>Advanced insights dashboard</li>
+            <li>Priority support</li>
+          </ul>
+          <a class="landing-button primary" href="{% url 'account_signup' %}">Start 14-day trial</a>
+        </article>
+
+        <article class="plan-card">
+          <h2>Community</h2>
+          <p class="plan-price">Let’s chat</p>
+          <p>For schools, clubs, and teams</p>
+          <ul>
+            <li>Bulk licensing</li>
+            <li>Onboarding workshops</li>
+            <li>Dedicated success manager</li>
+            <li>Integration toolkit & API</li>
+          </ul>
+          <a class="landing-button ghost" href="mailto:hello@familyhub.app">Contact us</a>
+        </article>
+      </section>
+
+      <section class="landing-section plan-comparison glass">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">Feature matrix</span>
+          <h2>Compare features side by side</h2>
+        </div>
+        <div class="comparison-table">
+          <div class="comparison-row header">
+            <span>Included features</span>
+            <span>Starter</span>
+            <span>Family Plus</span>
+            <span>Community</span>
+          </div>
+          <div class="comparison-row">
+            <span>Unlimited tasks & rewards</span>
+            <span>✔︎</span>
+            <span>✔︎</span>
+            <span>✔︎</span>
+          </div>
+          <div class="comparison-row">
+            <span>Automations</span>
+            <span>—</span>
+            <span>✔︎</span>
+            <span>✔︎</span>
+          </div>
+          <div class="comparison-row">
+            <span>Advanced analytics</span>
+            <span>—</span>
+            <span>✔︎</span>
+            <span>✔︎</span>
+          </div>
+          <div class="comparison-row">
+            <span>Priority support</span>
+            <span>—</span>
+            <span>✔︎</span>
+            <span>✔︎</span>
+          </div>
+          <div class="comparison-row">
+            <span>Integrations & API</span>
+            <span>—</span>
+            <span>—</span>
+            <span>✔︎</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section faq glass">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">FAQ</span>
+          <h2>All plans include a free 14-day trial</h2>
+          <p>Need a hand deciding? Here are the top questions families ask.</p>
+        </div>
+        <div class="faq-grid">
+          <details open>
+            <summary>Can we change plans at any time?</summary>
+            <p>Absolutely. Upgrade, downgrade, or cancel whenever you need—your data stays safe.</p>
+          </details>
+          <details>
+            <summary>Is Family Plus available annually?</summary>
+            <p>Yes, save 15% with annual billing. Switch in your account settings after signup.</p>
+          </details>
+          <details>
+            <summary>Do you offer nonprofit or school pricing?</summary>
+            <p>We love working with community organisations. Reach out and we’ll tailor a plan.</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    {% include 'a_landing/partials/footer.html' %}
+    <script src="{% static 'landing.js' %}"></script>
+  </body>
+</html>

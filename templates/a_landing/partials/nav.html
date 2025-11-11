@@ -1,0 +1,22 @@
+<header class="landing-nav glass {% if mobile_only %}mobile{% endif %}">
+  <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+    <span class="landing-logo">FH</span>
+    <div>
+      <span class="landing-brand-title">FamilyHub</span>
+      <span class="landing-brand-tagline">Together Daily</span>
+    </div>
+  </a>
+  <nav class="landing-nav-links">
+    <a {% if current == 'home' %}class="active"{% endif %} href="{% url 'a_landing:landing_index' %}">Home</a>
+    <a {% if current == 'features' %}class="active"{% endif %} href="{% url 'a_landing:features' %}">Features</a>
+    <a {% if current == 'about' %}class="active"{% endif %} href="{% url 'a_landing:about' %}">About</a>
+    <a {% if current == 'plans' %}class="active"{% endif %} href="{% url 'a_landing:plans' %}">Plans</a>
+  </nav>
+  <div class="landing-nav-actions">
+    <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
+    <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+  </div>
+  <button class="landing-nav-toggle" type="button" aria-label="Toggle menu">
+    <span aria-hidden="true"></span>
+  </button>
+</header>

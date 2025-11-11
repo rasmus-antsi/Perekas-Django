@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FamilyHub Features</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body class="landing-body">
+    <div class="landing-background"></div>
+    {% include 'a_landing/partials/nav.html' with current='features' %}
+
+    <main class="landing-main">
+      <section class="landing-section hero-narrow glass">
+        <span class="section-eyebrow">Feature Spotlight</span>
+        <h1>Tools that energise every member of the family</h1>
+        <p>
+          From task boards to celebration moments, FamilyHub keeps your home organised, transparent,
+          and full of motivation.
+        </p>
+      </section>
+
+      <section class="landing-section feature-details">
+        <article class="feature-detail glass">
+          <div class="feature-visual chore-board"></div>
+          <div class="feature-copy">
+            <h2>Dynamic task boards</h2>
+            <p>
+              Drag-and-drop tasks, colour-coded assignments, and smart reminders help everyone know
+              what matters today. Parents approve completions in a tap.
+            </p>
+            <ul>
+              <li>Assign or reassign tasks instantly</li>
+              <li>Recurring routines for repeating chores</li>
+              <li>Progress analytics with weekly snapshots</li>
+            </ul>
+          </div>
+        </article>
+        <article class="feature-detail glass reverse">
+          <div class="feature-visual rewards"></div>
+          <div class="feature-copy">
+            <h2>Motivational rewards marketplace</h2>
+            <p>
+              Turn effort into celebration with a custom rewards catalogue. Kids track points and vote
+              on what should come next.
+            </p>
+            <ul>
+              <li>Reward templates to get started quickly</li>
+              <li>Auto-notifications when goals are reached</li>
+              <li>Shared wishlists keep everyone inspired</li>
+            </ul>
+          </div>
+        </article>
+        <article class="feature-detail glass">
+          <div class="feature-visual shopping"></div>
+          <div class="feature-copy">
+            <h2>Unified shopping list</h2>
+            <p>
+              Never miss a request again. Real-time updates keep groceries, supplies, and kid requests
+              in one flowing list.
+            </p>
+            <ul>
+              <li>Collaborative list synced across devices</li>
+              <li>Smart grouping by store section</li>
+              <li>Integrations with favourite delivery apps</li>
+            </ul>
+          </div>
+        </article>
+      </section>
+
+      <section class="landing-section landing-cta glass">
+        <div class="landing-cta-inner">
+          <div>
+            <h2>Bring the full toolkit to your home</h2>
+            <p>Start free today and discover how effortless family organisation can feel.</p>
+          </div>
+          <div class="landing-hero-actions">
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Review plans</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    {% include 'a_landing/partials/footer.html' %}
+    <script src="{% static 'landing.js' %}"></script>
+  </body>
+</html>

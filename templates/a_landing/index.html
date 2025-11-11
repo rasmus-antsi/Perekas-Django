@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyHub | Together Daily</title>
+    <title>FamilyHub | Organize Life Together</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -15,7 +15,7 @@
   </head>
   <body class="landing-body">
     <div class="landing-background"></div>
-    <header class="landing-nav">
+    <header class="landing-nav glass">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
         <span class="landing-logo">FH</span>
         <div>
@@ -24,200 +24,181 @@
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="#features">Features</a>
-        <a href="#about">About</a>
-        <a href="#plans">Plans</a>
+        <a href="#hero">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
       </nav>
       <div class="landing-nav-actions">
         <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
         <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
       </div>
+      <button class="landing-nav-toggle" aria-label="Toggle menu"></button>
     </header>
 
     <main class="landing-main">
-      <section class="landing-hero" id="top">
+      <section class="landing-hero" id="hero">
         <div class="landing-hero-content">
-          <span class="landing-hero-eyebrow">Your Family Command Center</span>
-          <h1>Bring tasks, rewards, and shopping into one joyful routine.</h1>
+          <span class="landing-hero-eyebrow glass">Family routines Elevated</span>
+          <h1>Bring clarity, celebration, and collaboration to every day together.</h1>
           <p>
-            FamilyHub keeps everyone aligned with shared to-dos, points for great work, and a
-            collaborative shopping list. Turn daily chores into a game the whole family loves.
-          </p>
-          <div class="landing-hero-actions">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start your free trial</a>
-            <a class="landing-button ghost" href="#features">See how it works</a>
-          </div>
-          <dl class="landing-hero-stats">
-            <div>
-              <dt>Families organized</dt>
-              <dd>12k+</dd>
-            </div>
-            <div>
-              <dt>Rewards redeemed</dt>
-              <dd>58k</dd>
-            </div>
-            <div>
-              <dt>Tasks completed</dt>
-              <dd>2.4M</dd>
-            </div>
-          </dl>
-        </div>
-        <div class="landing-hero-visual" aria-hidden="true">
-          <div class="landing-hero-card">
-            <h3>Today&apos;s Focus</h3>
-            <ul>
-              <li>
-                <span class="hero-task-title">Homework Power Hour</span>
-                <span class="hero-task-points">+30 pts</span>
-              </li>
-              <li>
-                <span class="hero-task-title">Grocery Mission</span>
-                <span class="hero-task-points">+20 pts</span>
-              </li>
-              <li>
-                <span class="hero-task-title">Family Game Night</span>
-                <span class="hero-task-points">Claim Reward</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <section class="landing-section landing-features" id="features">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">Why Families Choose FamilyHub</span>
-          <h2>All the tools you need to stay in sync</h2>
-          <p>
-            Routines become easy when tasks, accountability, and celebrations live together.
-          </p>
-        </div>
-        <div class="features-grid">
-          <article>
-            <div class="feature-icon">✓</div>
-            <h3>Shared Task Boards</h3>
-            <p>
-              Assign chores, track progress, and celebrate completions with instant approvals and
-              points.
-            </p>
-          </article>
-          <article>
-            <div class="feature-icon">★</div>
-            <h3>Reward Marketplace</h3>
-            <p>
-              Create custom rewards and let kids cash in their points for special experiences or treats.
-            </p>
-          </article>
-          <article>
-            <div class="feature-icon">🛒</div>
-            <h3>Smart Shopping List</h3>
-            <p>
-              Keep groceries organized with real-time updates so you never forget a family request.
-            </p>
-          </article>
-          <article>
-            <div class="feature-icon">💬</div>
-            <h3>Weekly Insights</h3>
-            <p>
-              Understand who&apos;s doing what with simple dashboards that highlight wins and priorities.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section class="landing-section landing-about" id="about">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">Built for connection</span>
-          <h2>Designed to bring families closer together</h2>
-        </div>
-        <div class="about-grid">
-          <div class="about-card">
-            <h3>Reduce the daily juggle</h3>
-            <p>
-              FamilyHub gives everyone clarity on what needs to be done—no more repeating instructions or
-              wondering what&apos;s next.
-            </p>
-          </div>
-          <div class="about-card">
-            <h3>Celebrate every effort</h3>
-            <p>
-              Our points and rewards system motivates kids with positive reinforcement and lets
-              parents celebrate progress.
-            </p>
-          </div>
-          <div class="about-card">
-            <h3>Works on every device</h3>
-            <p>
-              Access the dashboard from phones, tablets, or desktop with a beautiful, accessible experience for
-              everyone.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="landing-section landing-plans" id="plans">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">Flexible plans</span>
-          <h2>Choose the perfect plan for your household</h2>
-        </div>
-        <div class="plans-grid">
-          <article class="plan-card">
-            <h3>Starter</h3>
-            <p class="plan-price">$0<span>/month</span></p>
-            <ul>
-              <li>Up to 3 family members</li>
-              <li>Task boards & rewards</li>
-              <li>Shared shopping list</li>
-            </ul>
-            <a class="landing-button secondary" href="{% url 'account_signup' %}">Create free account</a>
-          </article>
-          <article class="plan-card plan-featured">
-            <div class="plan-badge">Popular</div>
-            <h3>Family Plus</h3>
-            <p class="plan-price">$9<span>/month</span></p>
-            <ul>
-              <li>Unlimited family members</li>
-              <li>Advanced analytics & insights</li>
-              <li>Custom reward marketplace</li>
-              <li>Priority support</li>
-            </ul>
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Try Family Plus</a>
-          </article>
-          <article class="plan-card">
-            <h3>Community</h3>
-            <p class="plan-price">Let&apos;s chat</p>
-            <ul>
-              <li>Workshops & group onboarding</li>
-              <li>Bulk pricing for schools & clubs</li>
-              <li>Dedicated success manager</li>
-            </ul>
-            <a class="landing-button ghost" href="mailto:hello@familyhub.app">Contact us</a>
-          </article>
-        </div>
-      </section>
-
-      <section class="landing-cta">
-        <div class="landing-cta-card">
-          <h2>Ready to make family routines effortless?</h2>
-          <p>
-            Start your free trial today and see why thousands of families trust FamilyHub to simplify
-            their days.
+            FamilyHub combines shared task boards, motivational rewards, and a collaborative
+            shopping list into one elegant command center. Stay in sync—wherever life takes you.
           </p>
           <div class="landing-hero-actions">
             <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
-            <a class="landing-button ghost" href="{% url 'account_login' %}">Log in</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:features' %}">Explore features</a>
+          </div>
+        </div>
+        <div class="landing-hero-stage" aria-hidden="true">
+          <div class="hero-orb orb-one"></div>
+          <div class="hero-orb orb-two"></div>
+          <div class="hero-dashboard glass">
+            <header>
+              <span class="hero-pill">Today</span>
+              <span class="hero-status">✨ Momentum is strong</span>
+            </header>
+            <ul>
+              <li>
+                <div>
+                  <strong>Sarah</strong>
+                  <span>Homework sprint</span>
+                </div>
+                <span class="hero-points">+30 pts</span>
+              </li>
+              <li>
+                <div>
+                  <strong>Mike</strong>
+                  <span>Walk the dog</span>
+                </div>
+                <span class="hero-points">Completed</span>
+              </li>
+              <li>
+                <div>
+                  <strong>Emma</strong>
+                  <span>Reward: Game night</span>
+                </div>
+                <span class="hero-reward">Claimed</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section landing-preview glass" id="preview">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">Built for modern families</span>
+          <h2>Everything you need to plan, act, and celebrate together</h2>
+          <p>
+            Dynamic tools keep everyone energised—the difference between checking boxes and creating
+            shared wins.
+          </p>
+        </div>
+        <div class="landing-preview-grid">
+          <a href="{% url 'a_landing:features' %}" class="preview-card">
+            <div class="preview-card-visual features"></div>
+            <div class="preview-card-body">
+              <h3>Features</h3>
+              <p>Discover chore boards, motivational rewards, shopping lists, and automation.</p>
+              <span class="preview-link">See how it works →</span>
+            </div>
+          </a>
+          <a href="{% url 'a_landing:about' %}" class="preview-card">
+            <div class="preview-card-visual about"></div>
+            <div class="preview-card-body">
+              <h3>About</h3>
+              <p>The story behind FamilyHub and the families inspiring our roadmap.</p>
+              <span class="preview-link">Meet the team →</span>
+            </div>
+          </a>
+          <a href="{% url 'a_landing:plans' %}" class="preview-card">
+            <div class="preview-card-visual plans"></div>
+            <div class="preview-card-body">
+              <h3>Plans</h3>
+              <p>Flexible plans designed for households of every size and stage.</p>
+              <span class="preview-link">Compare plans →</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <section class="landing-section landing-marquee">
+        <div class="marquee-track">
+          <span>Tasks</span>
+          <span>Rewards</span>
+          <span>Shopping</span>
+          <span>Celebrations</span>
+          <span>Teamwork</span>
+          <span>Momentum</span>
+          <span>FamilyHub</span>
+        </div>
+      </section>
+
+      <section class="landing-section landing-testimonials glass" id="stories">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">Loved by families worldwide</span>
+          <h2>“FamilyHub turned our to-do list into something our kids cheer for.”</h2>
+          <p>Here’s how households are creating rhythm and joy with FamilyHub.</p>
+        </div>
+        <div class="testimonial-grid">
+          <article>
+            <p>
+              “We went from chore arguments to high-fives. Everyone knows what matters today, and the
+              rewards feel like mini-celebrations.”
+            </p>
+            <span class="author">— The Taylor Family</span>
+          </article>
+          <article>
+            <p>
+              “FamilyHub gives our teens agency. They pick rewards, they own their points, and they
+              even remind us about shopping now.”
+            </p>
+            <span class="author">— The Singh Family</span>
+          </article>
+          <article>
+            <p>
+              “The dashboard is our new morning ritual. Tasks, groceries, weekend plans—it’s all in
+              motion, together.”
+            </p>
+            <span class="author">— The Martins</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="landing-section landing-cta glass" id="get-started">
+        <div class="landing-cta-inner">
+          <div>
+            <h2>Ready to power joyful productivity?</h2>
+            <p>Start a 14-day free trial—no credit card required—and unlock the FamilyHub experience.</p>
+          </div>
+          <div class="landing-hero-actions">
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">View plans</a>
           </div>
         </div>
       </section>
     </main>
 
     <footer class="landing-footer">
-      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
       <div class="landing-footer-links">
-        <a href="#features">Features</a>
-        <a href="#about">About</a>
-        <a href="#plans">Plans</a>
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
         <a href="mailto:hello@familyhub.app">Support</a>
       </div>
+      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
     </footer>
+
+    <script>
+      const toggle = document.querySelector('.landing-nav-toggle');
+      const navLinks = document.querySelector('.landing-nav-links');
+      const navActions = document.querySelector('.landing-nav-actions');
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('open');
+        navLinks.classList.toggle('open');
+        navActions.classList.toggle('open');
+      });
+    </script>
   </body>
 </html>

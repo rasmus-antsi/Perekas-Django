@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About FamilyHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body class="landing-body">
+    <div class="landing-background"></div>
+    {% include 'a_landing/partials/nav.html' with current='about' %}
+
+    <main class="landing-main">
+      <section class="landing-section hero-narrow glass">
+        <span class="section-eyebrow">Our Story</span>
+        <h1>Rooted in family life, designed for joyful productivity</h1>
+        <p>
+          FamilyHub was founded by parents who wanted to transform chore charts into moments of
+          connection. Today, we’re powering households around the globe.
+        </p>
+      </section>
+
+      <section class="landing-section about-grid glass">
+        <article>
+          <h2>Mission</h2>
+          <p>
+            To empower households with tools that combine clarity, celebration, and collaboration—so
+            families spend less time coordinating and more time thriving together.
+          </p>
+        </article>
+        <article>
+          <h2>Vision</h2>
+          <p>
+            A world where every family, regardless of shape or size, enjoys smooth routines, shared
+            ownership, and joyful celebrations of progress.
+          </p>
+        </article>
+        <article>
+          <h2>Team</h2>
+          <p>
+            We’re designers, parents, educators, and dreamers. Together, we listen closely to the
+            households using FamilyHub and build alongside them.
+          </p>
+        </article>
+      </section>
+
+      <section class="landing-section timeline">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">Milestones</span>
+          <h2>From kitchen table idea to global platform</h2>
+        </div>
+        <ol class="timeline-list">
+          <li>
+            <span class="timeline-year">2019</span>
+            <p>We prototype the first FamilyHub to help our own kids stay on top of chores.</p>
+          </li>
+          <li>
+            <span class="timeline-year">2021</span>
+            <p>Public beta launches, bringing in the first 500 families who shape today’s experience.</p>
+          </li>
+          <li>
+            <span class="timeline-year">2023</span>
+            <p>Rewards marketplace and shared shopping list go live, helping families celebrate wins.</p>
+          </li>
+          <li>
+            <span class="timeline-year">2024</span>
+            <p>
+              FamilyHub powers 12k+ households and introduces automations that keep routines flowing on
+              autopilot.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="landing-section values glass">
+        <div class="landing-section-header">
+          <span class="section-eyebrow">What guides us</span>
+          <h2>Values baked into every pixel</h2>
+        </div>
+        <div class="values-grid">
+          <div>
+            <h3>Empathy first</h3>
+            <p>We build with families—not just for them. Every decision starts with listening.</p>
+          </div>
+          <div>
+            <h3>Celebrate progress</h3>
+            <p>Always make room for delight. Every action should feel rewarding, not draining.</p>
+          </div>
+          <div>
+            <h3>Simple is powerful</h3>
+            <p>Clarity, contrast, and motion guide our design. Busy lives deserve effortless tools.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    {% include 'a_landing/partials/footer.html' %}
+    <script src="{% static 'landing.js' %}"></script>
+  </body>
+</html>
