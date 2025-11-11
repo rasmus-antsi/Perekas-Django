@@ -64,6 +64,10 @@
         <div class="sidebar-footer">
           <div class="sidebar-footer-title">Family Account</div>
           <div class="sidebar-footer-meta">4 members active</div>
+          <form method="post" action="{% url 'account_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sidebar-logout">Log out</button>
+          </form>
         </div>
       </aside>
 
