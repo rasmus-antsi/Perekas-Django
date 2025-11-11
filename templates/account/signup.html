@@ -2,17 +2,36 @@
 {% load i18n %}
 {% block title %}{% trans "Register" %}{% endblock %}
 {% block content %}
-<h1>{% trans "Create Your Account" %}</h1>
-<form method="post" action="{% url 'account_signup' %}">
+  <div class="auth-form-header">
+    <h1>{% trans "Create your FamilyHub account" %}</h1>
+    <p>Start organizing tasks, rewards, and shopping together.</p>
+  </div>
+
+  <form method="post" action="{% url 'account_signup' %}" class="auth-form">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{% trans "Register" %}</button>
-</form>
-<p>
+    {% if form.non_field_errors %}
+      <div class="auth-error">{{ form.non_field_errors|join:", " }}</div>
+    {% endif %}
+    {% for field in form %}
+      <div class="auth-field{% if field.errors %} has-error{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
+          <p class="auth-field-error">{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div class="auth-actions">
+      <button type="submit" class="auth-submit">{% trans "Get Started" %}</button>
+    </div>
+  </form>
+
+  <p class="auth-switch">
     {% url 'account_login' as login_url %}
     {% blocktrans trimmed %}
-    Already have an account? <a href="{{ login_url }}">Sign in</a>.
+      Already have an account? <a href="{{ login_url }}">Sign in</a>.
     {% endblocktrans %}
-</p>
+  </p>
 {% endblock %}
 

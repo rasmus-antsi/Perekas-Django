@@ -1,24 +1,66 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="utf-8">
-    <title>{% block title %}Account{% endblock %}</title>
-</head>
-<body>
-    <nav>
-        {% if user.is_authenticated %}
-            <span>Signed in as {{ user.get_username }}</span>
-            <a href="{% url 'account_logout' %}">Sign out</a>
-        {% else %}
-            <a href="{% url 'account_login' %}">Sign in</a>
-            <a href="{% url 'account_signup' %}">Register</a>
-        {% endif %}
-        <a href="{% url 'a_dashboard:dashboard' %}">Dashboard</a>
-    </nav>
-    <hr>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-</body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FamilyHub{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body class="auth-body">
+    <div class="auth-background"></div>
+
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="auth-card-inner">
+          <section class="auth-visual" aria-hidden="true">
+            <div class="auth-visual-glow glow-one"></div>
+            <div class="auth-visual-glow glow-two"></div>
+            <div class="auth-visual-header">
+              <span class="auth-logo">FH</span>
+              <div>
+                <span class="auth-brand-title">FamilyHub</span>
+                <span class="auth-brand-tagline">Together Daily</span>
+              </div>
+            </div>
+            <div class="auth-visual-body">
+              <h2>Unlock calm, connected family routines</h2>
+              <p>
+                Keep tasks, rewards, and the weekly shopping list flowing together. Celebrate wins,
+                stay organized, and keep everyone in sync.
+              </p>
+            </div>
+            <div class="auth-visual-cards">
+              <div class="auth-visual-card">
+                <span class="card-label">Families organized</span>
+                <span class="card-value">12k+</span>
+              </div>
+              <div class="auth-visual-card">
+                <span class="card-label">Rewards shared</span>
+                <span class="card-value">58k</span>
+              </div>
+            </div>
+          </section>
+
+          <main class="auth-form-wrapper">
+            <a href="{% url 'a_landing:landing_index' %}" class="auth-card-brand">
+              <span class="auth-logo">FH</span>
+              <div>
+                <span class="auth-brand-title">FamilyHub</span>
+                <span class="auth-brand-tagline">Together Daily</span>
+              </div>
+            </a>
+            {% block content %}{% endblock %}
+          </main>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
 

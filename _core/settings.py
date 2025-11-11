@@ -98,6 +98,9 @@ ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/5m',
 }
+ACCOUNT_FORMS = {
+    'signup': 'a_family.forms.FamilySignupForm',
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
