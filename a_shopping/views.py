@@ -22,8 +22,7 @@ def index(request):
     if family and not has_shopping_list_access(family):
         messages.warning(
             request,
-            "Shopping list is only available with Starter or Pro subscription. "
-            "Please upgrade your subscription to access this feature."
+            "Ostunimekiri on saadaval Starter või Pro paketiga. Palun uuenda tellimust, et seda kasutada."
         )
         return redirect('a_subscription:status')
 
@@ -65,7 +64,7 @@ def index(request):
         in_cart_items = ShoppingListItem.objects.none()
 
     context = {
-        'family_name': family.name if family else 'Your Family',
+        'family_name': family.name if family else 'Sinu pere',
         'to_buy_items': to_buy_items,
         'in_cart_items': in_cart_items,
         'to_buy_count': to_buy_items.count(),

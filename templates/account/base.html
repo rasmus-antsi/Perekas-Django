@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FamilyHub{% endblock %}</title>
+    <title>{% block title %}Luminara{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,24 +18,24 @@
 
     <header class="landing-nav">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-        <span class="landing-logo">FH</span>
-              <div>
-          <span class="landing-brand-title">FamilyHub</span>
-          <span class="landing-brand-tagline">Together Daily</span>
+        <span class="landing-logo">LU</span>
+        <div>
+          <span class="landing-brand-title">Luminara</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+        <a href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a href="{% url 'a_landing:about' %}">Meist</a>
+        <a href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
         {% if user.is_authenticated %}
-          <a class="landing-link" href="{% url 'a_dashboard:dashboard' %}">Dashboard</a>
+          <a class="landing-link" href="{% url 'a_dashboard:dashboard' %}">Ülevaade</a>
         {% else %}
-          <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
-          <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+          <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary" href="{% url 'account_signup' %}">Loo konto</a>
         {% endif %}
       </div>
       <button class="landing-nav-toggle" aria-label="Toggle menu">
@@ -46,7 +46,7 @@
     <main class="auth-main">
       <div class="auth-container">
         {% block content %}{% endblock %}
-    </div>
+      </div>
     </main>
 
     <script>

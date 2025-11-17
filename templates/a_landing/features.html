@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyHub Features</title>
+    <title>Luminara | Võimalused</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,21 +18,21 @@
     
     <header class="landing-nav">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-        <span class="landing-logo">FH</span>
+        <span class="landing-logo">LU</span>
         <div>
-          <span class="landing-brand-title">FamilyHub</span>
-          <span class="landing-brand-tagline">Together Daily</span>
+          <span class="landing-brand-title">Luminara</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a class="active" href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+        <a class="active" href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a href="{% url 'a_landing:about' %}">Meist</a>
+        <a href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
-        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
-        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+        <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
       </div>
       <button class="landing-nav-toggle" aria-label="Toggle menu">
         <span aria-hidden="true"></span>
@@ -44,10 +44,10 @@
       <div class="mobile-menu-sidebar">
         <div class="mobile-menu-header">
           <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-            <span class="landing-logo">FH</span>
+            <span class="landing-logo">LU</span>
             <div>
-              <span class="landing-brand-title">FamilyHub</span>
-              <span class="landing-brand-tagline">Together Daily</span>
+              <span class="landing-brand-title">Luminara</span>
+              <span class="landing-brand-tagline">Koos iga päev</span>
             </div>
           </a>
           <button class="mobile-menu-close" aria-label="Close menu">
@@ -58,15 +58,15 @@
           </button>
         </div>
         <nav class="mobile-menu-links">
-          <a href="{% url 'a_landing:landing_index' %}">Home</a>
-          <a class="active" href="{% url 'a_landing:features' %}">Features</a>
-          <a href="{% url 'a_landing:about' %}">About</a>
-          <a href="{% url 'a_landing:plans' %}">Plans</a>
+          <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+          <a class="active" href="{% url 'a_landing:features' %}">Võimalused</a>
+          <a href="{% url 'a_landing:about' %}">Meist</a>
+          <a href="{% url 'a_landing:plans' %}">Paketid</a>
         </nav>
         <div class="mobile-menu-separator"></div>
         <div class="mobile-menu-actions">
-          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
-          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Alusta tasuta</a>
         </div>
       </div>
     </div>
@@ -74,11 +74,10 @@
     <main class="landing-main">
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Feature Spotlight</span>
-          <h1>Tools that energise every member of the family</h1>
+          <span class="section-eyebrow-minimal">Võimaluste fookus</span>
+          <h1>Tööriistad, mis annavad igale pereliikmele energiat</h1>
           <p>
-            From task boards to celebration moments, FamilyHub keeps your home organised, transparent,
-            and full of motivation.
+            Alates ülesandetahvlitest kuni tähistamishetkedeni hoiab Luminara sinu kodu organiseeritud, läbipaistva ja motiveeriva.
           </p>
         </div>
       </section>
@@ -87,41 +86,38 @@
         <div class="features-grid-minimal">
           <article class="feature-card-minimal scroll-scale scroll-delay-1">
             <div class="feature-visual feature-visual-dynamics"></div>
-            <h3>Dynamic task boards</h3>
+            <h3>Dünaamilised ülesandetahvlid</h3>
             <p>
-              Drag-and-drop tasks, colour-coded assignments, and smart reminders help everyone know
-              what matters today. Parents approve completions in a tap.
+              Lohista ülesandeid, kasuta värvikoode ja nutikaid meeldetuletusi, et kõik teaksid, mis täna päriselt loeb. Vanemad kinnitavad läbiviidud tööd ühe puudutusega.
             </p>
             <ul>
-              <li>Assign or reassign tasks instantly</li>
-              <li>Recurring routines for repeating chores</li>
-              <li>Progress analytics with weekly snapshots</li>
+              <li>Määra või jaga ülesandeid ringi sekunditega</li>
+              <li>Korda mustreid korduvate koduste tööde jaoks</li>
+              <li>Nädalased ülevaated annavad kiire pildi edenemisest</li>
             </ul>
           </article>
           <article class="feature-card-minimal scroll-scale scroll-delay-2">
             <div class="feature-visual feature-visual-motivational"></div>
-            <h3>Motivational rewards marketplace</h3>
+            <h3>Motiveeriv preemiaturg</h3>
             <p>
-              Turn effort into celebration with a custom rewards catalogue. Kids track points and vote
-              on what should come next.
+              Muuda pingutus pidulikuks hetkeks personaalse preemiakataloogi abil. Lapsed jälgivad punkte ja hääletavad, mis võiks olla järgmine eesmärk.
             </p>
             <ul>
-              <li>Reward templates to get started quickly</li>
-              <li>Auto-notifications when goals are reached</li>
-              <li>Shared wishlists keep everyone inspired</li>
+              <li>Valmiskujul preeemiamallid kiireks stardiks</li>
+              <li>Automaatteavitused, kui eesmärk on täidetud</li>
+              <li>Ühised soovinimekirjad hoiavad inspiratsiooni elus</li>
             </ul>
           </article>
           <article class="feature-card-minimal scroll-scale scroll-delay-3">
             <div class="feature-visual feature-visual-shopping"></div>
-            <h3>Unified shopping list</h3>
+            <h3>Ühine ostunimekiri</h3>
             <p>
-              Never miss a request again. Real-time updates keep groceries, supplies, and kid requests
-              in one flowing list.
+              Ükski palve ei lähe kaduma. Reaalajas uuendused hoiavad poekaupade, tarvikute ja laste soovide info ühes voolavas nimekirjas.
             </p>
             <ul>
-              <li>Collaborative list synced across devices</li>
-              <li>Smart grouping by store section</li>
-              <li>Integrations with favourite delivery apps</li>
+              <li>Koostöö nimekiri sünkroonituna kõigis seadmetes</li>
+              <li>Nutikas jaotus poeosakondade kaupa</li>
+              <li>Integratsioonid lemmik kullerteenustega</li>
             </ul>
           </article>
         </div>
@@ -129,26 +125,16 @@
 
       <section class="section-minimal section-cta">
         <div class="cta-content-minimal scroll-slide-up">
-          <h2>Bring the full toolkit to your home</h2>
-          <p>Start free today and discover how effortless family organisation can feel.</p>
+          <h2>Too kogu tööriistakomplekt koju</h2>
+          <p>Alusta juba täna tasuta ja avasta, kui kerge võib pere korraldamine olla.</p>
           <div class="cta-actions-minimal">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
-            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Review plans</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Vaata pakette</a>
           </div>
         </div>
       </section>
     </main>
-
-    <footer class="landing-footer">
-      <div class="landing-footer-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
-        <a href="mailto:hello@familyhub.app">Support</a>
-      </div>
-      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
-    </footer>
+    {% include 'a_landing/partials/footer.html' %}
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');

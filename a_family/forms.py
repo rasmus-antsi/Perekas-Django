@@ -8,7 +8,7 @@ from .models import User, Family
 class FamilySignupForm(SignupForm):
     role = forms.ChoiceField(
         choices=User.ROLE_CHOICES,
-        label="Role",
+        label="Roll",
     )
 
     def save(self, request):
@@ -25,16 +25,16 @@ class CreateFamilyForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'auth-field-minimal',
-            'placeholder': 'Enter family name',
+            'placeholder': 'Sisesta perekonna nimi',
             'autofocus': True,
         }),
-        label='Family Name',
+        label='Perekonna nimi',
     )
 
     def clean_name(self):
         name = self.cleaned_data.get('name', '').strip()
         if not name:
-            raise ValidationError('Family name is required.')
+            raise ValidationError('Perekonna nimi on kohustuslik.')
         return name
 
 
@@ -44,21 +44,21 @@ class JoinFamilyForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'auth-field-minimal',
-            'placeholder': 'Enter 8 character code',
+            'placeholder': 'Sisesta 8-kohaline kood',
             'autofocus': True,
             'style': 'text-transform: uppercase;',
             'size': '8',
         }),
-        label='Family Code',
+        label='Perekonna kood',
     )
 
     def clean_join_code(self):
         join_code = self.cleaned_data.get('join_code', '').strip().upper()
         if not join_code:
-            raise ValidationError('Family code is required.')
+            raise ValidationError('Perekonna kood on kohustuslik.')
         if len(join_code) != 8:
-            raise ValidationError('Family code must be exactly 8 characters.')
+            raise ValidationError('Perekonna kood peab olema täpselt 8 märki.')
         if not Family.objects.filter(join_code=join_code).exists():
-            raise ValidationError('Invalid family code. Please check and try again.')
+            raise ValidationError('Vale pere kood. Palun kontrolli ja proovi uuesti.')
         return join_code
 

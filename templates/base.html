@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FamilyHub{% endblock %}</title>
+    <title>{% block title %}Luminara{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -24,8 +24,8 @@
             </svg>
           </div>
           <div>
-            <div class="sidebar-brand">FamilyHub</div>
-            <div class="sidebar-tagline">Together Daily</div>
+            <div class="sidebar-brand">Luminara</div>
+            <div class="sidebar-tagline">Koos iga päev</div>
           </div>
         </div>
 
@@ -34,7 +34,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 12l2-2 3 3 7-7 6 6v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             </svg>
-            <span>Dashboard</span>
+            <span>Ülevaade</span>
           </a>
           <a class="nav-link{% block nav_tasks_active %}{% endblock %}" href="{% url 'a_tasks:index' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -43,13 +43,13 @@
               <path d="M3 19h12"></path>
               <path d="M18 9l3 3-3 3"></path>
             </svg>
-            <span>Tasks</span>
+            <span>Ülesanded</span>
           </a>
           <a class="nav-link{% block nav_rewards_active %}{% endblock %}" href="{% url 'a_rewards:index' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 2l1.5 4.5H18l-3.75 2.7L15.75 14 12 11.4 8.25 14l1.5-4.8L6 6.5h4.5z"></path>
             </svg>
-            <span>Rewards</span>
+            <span>Preemiad</span>
           </a>
           <a class="nav-link{% block nav_shopping_active %}{% endblock %}" href="{% url 'a_shopping:index' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -57,7 +57,7 @@
               <circle cx="20" cy="21" r="1"></circle>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
             </svg>
-            <span>Shopping</span>
+            <span>Ostunimekiri</span>
           </a>
           {% if user.role != 'child' and user.is_authenticated %}
             <a class="nav-link{% block nav_family_active %}{% endblock %}" href="{% url 'a_family:index' %}">
@@ -65,14 +65,14 @@
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
-              <span>Family</span>
+            <span>Perekond</span>
             </a>
           {% endif %}
           <a class="nav-link{% block nav_subscription_active %}{% endblock %}" href="{% url 'a_subscription:status' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
             </svg>
-            <span>Subscription</span>
+            <span>Tellimus</span>
           </a>
         </nav>
 
@@ -81,15 +81,15 @@
             <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
           </svg>
-          <span>Settings</span>
+          <span>Seaded</span>
         </a>
 
         <div class="sidebar-footer">
-          <div class="sidebar-footer-title">Family Account</div>
-          <div class="sidebar-footer-meta">4 members active</div>
+        <div class="sidebar-footer-title">Perekonto</div>
+        <div class="sidebar-footer-meta">Kõik liikmed on ühendatud</div>
           <form method="post" action="{% url 'account_logout' %}">
             {% csrf_token %}
-            <button type="submit" class="sidebar-logout">Log out</button>
+          <button type="submit" class="sidebar-logout">Logi välja</button>
           </form>
         </div>
       </aside>

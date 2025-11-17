@@ -49,20 +49,20 @@ def dashboard(request):
     recent_tasks = []
     quick_actions = [
         {
-            "label": "Manage Tasks",
-            "description": "Create and assign family tasks",
+            "label": "Halda ülesandeid",
+            "description": "Loo ja määra perele uued ülesanded",
             "url": "a_tasks:index",
             "icon": "tasks",
         },
         {
-            "label": "View Rewards",
-            "description": "Claim rewards with earned points",
+            "label": "Vaata preemiaid",
+            "description": "Kasuta kogutud punkte ihatud preemiateks",
             "url": "a_rewards:index",
             "icon": "trophy",
         },
         {
-            "label": "Shopping List",
-            "description": "Manage family shopping items",
+            "label": "Ostunimekiri",
+            "description": "Halda pere sisseoste ja vajalikke tooteid",
             "url": "a_shopping:index",
             "icon": "cart",
         },

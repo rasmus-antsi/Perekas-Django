@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Rewards | FamilyHub{% endblock %}
+{% block title %}Preemiad | Luminara{% endblock %}
 
 {% block nav_rewards_active %} active{% endblock %}
 
@@ -8,20 +8,20 @@
   <div class="page-container">
     <header class="page-header">
       <div>
-        <h1 class="page-title">Rewards Store</h1>
+        <h1 class="page-title">Preemiapood</h1>
         {% if is_child %}
-          <p class="page-subtitle">You have {{ points_balance }} points to spend.</p>
+          <p class="page-subtitle">Sul on kasutada {{ points_balance }} punkti.</p>
         {% elif is_parent %}
-          <p class="page-subtitle">Manage family rewards and track redeemed treats.</p>
+          <p class="page-subtitle">Halda pere preemiaid ja jälgi lunastusi.</p>
         {% else %}
-          <p class="page-subtitle">Sign in or join a family to access rewards.</p>
+          <p class="page-subtitle">Logi sisse või liitu perega, et preemiaid näha.</p>
         {% endif %}
       </div>
       {% if is_parent %}
         <div class="task-toolbar">
           <button type="button" class="primary-button" data-open-reward-modal="create">
             <span aria-hidden="true">+</span>
-            <span>Add Reward</span>
+            <span>Lisa preemia</span>
           </button>
         </div>
       {% endif %}
@@ -29,13 +29,13 @@
 
     {% if not has_family %}
       <section class="empty-state">
-        <p>No family connected yet. Create or join one to start offering rewards.</p>
+        <p>Pere pole veel ühendatud. Loo või liitu perega, et preemiaid pakkuda.</p>
       </section>
     {% else %}
       <section class="points-overview-card">
         <div class="points-card-header">
           <div>
-            <span class="points-card-label">Your Points Balance</span>
+            <span class="points-card-label">Sinu punktisaldo</span>
             <h2 class="points-card-value">{{ points_balance }}</h2>
           </div>
           <div class="points-card-icon" aria-hidden="true">
@@ -44,13 +44,13 @@
             </svg>
           </div>
         </div>
-        <p class="points-card-subtext">Keep earning points by completing tasks and redeem them for special rewards.</p>
+        <p class="points-card-subtext">Teeni ülesandeid lõpetades punkte ja lunasta need eripreemiateks.</p>
       </section>
 
       <section class="rewards-section">
         <header class="list-section-header">
           <span class="list-section-icon need-icon" aria-hidden="true"></span>
-          <h2>Available Rewards</h2>
+          <h2>Saadaval preemiad</h2>
         </header>
         <div class="rewards-grid">
           {% if available_rewards %}
@@ -65,7 +65,7 @@
                   </div>
                   <span class="reward-points points-chip">
                     <span class="points-value">{{ reward.points }}</span>
-                    <span class="points-label">pts</span>
+                    <span class="points-label">pkt</span>
                   </span>
                 </header>
                 <div class="reward-actions">
@@ -80,7 +80,7 @@
                     </form>
                   {% elif is_child %}
                     <button type="button" class="primary-button reward-button" disabled>
-                      Need {{ reward.points_shortfall }} more pts
+                      Vajad veel {{ reward.points_shortfall }} pkt
                     </button>
                   {% else %}
                     <div class="reward-note">Children can redeem when they have enough points.</div>
@@ -105,7 +105,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete">
                         <input type="hidden" name="reward_id" value="{{ reward.id }}">
-                        <button type="submit" class="icon-button" aria-label="Delete {{ reward.name }}">
+                        <button type="submit" class="icon-button" aria-label="Kustuta {{ reward.name }}">
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -118,7 +118,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state full-row">No rewards available right now. Parents can add new perks.</p>
+            <p class="empty-state full-row">Saadaval preemiaid pole. Lapsevanemad saavad lisada uusi võimalusi.</p>
           {% endif %}
         </div>
       </section>
@@ -144,7 +144,7 @@
                   </div>
                   <span class="reward-points points-chip">
                     <span class="points-value">{{ reward.points }}</span>
-                    <span class="points-label">pts</span>
+                    <span class="points-label">pkt</span>
                   </span>
                 </header>
                 {% if is_parent %}
@@ -164,7 +164,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="reward_id" value="{{ reward.id }}">
-                      <button type="submit" class="icon-button" aria-label="Delete {{ reward.name }}">
+                      <button type="submit" class="icon-button" aria-label="Kustuta {{ reward.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -176,7 +176,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state full-row">No rewards claimed yet. Start redeeming your hard-earned points!</p>
+            <p class="empty-state full-row">Ühtegi preemiat pole veel lunastatud. Kasuta oma teenitud punkte!</p>
           {% endif %}
         </div>
       </section>
@@ -248,15 +248,15 @@
           if (mode === 'create') {
             actionInput.value = 'create';
             idInput.value = '';
-            titleEl.textContent = 'Add Reward';
-            submitLabel.textContent = 'Save Reward';
+            titleEl.textContent = 'Lisa preemia';
+            submitLabel.textContent = 'Salvesta preemia';
             submitIcon.textContent = submitIcon.dataset.createIcon || '+';
             pointsInput.value = 100;
           } else {
             actionInput.value = 'update';
             idInput.value = data.id || '';
-            titleEl.textContent = 'Edit Reward';
-            submitLabel.textContent = 'Update Reward';
+            titleEl.textContent = 'Muuda preemiat';
+            submitLabel.textContent = 'Uuenda preemiat';
             submitIcon.textContent = submitIcon.dataset.editIcon || '✔';
 
             nameInput.value = data.name || '';

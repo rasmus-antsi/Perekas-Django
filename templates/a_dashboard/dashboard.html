@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard | FamilyHub{% endblock %}
+{% block title %}Töölaud | Luminara{% endblock %}
 
 {% block nav_dashboard_active %} active{% endblock %}
 
@@ -8,14 +8,14 @@
   <div class="page-container dashboard-page">
     <section class="dashboard-header">
       <div>
-        <h1 class="page-title">Welcome back, {{ request.user.username }}</h1>
-        <p class="page-subtitle">Here&apos;s your household overview for today</p>
+        <h1 class="page-title">Tere tulemast tagasi, {{ request.user.username }}!</h1>
+        <p class="page-subtitle">Siin on teie pere tänane ülevaade.</p>
       </div>
     </section>
 
     {% if not family %}
       <section class="empty-state full-row">
-        <p>No family profile found. Create or join a family to see shared activity.</p>
+        <p>Pereprofiili ei leitud. Looge uus pere või liituge olemasolevaga, et näha jagatud tegevust.</p>
       </section>
     {% else %}
       <section class="stats-grid">
@@ -28,9 +28,9 @@
             </svg>
           </div>
           <div class="stat-card-body">
-            <span class="stat-label">Active Tasks</span>
+            <span class="stat-label">Aktiivsed ülesanded</span>
             <div class="stat-value">{{ stats.active_tasks }}</div>
-            <div class="stat-change">+{{ stats.tasks_change }} this week</div>
+            <div class="stat-change">+{{ stats.tasks_change }} sel nädalal</div>
           </div>
         </article>
         <article class="stat-card">
@@ -41,9 +41,9 @@
             </svg>
           </div>
           <div class="stat-card-body">
-            <span class="stat-label">Points Earned</span>
+            <span class="stat-label">Teenitud punktid</span>
             <div class="stat-value">{{ stats.points_earned }}</div>
-            <div class="stat-change">+{{ stats.points_change }} this month</div>
+            <div class="stat-change">+{{ stats.points_change }} sel kuul</div>
           </div>
         </article>
         <article class="stat-card">
@@ -53,9 +53,9 @@
             </svg>
           </div>
           <div class="stat-card-body">
-            <span class="stat-label">Rewards Available</span>
+            <span class="stat-label">Saadaval preemiad</span>
             <div class="stat-value">{{ stats.rewards_available }}</div>
-            <div class="stat-change">{{ stats.rewards_change }} new rewards</div>
+            <div class="stat-change">{{ stats.rewards_change }} uut preemiat</div>
           </div>
         </article>
         <article class="stat-card">
@@ -67,9 +67,9 @@
             </svg>
           </div>
           <div class="stat-card-body">
-            <span class="stat-label">Shopping Items</span>
+            <span class="stat-label">Ostunimekirja kirjed</span>
             <div class="stat-value">{{ stats.shopping_items }}</div>
-            <div class="stat-change">{{ stats.shopping_needed }} items needed</div>
+            <div class="stat-change">{{ stats.shopping_needed }} eset veel vaja</div>
           </div>
         </article>
       </section>
@@ -79,7 +79,7 @@
           <header class="card-header">
             <div class="card-title-wrap">
               <span class="card-icon icon-purple"></span>
-              <h2>Family Members</h2>
+              <h2>Pere liikmed</h2>
             </div>
           </header>
           {% if family_members %}
@@ -90,20 +90,20 @@
                     <div class="member-avatar">{{ member.initials }}</div>
                     <div>
                       <h3>{{ member.name }}</h3>
-                      <p>{{ member.points }} points · {{ member.role }}</p>
+                      <p>{{ member.points }} punkti · {{ member.role }}</p>
                     </div>
                   </div>
                   <div class="member-stats">
                     <div class="member-progress-bar">
                       <div class="member-progress-fill" style="--progress: {{ member.progress|default:0 }};"></div>
                     </div>
-                      <span class="member-progress-label">{{ member.tasks_completed }}/{{ member.total_tasks }} tasks</span>
+                      <span class="member-progress-label">{{ member.tasks_completed }}/{{ member.total_tasks }} ülesannet</span>
                   </div>
                 </div>
               {% endfor %}
             </div>
           {% else %}
-            <p class="empty-state full-row">No family members loaded yet.</p>
+            <p class="empty-state full-row">Pereliikmeid pole veel laaditud.</p>
           {% endif %}
         </article>
 
@@ -111,9 +111,9 @@
           <header class="card-header">
             <div class="card-title-wrap">
               <span class="card-icon icon-green"></span>
-              <h2>Recent Tasks</h2>
+              <h2>Viimased ülesanded</h2>
             </div>
-            <a href="{% url 'a_tasks:index' %}" class="card-link">View all tasks →</a>
+            <a href="{% url 'a_tasks:index' %}" class="card-link">Vaata kõiki ülesandeid →</a>
           </header>
           {% if recent_tasks %}
             <ul class="recent-task-list">
@@ -123,21 +123,21 @@
                     <h3>{{ task.name }}</h3>
                     <p>
                       {{ task.completed_by.get_full_name|default:task.completed_by.username }}
-                      · {{ task.completed_at|timesince }} ago
+                      · {{ task.completed_at|timesince }} tagasi
                     </p>
                   </div>
-                  <span class="recent-task-points">{{ task.points }} pts</span>
+                  <span class="recent-task-points">{{ task.points }} punkti</span>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p class="empty-state full-row">No recent task activity.</p>
+            <p class="empty-state full-row">Hiljutisi ülesandeid pole.</p>
           {% endif %}
         </article>
       </section>
 
       <section class="quick-actions">
-        <h2>Quick Actions</h2>
+        <h2>Kiirtoimingud</h2>
         <div class="quick-grid">
           {% for action in quick_actions %}
             <a href="{% url action.url %}" class="quick-card">
