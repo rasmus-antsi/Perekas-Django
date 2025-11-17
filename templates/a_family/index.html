@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Family | FamilyHub{% endblock %}
+
+{% block nav_family_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">{{ family.name }}</h1>
+        <p class="page-subtitle">Manage your family members and settings</p>
+      </div>
+    </section>
+
+    <section class="family-invite-section">
+      <div class="invite-code-card">
+        <div class="invite-code-header">
+          <div class="invite-code-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+          <div>
+            <h2>Family Invite Code</h2>
+            <p>Share this code with family members to invite them to join</p>
+          </div>
+        </div>
+        <div class="invite-code-display">
+          <div class="invite-code-value" id="inviteCode">{{ family.join_code }}</div>
+          <button type="button" class="btn btn-ghost" onclick="copyInviteCode()" id="copyButton">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyButtonText">Copy</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="family-members-section">
+      <div class="members-card">
+        <header class="card-header">
+          <div class="card-title-wrap">
+            <span class="card-icon icon-purple"></span>
+            <h2>Family Members</h2>
+          </div>
+        </header>
+        {% if members %}
+          <div class="members-grid">
+            {% for member in members %}
+              <div class="member-card">
+                <div class="member-header">
+                  <div class="member-avatar">{{ member.get_full_name|default:member.username|slice:":2"|upper }}</div>
+                  <div>
+                    <h3>{{ member.get_full_name|default:member.username }}</h3>
+                    <p>{{ member.points }} points · {{ member.get_role_display }}</p>
+                    {% if member == family.owner %}
+                      <span class="member-badge">Owner</span>
+                    {% endif %}
+                  </div>
+                </div>
+                {% if is_owner and member != family.owner %}
+                  <form method="post" action="{% url 'a_family:remove_member' member.id %}" style="margin-top: 1rem;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost" onclick="return confirm('Are you sure you want to remove {{ member.get_full_name|default:member.username }} from the family?')" style="color: rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 0.3);">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                      </svg>
+                      Remove
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="empty-state">No family members found.</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <style>
+    .family-invite-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .invite-code-card {
+      background: linear-gradient(135deg, rgba(12, 18, 35, 0.95), rgba(16, 24, 46, 0.9));
+      border: 1px solid rgba(59, 72, 99, 0.35);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .invite-code-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .invite-code-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.35));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .invite-code-icon svg {
+      width: 28px;
+      height: 28px;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      fill: none;
+    }
+
+    .invite-code-header h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+
+    .invite-code-header p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .invite-code-display {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(3, 8, 22, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: var(--radius-sm);
+    }
+
+    .invite-code-value {
+      flex: 1;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #f8fafc;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .member-badge {
+      display: inline-block;
+      margin-top: 0.25rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--color-primary);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 768px) {
+      .invite-code-display {
+        flex-direction: column;
+      }
+
+      .invite-code-value {
+        width: 100%;
+      }
+
+      .invite-code-header {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
+
+  <script>
+    function copyInviteCode() {
+      const code = document.getElementById('inviteCode').textContent;
+      const button = document.getElementById('copyButton');
+      const buttonText = document.getElementById('copyButtonText');
+      
+      navigator.clipboard.writeText(code).then(() => {
+        buttonText.textContent = 'Copied!';
+        button.style.background = 'rgba(34, 197, 94, 0.15)';
+        button.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+        button.style.color = '#4ade80';
+        
+        setTimeout(() => {
+          buttonText.textContent = 'Copy';
+          button.style.background = '';
+          button.style.borderColor = '';
+          button.style.color = '';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        buttonText.textContent = 'Error';
+        setTimeout(() => {
+          buttonText.textContent = 'Copy';
+        }, 2000);
+      });
+    }
+  </script>
+{% endblock %}
+

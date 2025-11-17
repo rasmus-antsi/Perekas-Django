@@ -1,0 +1,357 @@
+{% extends "account/base.html" %}
+{% load static %}
+{% block title %}Join or Create Family | FamilyHub{% endblock %}
+{% block content %}
+  <div class="auth-card-minimal">
+    <div class="auth-header-minimal">
+      <h1>Welcome to FamilyHub!</h1>
+      <p>Create or join a family to get started</p>
+    </div>
+
+    {% if messages %}
+      <div class="auth-messages">
+        {% for message in messages %}
+          <div class="auth-message auth-message-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if error_message %}
+      <div class="auth-error-minimal">{{ error_message }}</div>
+    {% endif %}
+
+    <div class="onboarding-options">
+      {% if is_parent %}
+        <!-- Create Family Option (Parents Only) -->
+        <div class="onboarding-card">
+          <div class="onboarding-card-header">
+            <div class="onboarding-icon-wrapper icon-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+            </div>
+            <h2>Create a Family</h2>
+            <p>Start a new family group and invite members</p>
+          </div>
+          
+          <div class="auth-actions-minimal">
+            <button type="button" class="landing-button primary" onclick="openCreateModal()">Create Family</button>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Join Family Option (All Users) -->
+      <div class="onboarding-card">
+        <div class="onboarding-card-header">
+          <div class="onboarding-icon-wrapper icon-teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </div>
+          <h2>Join a Family</h2>
+          <p>Enter the family code to join an existing family</p>
+        </div>
+        
+        <form method="post" action="{% url 'a_family:onboarding' %}" class="auth-form-minimal">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="join">
+          
+          <div class="auth-field-minimal{% if join_form.join_code.errors %} has-error{% endif %}">
+            <label for="{{ join_form.join_code.id_for_label }}">{{ join_form.join_code.label }}</label>
+            {{ join_form.join_code }}
+            {% for error in join_form.join_code.errors %}
+              <span class="auth-field-error-minimal">{{ error }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="auth-actions-minimal">
+            <button type="submit" class="landing-button primary">Join Family</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Create Family Modal -->
+    {% if is_parent %}
+      <div id="createFamilyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Create a Family</h2>
+            <button type="button" class="modal-close" onclick="closeCreateModal()" aria-label="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <form method="post" action="{% url 'a_family:onboarding' %}" class="auth-form-minimal">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            
+            <div class="auth-field-minimal{% if create_form.name.errors %} has-error{% endif %}">
+              <label for="{{ create_form.name.id_for_label }}">{{ create_form.name.label }}</label>
+              {{ create_form.name }}
+              {% for error in create_form.name.errors %}
+                <span class="auth-field-error-minimal">{{ error }}</span>
+              {% endfor %}
+            </div>
+
+            <div class="auth-actions-minimal">
+              <button type="submit" class="landing-button primary">Create Family</button>
+              <button type="button" class="landing-button ghost" onclick="closeCreateModal()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <style>
+    /* Override container width for onboarding */
+    .auth-container {
+      max-width: 900px !important;
+    }
+
+    .onboarding-options {
+      display: grid;
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .onboarding-options {
+        grid-template-columns: {% if is_parent %}1fr 1fr{% else %}1fr{% endif %};
+        gap: 2.5rem;
+      }
+    }
+
+    .onboarding-card {
+      background: rgba(7, 12, 28, 0.4);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      box-shadow: 0 20px 45px rgba(4, 8, 24, 0.35);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .onboarding-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(148, 163, 184, 0.25);
+    }
+
+    .onboarding-card-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .onboarding-icon-wrapper {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 1.25rem;
+      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.3);
+    }
+
+    .onboarding-icon-wrapper svg {
+      width: 32px;
+      height: 32px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+      color: #fff;
+    }
+
+    .onboarding-icon-wrapper.icon-purple {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.35));
+    }
+
+    .onboarding-icon-wrapper.icon-teal {
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.28), rgba(74, 222, 128, 0.32));
+    }
+
+    .onboarding-card-header h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+
+    .onboarding-card-header p {
+      margin: 0;
+      color: rgba(148, 163, 184, 0.85);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    .onboarding-card .auth-form-minimal {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .onboarding-card .auth-actions-minimal {
+      margin-top: auto;
+    }
+
+    .auth-messages {
+      margin-bottom: 1.5rem;
+    }
+
+    .auth-message {
+      padding: 0.875rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .auth-message-success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #4ade80;
+    }
+
+    .auth-message-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .auth-message-info {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(3, 7, 18, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1.5rem;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, rgba(17, 25, 45, 0.95), rgba(10, 15, 28, 0.95));
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(59, 72, 99, 0.45);
+      border-radius: 1.5rem;
+      padding: 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 30px 70px rgba(2, 6, 23, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.15) inset;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #f8fafc;
+      letter-spacing: -0.01em;
+    }
+
+    .modal-close {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 50%;
+      color: rgba(148, 163, 184, 0.9);
+      cursor: pointer;
+      padding: 0;
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .modal-close svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .modal-close:hover {
+      background: rgba(148, 163, 184, 0.15);
+      border-color: rgba(148, 163, 184, 0.4);
+      color: #f8fafc;
+      transform: rotate(90deg);
+    }
+  </style>
+
+  <script>
+    // Auto-uppercase and limit to 8 characters for join code input
+    const joinCodeInput = document.querySelector('input[name="join_code"]');
+    if (joinCodeInput) {
+      joinCodeInput.addEventListener('input', function(e) {
+        let value = e.target.value.toUpperCase();
+        // Limit to 8 characters
+        if (value.length > 8) {
+          value = value.substring(0, 8);
+        }
+        e.target.value = value;
+      });
+    }
+
+    // Modal functions
+    function openCreateModal() {
+      const modal = document.getElementById('createFamilyModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        const nameInput = modal.querySelector('input[name="name"]');
+        if (nameInput) {
+          setTimeout(() => nameInput.focus(), 100);
+        }
+      }
+    }
+
+    function closeCreateModal() {
+      const modal = document.getElementById('createFamilyModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Close modal on overlay click
+    document.addEventListener('click', function(e) {
+      const modal = document.getElementById('createFamilyModal');
+      if (modal && e.target === modal) {
+        closeCreateModal();
+      }
+    });
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeCreateModal();
+      }
+    });
+  </script>
+{% endblock %}
+

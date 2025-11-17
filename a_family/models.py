@@ -1,4 +1,6 @@
 import uuid
+import secrets
+import string
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -31,9 +33,25 @@ class Family(models.Model):
     owner = models.ForeignKey('User', on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=255, db_index=True)
     members = models.ManyToManyField('User', related_name='families')
+    join_code = models.CharField(max_length=8, unique=True, db_index=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.join_code:
+            self.join_code = self._generate_join_code()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def _generate_join_code():
+        """Generate a unique 8 character alphanumeric code"""
+        while True:
+            # Generate 8 character code (mix of digits and uppercase letters)
+            code = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+            # Check if code already exists
+            if not Family.objects.filter(join_code=code).exists():
+                return code
 
     class Meta:
         db_table = 'family_family'

@@ -4,36 +4,36 @@
 {% block content %}
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
-      <h1>{% trans "Create your FamilyHub account" %}</h1>
-      <p>Start organizing tasks, rewards, and shopping together.</p>
-    </div>
+    <h1>{% trans "Create your FamilyHub account" %}</h1>
+    <p>Start organizing tasks, rewards, and shopping together.</p>
+  </div>
 
     <form method="post" action="{% url 'account_signup' %}" class="auth-form-minimal">
-      {% csrf_token %}
-      {% if form.non_field_errors %}
+    {% csrf_token %}
+    {% if form.non_field_errors %}
         <div class="auth-error-minimal">{{ form.non_field_errors|join:", " }}</div>
-      {% endif %}
-      {% for field in form %}
+    {% endif %}
+    {% for field in form %}
         <div class="auth-field-minimal{% if field.errors %} has-error{% endif %}">
-          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% for error in field.errors %}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
             <span class="auth-field-error-minimal">{{ error }}</span>
-          {% endfor %}
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
+    {% endfor %}
 
       <div class="auth-actions-minimal">
         <button type="submit" class="landing-button primary">{% trans "Get Started" %}</button>
-      </div>
-    </form>
+    </div>
+  </form>
 
     <p class="auth-switch-minimal">
-      {% url 'account_login' as login_url %}
-      {% blocktrans trimmed %}
-        Already have an account? <a href="{{ login_url }}">Sign in</a>.
-      {% endblocktrans %}
-    </p>
+    {% url 'account_login' as login_url %}
+    {% blocktrans trimmed %}
+      Already have an account? <a href="{{ login_url }}">Sign in</a>.
+    {% endblocktrans %}
+  </p>
   </div>
 {% endblock %}
 
