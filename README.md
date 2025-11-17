@@ -191,6 +191,7 @@ This project uses Git for version control. Follow these guidelines for working w
 
 #### Main Branch
 - `master` - Main production-ready branch. All code here should be stable and tested.
+- **Pull Requests Required**: All changes to `master` must go through a Pull Request for code review (see below for configuring branch protection)
 
 #### Creating a Feature Branch
 
@@ -222,9 +223,10 @@ This project uses Git for version control. Follow these guidelines for working w
    git push -u origin feature/your-feature-name
    ```
 
-5. **Create a Pull Request** (if using GitHub/GitLab):
-   - Push your branch and create a PR to merge into `master`
+5. **Create a Pull Request**:
+   - Push your branch and create a PR on GitHub to merge into `master`
    - Request code review before merging
+   - **Important**: Direct pushes to `master` are not recommended. All changes should go through PRs for review.
 
 #### Syncing Your Branch with Master
 
@@ -283,9 +285,27 @@ git push origin --delete feature/your-feature-name
 - ✅ Keep your branch up-to-date with `master`
 - ✅ Test your changes before pushing
 - ✅ Run migrations before committing database changes
+- ✅ Use Pull Requests for all changes to `master`
 - ❌ Don't commit directly to `master` (unless it's a critical hotfix)
 - ❌ Don't commit sensitive data (`.env`, credentials, etc.)
 - ❌ Don't commit large binary files or `__pycache__` directories
+
+#### Configuring Branch Protection (Repository Admins)
+
+To enforce Pull Request requirements for the `master` branch on GitHub:
+
+1. Go to your repository on GitHub: `https://github.com/rasmus-antsi/Family-v1`
+2. Navigate to **Settings** → **Branches**
+3. Click **Add rule** or edit the existing rule for `master`
+4. Configure branch protection:
+   - ✅ **Require a pull request before merging**
+     - Require approvals: 1 (or more as needed)
+   - ✅ **Require status checks to pass before merging** (optional)
+   - ✅ **Require branches to be up to date before merging**
+   - ✅ **Include administrators** (recommended - applies rules to admins too)
+5. Save the rule
+
+This will prevent direct pushes to `master` and require all changes to go through Pull Requests.
 
 ## Application Overview
 
