@@ -2073,6 +2073,30 @@ body.modal-open {
   color: #f8fafc;
 }
 
+.auth-content-minimal {
+  margin: 1.5rem 0;
+}
+
+.auth-content-minimal p {
+  color: rgba(148, 163, 184, 0.9);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.auth-content-minimal strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.auth-info-box {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 0.875rem;
+}
+
 @media (max-width: 640px) {
   .auth-card-minimal {
     padding: 2rem 1.5rem;

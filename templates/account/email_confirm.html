@@ -1,0 +1,44 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% load account %}
+{% block title %}{% trans "Confirm Email Address" %} | FamilyHub{% endblock %}
+{% block content %}
+  <div class="auth-card-minimal">
+    <div class="auth-header-minimal">
+      <h1>{% trans "Confirm Email Address" %}</h1>
+      <p>{% trans "Verify your email to activate your account" %}</p>
+    </div>
+
+    <div class="auth-content-minimal">
+      {% if confirmation %}
+        {% user_display confirmation.email_address.user as user_display %}
+        {% if can_confirm %}
+          <p>{% blocktrans with confirmation.email_address.email as email %}Please confirm that <strong>{{ email }}</strong> is an email address for user {{ user_display }}.{% endblocktrans %}</p>
+          
+          <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="auth-form-minimal">
+            {% csrf_token %}
+            {% if redirect_field_value %}
+              <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            <div class="auth-actions-minimal">
+              <button type="submit" class="landing-button primary">{% trans "Confirm" %}</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="auth-error-minimal">
+            <p>{% blocktrans %}Unable to confirm {{ email }} because it is already confirmed by a different account.{% endblocktrans %}</p>
+          </div>
+          <div class="auth-actions-minimal" style="margin-top: 1.5rem;">
+            <a href="{% url 'account_login' %}" class="landing-button ghost">{% trans "Sign In" %}</a>
+          </div>
+        {% endif %}
+      {% else %}
+        <p>{% trans "This email confirmation link expired or is invalid." %}</p>
+        <div class="auth-actions-minimal" style="margin-top: 1.5rem;">
+          <a href="{% url 'account_email' %}" class="landing-button primary">{% trans "Request New Confirmation Email" %}</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
