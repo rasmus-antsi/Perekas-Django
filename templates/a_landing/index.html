@@ -39,10 +39,42 @@
       </button>
     </header>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+      <div class="mobile-menu-sidebar">
+        <div class="mobile-menu-header">
+          <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+            <span class="landing-logo">FH</span>
+            <div>
+              <span class="landing-brand-title">FamilyHub</span>
+              <span class="landing-brand-tagline">Together Daily</span>
+            </div>
+          </a>
+          <button class="mobile-menu-close" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="mobile-menu-links">
+          <a href="#hero">Home</a>
+          <a href="{% url 'a_landing:features' %}">Features</a>
+          <a href="{% url 'a_landing:about' %}">About</a>
+          <a href="{% url 'a_landing:plans' %}">Plans</a>
+        </nav>
+        <div class="mobile-menu-separator"></div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+        </div>
+      </div>
+    </div>
+
     <main class="landing-main">
       <!-- Hero Section -->
       <section class="hero-full" id="hero">
-        <div class="hero-content">
+        <div class="hero-content scroll-fade-in">
           <span class="hero-eyebrow">Family routines Elevated</span>
           <h1>Bring clarity, celebration, and collaboration to every day together.</h1>
           <p class="hero-description">
@@ -50,11 +82,11 @@
             shopping list into one elegant command center. Stay in sync—wherever life takes you.
           </p>
           <div class="hero-actions">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
             <a class="landing-button ghost" href="{% url 'a_landing:features' %}">Explore features</a>
           </div>
         </div>
-        <div class="hero-visual">
+        <div class="hero-visual scroll-scale">
           <div class="hero-dashboard-preview">
             <header class="dashboard-header">
               <span class="dashboard-label">Today</span>
@@ -89,28 +121,28 @@
 
       <!-- Features Section -->
       <section class="section-minimal" id="features">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">What we offer</span>
           <h2>Everything you need to plan, act, and celebrate together</h2>
           <p>Dynamic tools keep everyone energized—the difference between checking boxes and creating shared wins.</p>
         </div>
         <div class="features-grid-minimal">
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-1">
             <div class="feature-icon-minimal">✓</div>
             <h3>Task Management</h3>
             <p>Shared task boards that help everyone stay organized and accountable.</p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-2">
             <div class="feature-icon-minimal">⭐</div>
             <h3>Rewards System</h3>
             <p>Motivational rewards that celebrate progress and achievements together.</p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-3">
             <div class="feature-icon-minimal">🛒</div>
             <h3>Shopping Lists</h3>
             <p>Collaborative shopping lists that keep your household synchronized.</p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale">
             <div class="feature-icon-minimal">⚡</div>
             <h3>Automations</h3>
             <p>Smart automations that keep routines flowing on autopilot.</p>
@@ -121,15 +153,15 @@
       <!-- Stats Section -->
       <section class="section-minimal section-stats">
         <div class="stats-grid-minimal">
-          <div class="stat-item-minimal">
+          <div class="stat-item-minimal scroll-fade-in scroll-delay-1">
             <div class="stat-number-minimal">12k+</div>
             <div class="stat-label-minimal">Households</div>
           </div>
-          <div class="stat-item-minimal">
+          <div class="stat-item-minimal scroll-fade-in scroll-delay-2">
             <div class="stat-number-minimal">500k+</div>
             <div class="stat-label-minimal">Tasks Completed</div>
           </div>
-          <div class="stat-item-minimal">
+          <div class="stat-item-minimal scroll-fade-in scroll-delay-3">
             <div class="stat-number-minimal">98%</div>
             <div class="stat-label-minimal">Satisfaction Rate</div>
           </div>
@@ -138,20 +170,20 @@
 
       <!-- Testimonials Section -->
       <section class="section-minimal" id="testimonials">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Loved by families</span>
           <h2>"FamilyHub turned our to-do list into something our kids cheer for."</h2>
         </div>
         <div class="testimonials-grid-minimal">
-          <div class="testimonial-card-minimal">
+          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-1">
             <p>"We went from chore arguments to high-fives. Everyone knows what matters today, and the rewards feel like mini-celebrations."</p>
             <span class="testimonial-author">— The Taylor Family</span>
           </div>
-          <div class="testimonial-card-minimal">
+          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-2">
             <p>"FamilyHub gives our teens agency. They pick rewards, they own their points, and they even remind us about shopping now."</p>
             <span class="testimonial-author">— The Singh Family</span>
           </div>
-          <div class="testimonial-card-minimal">
+          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-3">
             <p>"The dashboard is our new morning ritual. Tasks, groceries, weekend plans—it's all in motion, together."</p>
             <span class="testimonial-author">— The Martins</span>
           </div>
@@ -160,11 +192,11 @@
 
       <!-- CTA Section -->
       <section class="section-minimal section-cta" id="get-started">
-        <div class="cta-content-minimal">
+        <div class="cta-content-minimal scroll-slide-up">
           <h2>Ready to power joyful productivity?</h2>
-          <p>Start a 14-day free trial—no credit card required—and unlock the FamilyHub experience.</p>
+          <p>Start for free—no credit card required—and unlock the FamilyHub experience.</p>
           <div class="cta-actions-minimal">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
             <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">View plans</a>
           </div>
         </div>
@@ -184,15 +216,60 @@
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');
-      const navLinks = document.querySelector('.landing-nav-links');
-      const navActions = document.querySelector('.landing-nav-actions');
-      if (toggle) {
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      
+      if (toggle && mobileMenuOverlay) {
         toggle.addEventListener('click', () => {
-          toggle.classList.toggle('open');
-          navLinks.classList.toggle('open');
-          navActions.classList.toggle('open');
+          mobileMenuOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
         });
       }
+      
+      function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+      }
+      
+      if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+          if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+          }
+        });
+      }
+      
+      // Close menu when clicking on a link
+      const mobileMenuLinks = document.querySelectorAll('.mobile-menu-links a, .mobile-menu-actions a');
+      mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          setTimeout(closeMobileMenu, 100);
+        });
+      });
+
+      // Scroll animations with Intersection Observer
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-fade-in, .scroll-scale, .scroll-slide-up').forEach(el => {
+        observer.observe(el);
+      });
     </script>
   </body>
 </html>

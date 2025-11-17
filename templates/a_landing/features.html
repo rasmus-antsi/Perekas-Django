@@ -11,27 +11,83 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     >
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ timestamp }}">
   </head>
   <body class="landing-body">
     <div class="landing-background"></div>
-    {% include 'a_landing/partials/nav.html' with current='features' %}
+    
+    <header class="landing-nav">
+      <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+        <span class="landing-logo">FH</span>
+        <div>
+          <span class="landing-brand-title">FamilyHub</span>
+          <span class="landing-brand-tagline">Together Daily</span>
+        </div>
+      </a>
+      <nav class="landing-nav-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a class="active" href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+      </nav>
+      <div class="landing-nav-actions">
+        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+      </div>
+      <button class="landing-nav-toggle" aria-label="Toggle menu">
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+      <div class="mobile-menu-sidebar">
+        <div class="mobile-menu-header">
+          <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+            <span class="landing-logo">FH</span>
+            <div>
+              <span class="landing-brand-title">FamilyHub</span>
+              <span class="landing-brand-tagline">Together Daily</span>
+            </div>
+          </a>
+          <button class="mobile-menu-close" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="mobile-menu-links">
+          <a href="{% url 'a_landing:landing_index' %}">Home</a>
+          <a class="active" href="{% url 'a_landing:features' %}">Features</a>
+          <a href="{% url 'a_landing:about' %}">About</a>
+          <a href="{% url 'a_landing:plans' %}">Plans</a>
+        </nav>
+        <div class="mobile-menu-separator"></div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+        </div>
+      </div>
+    </div>
 
     <main class="landing-main">
-      <section class="landing-section hero-narrow glass">
-        <span class="section-eyebrow">Feature Spotlight</span>
-        <h1>Tools that energise every member of the family</h1>
-        <p>
-          From task boards to celebration moments, FamilyHub keeps your home organised, transparent,
-          and full of motivation.
-        </p>
+      <section class="section-minimal">
+        <div class="section-header-minimal scroll-fade-in">
+          <span class="section-eyebrow-minimal">Feature Spotlight</span>
+          <h1>Tools that energise every member of the family</h1>
+          <p>
+            From task boards to celebration moments, FamilyHub keeps your home organised, transparent,
+            and full of motivation.
+          </p>
+        </div>
       </section>
 
-      <section class="landing-section feature-details">
-        <article class="feature-detail glass">
-          <div class="feature-visual feature-visual-dynamics"></div>
-          <div class="feature-copy">
-            <h2>Dynamic task boards</h2>
+      <section class="section-minimal">
+        <div class="features-grid-minimal">
+          <article class="feature-card-minimal scroll-scale scroll-delay-1">
+            <div class="feature-visual feature-visual-dynamics"></div>
+            <h3>Dynamic task boards</h3>
             <p>
               Drag-and-drop tasks, colour-coded assignments, and smart reminders help everyone know
               what matters today. Parents approve completions in a tap.
@@ -41,12 +97,10 @@
               <li>Recurring routines for repeating chores</li>
               <li>Progress analytics with weekly snapshots</li>
             </ul>
-          </div>
-        </article>
-        <article class="feature-detail glass reverse">
-          <div class="feature-visual feature-visual-motivational"></div>
-          <div class="feature-copy">
-            <h2>Motivational rewards marketplace</h2>
+          </article>
+          <article class="feature-card-minimal scroll-scale scroll-delay-2">
+            <div class="feature-visual feature-visual-motivational"></div>
+            <h3>Motivational rewards marketplace</h3>
             <p>
               Turn effort into celebration with a custom rewards catalogue. Kids track points and vote
               on what should come next.
@@ -56,12 +110,10 @@
               <li>Auto-notifications when goals are reached</li>
               <li>Shared wishlists keep everyone inspired</li>
             </ul>
-          </div>
-        </article>
-        <article class="feature-detail glass">
-          <div class="feature-visual feature-visual-shopping"></div>
-          <div class="feature-copy">
-            <h2>Unified shopping list</h2>
+          </article>
+          <article class="feature-card-minimal scroll-scale scroll-delay-3">
+            <div class="feature-visual feature-visual-shopping"></div>
+            <h3>Unified shopping list</h3>
             <p>
               Never miss a request again. Real-time updates keep groceries, supplies, and kid requests
               in one flowing list.
@@ -71,25 +123,89 @@
               <li>Smart grouping by store section</li>
               <li>Integrations with favourite delivery apps</li>
             </ul>
-          </div>
-        </article>
+          </article>
+        </div>
       </section>
 
-      <section class="landing-section landing-cta glass">
-        <div class="landing-cta-inner">
-          <div>
-            <h2>Bring the full toolkit to your home</h2>
-            <p>Start free today and discover how effortless family organisation can feel.</p>
-          </div>
-          <div class="landing-hero-actions">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+      <section class="section-minimal section-cta">
+        <div class="cta-content-minimal scroll-slide-up">
+          <h2>Bring the full toolkit to your home</h2>
+          <p>Start free today and discover how effortless family organisation can feel.</p>
+          <div class="cta-actions-minimal">
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
             <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Review plans</a>
           </div>
         </div>
       </section>
     </main>
 
-    {% include 'a_landing/partials/footer.html' %}
-    <script src="{% static 'landing.js' %}"></script>
+    <footer class="landing-footer">
+      <div class="landing-footer-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="mailto:hello@familyhub.app">Support</a>
+      </div>
+      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector('.landing-nav-toggle');
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      
+      if (toggle && mobileMenuOverlay) {
+        toggle.addEventListener('click', () => {
+          mobileMenuOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        });
+      }
+      
+      function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+      }
+      
+      if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+          if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+          }
+        });
+      }
+      
+      // Close menu when clicking on a link
+      const mobileMenuLinks = document.querySelectorAll('.mobile-menu-links a, .mobile-menu-actions a');
+      mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          setTimeout(closeMobileMenu, 100);
+        });
+      });
+
+      // Scroll animations with Intersection Observer
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-fade-in, .scroll-scale, .scroll-slide-up').forEach(el => {
+        observer.observe(el);
+      });
+    </script>
   </body>
 </html>
