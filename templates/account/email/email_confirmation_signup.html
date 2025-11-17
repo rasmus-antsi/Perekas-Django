@@ -1,0 +1,126 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% trans "Verify your email" %}</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #050816;
+      color: #f8fafc;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .email-card {
+      background: rgba(7, 12, 28, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 1.5rem;
+      padding: 40px;
+      box-shadow: 0 30px 60px rgba(4, 8, 24, 0.4);
+    }
+    .email-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .email-logo {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      color: #fff;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 48px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .email-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: #f8fafc;
+    }
+    .email-subtitle {
+      color: rgba(148, 163, 184, 0.85);
+      font-size: 16px;
+      margin: 0;
+    }
+    .email-content {
+      margin: 32px 0;
+    }
+    .email-content p {
+      color: rgba(226, 231, 255, 0.9);
+      font-size: 16px;
+      margin: 0 0 16px;
+    }
+    .email-button {
+      display: inline-block;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(236, 72, 153, 0.9));
+      color: #fbfbff;
+      text-decoration: none;
+      border-radius: 0.875rem;
+      font-weight: 600;
+      font-size: 16px;
+      text-align: center;
+      margin: 24px 0;
+      box-shadow: 0 18px 32px rgba(99, 102, 241, 0.35);
+    }
+    .email-link {
+      color: rgba(148, 163, 184, 0.9);
+      word-break: break-all;
+      font-size: 14px;
+      margin-top: 16px;
+      display: block;
+    }
+    .email-footer {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      text-align: center;
+      color: rgba(148, 163, 184, 0.7);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="email-card">
+      <div class="email-header">
+        <div class="email-logo">FH</div>
+        <h1 class="email-title">{% trans "Verify your email" %}</h1>
+        <p class="email-subtitle">{% trans "Welcome to FamilyHub!" %}</p>
+      </div>
+      
+      <div class="email-content">
+        <p>{% trans "Hi" %} {{ user.get_full_name|default:user.username }},</p>
+        <p>{% trans "Thanks for signing up! Please verify your email address by clicking the button below:" %}</p>
+        
+        <div style="text-align: center;">
+          <a href="{{ activate_url }}" class="email-button">{% trans "Verify Email Address" %}</a>
+        </div>
+        
+        <p style="font-size: 14px; color: rgba(148, 163, 184, 0.8);">
+          {% trans "Or copy and paste this link into your browser:" %}
+        </p>
+        <a href="{{ activate_url }}" class="email-link">{{ activate_url }}</a>
+      </div>
+      
+      <div class="email-footer">
+        <p>{% trans "If you didn't create this account, you can safely ignore this email." %}</p>
+        <p style="margin-top: 8px;">© {% now "Y" %} FamilyHub. {% trans "All rights reserved." %}</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
