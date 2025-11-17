@@ -27,8 +27,9 @@ A private SaaS application for family task management, rewards, and organization
 ## Technology Stack
 
 - **Backend**: Django 5.2.8
-- **Authentication**: django-allauth
-- **Payments**: Stripe
+- **Authentication**: django-allauth 65.13.0
+- **Payments**: Stripe 13.2.0
+- **Environment**: python-dotenv 1.2.1
 - **Database**: SQLite (development)
 - **Python**: 3.14+
 
@@ -53,7 +54,9 @@ Family v1/
 ├── a_tasks/                 # Task management
 ├── static/                  # Static files (CSS, JS)
 ├── templates/               # HTML templates
-└── manage.py               # Django management script
+├── requirements.txt         # Python dependencies
+├── manage.py               # Django management script
+└── db.sqlite3              # SQLite database (development)
 ```
 
 ## Setup & Installation
@@ -76,20 +79,8 @@ Family v1/
 
 3. **Install dependencies**:
    ```bash
-   pip install django==5.2.8
-   pip install django-allauth
-   pip install stripe
-   pip install python-dotenv
+   pip install -r requirements.txt
    ```
-
-   Or create a `requirements.txt` with:
-   ```
-   Django==5.2.8
-   django-allauth
-   stripe
-   python-dotenv
-   ```
-   Then run: `pip install -r requirements.txt`
 
 4. **Set up environment variables**:
    Create a `.env` file in the project root (see [Environment Variables](#environment-variables))
@@ -179,6 +170,17 @@ python manage.py collectstatic
 ### Testing
 ```bash
 python manage.py test
+```
+
+### Managing Dependencies
+The project uses `requirements.txt` to manage Python dependencies. To update dependencies:
+
+```bash
+# After installing new packages, update requirements.txt
+pip freeze > requirements.txt
+
+# Or manually add packages and install
+pip install -r requirements.txt
 ```
 
 ## Application Overview
