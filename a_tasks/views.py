@@ -34,6 +34,10 @@ def index(request):
     user = request.user
     family = _get_family_for_user(user)
 
+    # Redirect to onboarding if user doesn't have a family
+    if not family:
+        return redirect('a_family:onboarding')
+
     # Set default role for owner if not set
     if family and family.owner_id == user.id and not user.role:
         user.role = User.ROLE_PARENT

@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from a_family.models import Family, User
@@ -22,6 +22,10 @@ def _get_family_for_user(user):
 def dashboard(request):
     user = request.user
     family = _get_family_for_user(user)
+
+    # Redirect to onboarding if user doesn't have a family
+    if not family:
+        return redirect('a_family:onboarding')
 
     # Set default role for owner if not set
     if family and family.owner_id == user.id and not user.role:
