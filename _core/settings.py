@@ -114,10 +114,10 @@ ACCOUNT_RATE_LIMITS = {
 ACCOUNT_FORMS = {
     'signup': 'a_family.forms.FamilySignupForm',
 }
-ACCOUNT_EMAIL_SUBJECT_PREFIX = '[FamilyHub] '
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Luminara] '
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@familyhub.app')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@luminara.app')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 
@@ -154,7 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'et'
 
 TIME_ZONE = 'UTC'
 

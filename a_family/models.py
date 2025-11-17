@@ -10,8 +10,8 @@ class User(AbstractUser):
     ROLE_PARENT = 'parent'
     ROLE_CHILD = 'child'
     ROLE_CHOICES = [
-        (ROLE_PARENT, 'Parent'),
-        (ROLE_CHILD, 'Child'),
+        (ROLE_PARENT, 'Lapsevanem'),
+        (ROLE_CHILD, 'Laps'),
     ]
 
     role = models.CharField(max_length=12, choices=ROLE_CHOICES, default=ROLE_PARENT, db_index=True)

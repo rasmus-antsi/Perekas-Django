@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Shopping List | FamilyHub{% endblock %}
+{% block title %}Ostunimekiri | Luminara{% endblock %}
 
 {% block nav_shopping_active %} active{% endblock %}
 
@@ -8,10 +8,9 @@
   <div class="page-container">
     <header class="page-header">
       <div>
-        <h1 class="page-title">Shopping List</h1>
+        <h1 class="page-title">Ostunimekiri</h1>
         <p class="page-subtitle">
-          {{ to_buy_count }} item{% if to_buy_count != 1 %}s{% endif %} to buy,
-          {{ in_cart_count }} in cart
+          {{ to_buy_count }} eset nimekirjas, {{ in_cart_count }} korvis
         </p>
       </div>
       <button class="pill-button" type="button">{{ family_name }}</button>
@@ -20,25 +19,25 @@
     <form method="post" class="add-item-card">
       {% csrf_token %}
       <input type="hidden" name="action" value="add">
-      <label class="visually-hidden" for="new-item-input">Add new item</label>
+      <label class="visually-hidden" for="new-item-input">Lisa uus ese</label>
       <input
         id="new-item-input"
         name="name"
         type="text"
-        placeholder="Add new item..."
+        placeholder="Lisa uus ese..."
         {% if not has_family %}disabled{% endif %}
         required
       >
       <button type="submit" class="primary-button" {% if not has_family %}disabled{% endif %}>
         <span aria-hidden="true">+</span>
-        <span>Add</span>
+        <span>Lisa</span>
       </button>
     </form>
 
     <section class="list-section">
       <header class="list-section-header">
         <span class="list-section-icon need-icon" aria-hidden="true"></span>
-        <h2>Need to Buy</h2>
+        <h2>Vaja osta</h2>
       </header>
 
       <div class="list-items">
@@ -47,7 +46,7 @@
             <article class="item-card">
               <div>
                 <h3 class="item-name">{{ item.name }}</h3>
-                <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
+                <p class="item-meta">Lisas {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
               </div>
               <div class="item-actions">
                 <form method="post" class="icon-form">
@@ -55,7 +54,7 @@
                   <input type="hidden" name="action" value="toggle">
                   <input type="hidden" name="item_id" value="{{ item.id }}">
                   <input type="hidden" name="set_in_cart" value="true">
-                  <button type="submit" class="icon-button success" aria-label="Mark {{ item.name }} as in cart">
+                  <button type="submit" class="icon-button success" aria-label="Märgi {{ item.name }} korvis olevaks">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
@@ -65,7 +64,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="item_id" value="{{ item.id }}">
-                  <button type="submit" class="icon-button" aria-label="Remove {{ item.name }}">
+                  <button type="submit" class="icon-button" aria-label="Eemalda {{ item.name }}">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -76,7 +75,7 @@
             </article>
           {% endfor %}
         {% else %}
-          <p class="empty-state">Nothing on the list yet. Add the first item to get started.</p>
+          <p class="empty-state">Nimekiri on tühi. Lisa esimene ese, et alustada.</p>
         {% endif %}
       </div>
     </section>
@@ -84,7 +83,7 @@
     <section class="list-section">
       <header class="list-section-header">
         <span class="list-section-icon cart-icon" aria-hidden="true"></span>
-        <h2>In Cart</h2>
+        <h2>Korvis</h2>
       </header>
 
       <div class="list-items">
@@ -93,7 +92,7 @@
             <article class="item-card in-cart">
               <div>
                 <h3 class="item-name">{{ item.name }}</h3>
-                <p class="item-meta">Added by {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
+                <p class="item-meta">Lisas {{ item.added_by.get_full_name|default:item.added_by.username }}</p>
               </div>
               <div class="item-actions">
                 <form method="post" class="icon-form">
@@ -101,7 +100,7 @@
                   <input type="hidden" name="action" value="toggle">
                   <input type="hidden" name="item_id" value="{{ item.id }}">
                   <input type="hidden" name="set_in_cart" value="false">
-                  <button type="submit" class="icon-button success" aria-label="Move {{ item.name }} back to list">
+                  <button type="submit" class="icon-button success" aria-label="Liiguta {{ item.name }} tagasi nimekirja">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
@@ -111,7 +110,7 @@
                   {% csrf_token %}
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="item_id" value="{{ item.id }}">
-                  <button type="submit" class="icon-button" aria-label="Delete {{ item.name }}">
+                  <button type="submit" class="icon-button" aria-label="Kustuta {{ item.name }}">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -122,7 +121,7 @@
             </article>
           {% endfor %}
         {% else %}
-          <p class="empty-state">No items in the cart yet.</p>
+          <p class="empty-state">Korvis pole veel midagi.</p>
         {% endif %}
       </div>
     </section>

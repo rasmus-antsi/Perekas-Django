@@ -1,27 +1,27 @@
 {% extends "account/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Verify Your Email" %} | FamilyHub{% endblock %}
+{% block title %}Kinnita oma e-post | Luminara{% endblock %}
 {% block content %}
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
-      <h1>{% trans "Check your email" %}</h1>
-      <p>{% trans "We've sent you a verification link" %}</p>
+      <h1>Kontrolli oma e-posti</h1>
+      <p>Saatsime sulle kinnituse lingi.</p>
     </div>
 
     <div class="auth-content-minimal">
-      <p>{% trans "We've sent an email to" %} <strong>{{ email }}</strong> {% trans "with a link to verify your account." %}</p>
-      <p>{% trans "Please click the link in the email to complete your registration. The link will expire in 3 days." %}</p>
+      <p>Saatsime aadressile <strong>{{ email }}</strong> kirja, mis sisaldab konto kinnitamise linki.</p>
+      <p>Palun klõpsa kirjas oleval lingil, et registreerimine lõpuni viia. Link aegub 3 päeva pärast.</p>
       
       <div class="auth-info-box">
         <p style="margin: 0; font-size: 0.875rem; color: rgba(148, 163, 184, 0.85);">
-          {% trans "Didn't receive the email? Check your spam folder or" %} 
-          <a href="{% url 'account_email' %}" style="color: rgba(148, 163, 184, 0.95); font-weight: 600; text-decoration: none;">{% trans "request a new one" %}</a>.
+          Ei saanud kirja kätte? Vaata rämpsposti või 
+          <a href="{% url 'account_email' %}" style="color: rgba(148, 163, 184, 0.95); font-weight: 600; text-decoration: none;">küsi uus link</a>.
         </p>
       </div>
     </div>
 
     <div class="auth-actions-minimal" style="margin-top: 2rem;">
-      <a href="{% url 'a_landing:landing_index' %}" class="landing-button ghost">{% trans "Back to Home" %}</a>
+      <a href="{% url 'a_landing:landing_index' %}" class="landing-button ghost">Tagasi avalehele</a>
     </div>
   </div>
 {% endblock %}

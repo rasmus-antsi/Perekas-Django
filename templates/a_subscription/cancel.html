@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Cancel Subscription | FamilyHub{% endblock %}
+{% block title %}Tühista tellimus | Luminara{% endblock %}
 
 {% block nav_subscription_active %} active{% endblock %}
 
@@ -8,10 +8,10 @@
   <div class="page-container settings-page">
     <section class="settings-header">
       <div>
-        <h1 class="page-title">Cancel Subscription</h1>
-        <p class="page-subtitle">Cancel your subscription</p>
+        <h1 class="page-title">Tühista tellimus</h1>
+        <p class="page-subtitle">Tühista oma praegune tellimus.</p>
       </div>
-      <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">← Back to Subscription</a>
+      <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">← Tagasi tellimuse juurde</a>
     </section>
 
     {% if messages %}
@@ -30,33 +30,33 @@
           <div class="card-title-wrap">
             <span class="card-icon icon-orange"></span>
             <div>
-              <h2>Cancel Subscription</h2>
-              <p>Your subscription will remain active until the end of your billing period.</p>
+                <h2>Tühista tellimus</h2>
+                <p>Tellimus püsib aktiivne kuni arveldusperioodi lõpuni.</p>
             </div>
           </div>
         </header>
         <div class="settings-card-body">
           {% if subscription %}
             <div class="cancel-info">
-              <p><strong>Current Plan:</strong> {{ subscription.get_tier_display }}</p>
+              <p><strong>Praegune pakett:</strong> {{ subscription.get_tier_display }}</p>
               {% if subscription.current_period_end %}
-                <p><strong>Access until:</strong> {{ subscription.current_period_end|date:"F d, Y" }}</p>
+                <p><strong>Ligipääs kuni:</strong> {{ subscription.current_period_end|date:"j. F Y" }}</p>
               {% endif %}
               <p class="cancel-warning">
-                After cancellation, your subscription will remain active until the end of your current billing period. 
-                After that, you'll be downgraded to the Free plan.
+                Pärast tühistamist jääb tellimus aktiivseks kuni praeguse arveldusperioodi lõpuni.
+                Seejärel langetatakse pakett automaatselt tasuta tasemele.
               </p>
             </div>
             <form method="post" class="cancel-form">
               {% csrf_token %}
               <div class="form-actions">
-                <button type="submit" class="btn btn-danger">Cancel Subscription</button>
-                <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">Keep Subscription</a>
+                <button type="submit" class="btn btn-danger">Tühista tellimus</button>
+                <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">Hoia tellimus alles</a>
               </div>
             </form>
           {% else %}
-            <p class="empty-state">No active subscription found.</p>
-            <a href="{% url 'a_subscription:status' %}" class="btn btn-primary">Back to Subscription</a>
+            <p class="empty-state">Aktiivset tellimust ei leitud.</p>
+            <a href="{% url 'a_subscription:status' %}" class="btn btn-primary">Tagasi tellimuse juurde</a>
           {% endif %}
         </div>
       </section>

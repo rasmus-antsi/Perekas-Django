@@ -8,8 +8,8 @@ class Subscription(models.Model):
     TIER_STARTER = 'STARTER'
     TIER_PRO = 'PRO'
     TIER_CHOICES = [
-        (TIER_FREE, 'Free'),
-        (TIER_STARTER, 'Starter'),
+        (TIER_FREE, 'Tasuta'),
+        (TIER_STARTER, 'Algtase'),
         (TIER_PRO, 'Pro'),
     ]
 
@@ -21,13 +21,13 @@ class Subscription(models.Model):
     STATUS_TRIALING = 'trialing'
     STATUS_UNPAID = 'unpaid'
     STATUS_CHOICES = [
-        (STATUS_ACTIVE, 'Active'),
-        (STATUS_CANCELLED, 'Cancelled'),
-        (STATUS_PAST_DUE, 'Past Due'),
-        (STATUS_INCOMPLETE, 'Incomplete'),
-        (STATUS_INCOMPLETE_EXPIRED, 'Incomplete Expired'),
-        (STATUS_TRIALING, 'Trialing'),
-        (STATUS_UNPAID, 'Unpaid'),
+        (STATUS_ACTIVE, 'Aktiivne'),
+        (STATUS_CANCELLED, 'Tühistatud'),
+        (STATUS_PAST_DUE, 'Makset ootel'),
+        (STATUS_INCOMPLETE, 'Pooleli'),
+        (STATUS_INCOMPLETE_EXPIRED, 'Pooleli – aegunud'),
+        (STATUS_TRIALING, 'Prooviperioodil'),
+        (STATUS_UNPAID, 'Maksmata'),
     ]
 
     owner = models.ForeignKey(

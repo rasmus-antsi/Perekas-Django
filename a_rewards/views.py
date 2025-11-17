@@ -66,9 +66,9 @@ def index(request):
                 if not can_create:
                     messages.error(
                         request,
-                        f"You've reached your monthly reward limit ({limit} rewards). "
-                        f"You've created {current_count} rewards this month. "
-                        f"Please upgrade your subscription to create more rewards."
+                        f"Oled jõudnud oma kuise preemiapiirini ({limit} preemiat). "
+                        f"Oled sel kuul loonud {current_count} preemiat. "
+                        f"Palun uuenda tellimust, et lisada rohkem preemiaid."
                     )
                     return redirect("a_rewards:index")
 
