@@ -11,20 +11,45 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     >
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ timestamp }}">
   </head>
   <body class="landing-body">
     <div class="landing-background"></div>
-    {% include 'a_landing/partials/nav.html' with current='plans' %}
+    
+    <header class="landing-nav">
+      <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+        <span class="landing-logo">FH</span>
+        <div>
+          <span class="landing-brand-title">FamilyHub</span>
+          <span class="landing-brand-tagline">Together Daily</span>
+        </div>
+      </a>
+      <nav class="landing-nav-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a class="active" href="{% url 'a_landing:plans' %}">Plans</a>
+      </nav>
+      <div class="landing-nav-actions">
+        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+      </div>
+      <button class="landing-nav-toggle" aria-label="Toggle menu">
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
 
     <main class="landing-main">
-      <section class="landing-section hero-narrow glass">
-        <span class="section-eyebrow">Flexible pricing</span>
-        <h1>Plans for every rhythm of family life</h1>
-        <p>Start free and grow into advanced automations, insights, and priority celebration tools.</p>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">Flexible pricing</span>
+          <h1>Plans for every rhythm of family life</h1>
+          <p>Start free and grow into advanced automations, insights, and priority celebration tools.</p>
+        </div>
       </section>
 
-      <section class="landing-section plans-grid glass">
+      <section class="section-minimal">
+        <div class="plans-grid">
         <article class="plan-card">
           <h2>FREE</h2>
           <p class="plan-price">Free</p>
@@ -63,11 +88,12 @@
           </ul>
           <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
         </article>
+        </div>
       </section>
 
-      <section class="landing-section plan-comparison glass">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">Feature matrix</span>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">Feature matrix</span>
           <h2>Compare features side by side</h2>
         </div>
         <div class="comparison-table">
@@ -110,9 +136,9 @@
         </div>
       </section>
 
-      <section class="landing-section faq glass">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">FAQ</span>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">FAQ</span>
           <h2>All plans include a free 14-day trial</h2>
           <p>Need a hand deciding? Here are the top questions families ask.</p>
         </div>
@@ -133,7 +159,28 @@
       </section>
     </main>
 
-    {% include 'a_landing/partials/footer.html' %}
-    <script src="{% static 'landing.js' %}"></script>
+    <footer class="landing-footer">
+      <div class="landing-footer-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="mailto:hello@familyhub.app">Support</a>
+      </div>
+      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector('.landing-nav-toggle');
+      const navLinks = document.querySelector('.landing-nav-links');
+      const navActions = document.querySelector('.landing-nav-actions');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          toggle.classList.toggle('open');
+          navLinks.classList.toggle('open');
+          navActions.classList.toggle('open');
+        });
+      }
+    </script>
   </body>
 </html>

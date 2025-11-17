@@ -11,49 +11,75 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     >
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}?v={{ timestamp }}">
   </head>
   <body class="landing-body">
     <div class="landing-background"></div>
-    {% include 'a_landing/partials/nav.html' with current='about' %}
+    
+    <header class="landing-nav">
+      <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+        <span class="landing-logo">FH</span>
+        <div>
+          <span class="landing-brand-title">FamilyHub</span>
+          <span class="landing-brand-tagline">Together Daily</span>
+        </div>
+      </a>
+      <nav class="landing-nav-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a class="active" href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+      </nav>
+      <div class="landing-nav-actions">
+        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+      </div>
+      <button class="landing-nav-toggle" aria-label="Toggle menu">
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
 
     <main class="landing-main">
-      <section class="landing-section hero-narrow glass">
-        <span class="section-eyebrow">Our Story</span>
-        <h1>Rooted in family life, designed for joyful productivity</h1>
-        <p>
-          FamilyHub was founded by parents who wanted to transform chore charts into moments of
-          connection. Today, we’re powering households around the globe.
-        </p>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">Our Story</span>
+          <h1>Rooted in family life, designed for joyful productivity</h1>
+          <p>
+            FamilyHub was founded by parents who wanted to transform chore charts into moments of
+            connection. Today, we're powering households around the globe.
+          </p>
+        </div>
       </section>
 
-      <section class="landing-section about-grid glass">
-        <article>
-          <h2>Mission</h2>
-          <p>
-            To empower households with tools that combine clarity, celebration, and collaboration—so
-            families spend less time coordinating and more time thriving together.
-          </p>
-        </article>
-        <article>
-          <h2>Vision</h2>
-          <p>
-            A world where every family, regardless of shape or size, enjoys smooth routines, shared
-            ownership, and joyful celebrations of progress.
-          </p>
-        </article>
-        <article>
-          <h2>Team</h2>
-          <p>
-            We’re designers, parents, educators, and dreamers. Together, we listen closely to the
-            households using FamilyHub and build alongside them.
-          </p>
-        </article>
+      <section class="section-minimal">
+        <div class="features-grid-minimal">
+          <div class="feature-card-minimal">
+            <h3>Mission</h3>
+            <p>
+              To empower households with tools that combine clarity, celebration, and collaboration—so
+              families spend less time coordinating and more time thriving together.
+            </p>
+          </div>
+          <div class="feature-card-minimal">
+            <h3>Vision</h3>
+            <p>
+              A world where every family, regardless of shape or size, enjoys smooth routines, shared
+              ownership, and joyful celebrations of progress.
+            </p>
+          </div>
+          <div class="feature-card-minimal">
+            <h3>Team</h3>
+            <p>
+              We're designers, parents, educators, and dreamers. Together, we listen closely to the
+              households using FamilyHub and build alongside them.
+            </p>
+          </div>
+        </div>
       </section>
 
-      <section class="landing-section timeline">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">Milestones</span>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">Milestones</span>
           <h2>From kitchen table idea to global platform</h2>
         </div>
         <ol class="timeline-list">
@@ -79,21 +105,21 @@
         </ol>
       </section>
 
-      <section class="landing-section values glass">
-        <div class="landing-section-header">
-          <span class="section-eyebrow">What guides us</span>
+      <section class="section-minimal">
+        <div class="section-header-minimal">
+          <span class="section-eyebrow-minimal">What guides us</span>
           <h2>Values baked into every pixel</h2>
         </div>
-        <div class="values-grid">
-          <div>
+        <div class="features-grid-minimal">
+          <div class="feature-card-minimal">
             <h3>Empathy first</h3>
             <p>We build with families—not just for them. Every decision starts with listening.</p>
           </div>
-          <div>
+          <div class="feature-card-minimal">
             <h3>Celebrate progress</h3>
             <p>Always make room for delight. Every action should feel rewarding, not draining.</p>
           </div>
-          <div>
+          <div class="feature-card-minimal">
             <h3>Simple is powerful</h3>
             <p>Clarity, contrast, and motion guide our design. Busy lives deserve effortless tools.</p>
           </div>
@@ -101,7 +127,28 @@
       </section>
     </main>
 
-    {% include 'a_landing/partials/footer.html' %}
-    <script src="{% static 'landing.js' %}"></script>
+    <footer class="landing-footer">
+      <div class="landing-footer-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="mailto:hello@familyhub.app">Support</a>
+      </div>
+      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
+    </footer>
+
+    <script>
+      const toggle = document.querySelector('.landing-nav-toggle');
+      const navLinks = document.querySelector('.landing-nav-links');
+      const navActions = document.querySelector('.landing-nav-actions');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          toggle.classList.toggle('open');
+          navLinks.classList.toggle('open');
+          navActions.classList.toggle('open');
+        });
+      }
+    </script>
   </body>
 </html>
