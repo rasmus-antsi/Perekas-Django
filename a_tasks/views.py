@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from a_family.models import Family, UserProfile
+from a_family.models import Family, User
 from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Task
@@ -21,12 +21,12 @@ def _get_family_for_user(user):
     return family
 
 
-def _get_or_create_profile(user, default_role=UserProfile.ROLE_CHILD):
-    profile, _ = UserProfile.objects.get_or_create(
-        user=user,
-        defaults={"role": default_role},
-    )
-    return profile
+def _ensure_user_role(user, default_role=User.ROLE_CHILD):
+    """Ensure user has a role set, defaulting to the provided role if not set"""
+    if not user.role:
+        user.role = default_role
+        user.save(update_fields=['role'])
+    return user
 
 
 @login_required
@@ -34,13 +34,14 @@ def index(request):
     user = request.user
     family = _get_family_for_user(user)
 
-    profile = getattr(user, "family_profile", None)
-    if profile is None and family and family.owner_id == user.id:
-        profile = _get_or_create_profile(user, default_role=UserProfile.ROLE_PARENT)
+    # Set default role for owner if not set
+    if family and family.owner_id == user.id and not user.role:
+        user.role = User.ROLE_PARENT
+        user.save(update_fields=['role'])
 
-    role = profile.role if profile else (UserProfile.ROLE_PARENT if family and family.owner_id == user.id else None)
-    is_parent = role == UserProfile.ROLE_PARENT
-    is_child = role == UserProfile.ROLE_CHILD
+    role = user.role or (User.ROLE_PARENT if family and family.owner_id == user.id else None)
+    is_parent = role == User.ROLE_PARENT
+    is_child = role == User.ROLE_CHILD
 
     if request.method == "POST" and family:
         action = request.POST.get("action")
@@ -134,20 +135,17 @@ def index(request):
                 task.save()
 
                 if task.approved:
-                    previous_profile = _get_or_create_profile(previous_assigned) if previous_assigned else None
+                    if previous_assigned:
+                        previous_assigned.points = max(0, previous_assigned.points - previous_points)
+                        previous_assigned.save(update_fields=["points"])
                     current_assignee = task.assigned_to or task.completed_by
-                    current_profile = _get_or_create_profile(current_assignee) if current_assignee else None
-
-                    if previous_profile and (not current_profile or previous_profile.id != current_profile.id):
-                        previous_profile.points = max(0, previous_profile.points - previous_points)
-                        previous_profile.save(update_fields=["points"])
-                    if current_profile:
+                    if current_assignee:
                         diff = task.points
-                        if previous_profile and previous_profile.id == current_profile.id:
+                        if previous_assigned and previous_assigned.id == current_assignee.id:
                             diff = task.points - previous_points
                         if diff != 0:
-                            current_profile.points = max(0, current_profile.points + diff)
-                            current_profile.save(update_fields=["points"])
+                            current_assignee.points = max(0, current_assignee.points + diff)
+                            current_assignee.save(update_fields=["points"])
 
         elif action == "delete" and is_parent:
             task = _get_task()
@@ -180,9 +178,8 @@ def index(request):
                 if task.approved:
                     assignee = task.assigned_to or task.completed_by
                     if assignee:
-                        assigned_profile = _get_or_create_profile(assignee)
-                        assigned_profile.points = max(0, assigned_profile.points - task.points)
-                        assigned_profile.save(update_fields=["points"])
+                        assignee.points = max(0, assignee.points - task.points)
+                        assignee.save(update_fields=["points"])
                 task.completed = False
                 task.completed_by = None
                 task.completed_at = None
@@ -201,18 +198,16 @@ def index(request):
 
                 assignee = task.assigned_to or task.completed_by
                 if assignee:
-                    assigned_profile = _get_or_create_profile(assignee)
-                    assigned_profile.points += task.points
-                    assigned_profile.save(update_fields=["points"])
+                    assignee.points += task.points
+                    assignee.save(update_fields=["points"])
 
         elif action == "unapprove" and is_parent:
             task = _get_task()
             if task and task.approved:
                 assignee = task.assigned_to or task.completed_by
                 if assignee:
-                    assigned_profile = _get_or_create_profile(assignee)
-                    assigned_profile.points = max(0, assigned_profile.points - task.points)
-                    assigned_profile.save(update_fields=["points"])
+                    assignee.points = max(0, assignee.points - task.points)
+                    assignee.save(update_fields=["points"])
 
                 task.approved = False
                 task.approved_by = None
@@ -223,10 +218,10 @@ def index(request):
 
     if family:
         tasks_qs = Task.objects.filter(family=family).select_related(
-            "assigned_to__family_profile",
-            "created_by__family_profile",
-            "completed_by__family_profile",
-            "approved_by__family_profile",
+            "assigned_to",
+            "created_by",
+            "completed_by",
+            "approved_by",
         )
         active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
@@ -235,13 +230,13 @@ def index(request):
         for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
             task.can_child_complete = is_child and (task.assigned_to_id is None or task.assigned_to_id == user.id)
 
-        family_members_qs = family.members.select_related("family_profile")
+        family_members_qs = family.members.all()
         member_ids = set(family_members_qs.values_list("id", flat=True))
         if family.owner_id not in member_ids:
             from django.contrib.auth import get_user_model
 
             UserModel = get_user_model()
-            owner_qs = UserModel.objects.filter(id=family.owner_id).select_related("family_profile")
+            owner_qs = UserModel.objects.filter(id=family.owner_id)
             family_members = list(family_members_qs) + list(owner_qs)
         else:
             family_members = list(family_members_qs)
@@ -253,7 +248,6 @@ def index(request):
 
     context = {
         "family": family,
-        "profile": profile,
         "role": role,
         "is_parent": is_parent,
         "is_child": is_child,
