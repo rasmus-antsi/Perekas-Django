@@ -19,10 +19,10 @@ class Migration(migrations.Migration):
             name='Subscription',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('tier', models.CharField(choices=[('FREE', 'Free'), ('STARTER', 'Starter'), ('PRO', 'Pro')], db_index=True, default='FREE', max_length=10)),
+                ('tier', models.CharField(choices=[('FREE', 'Tasuta'), ('STARTER', 'Algtase'), ('PRO', 'Pro')], db_index=True, default='FREE', max_length=10)),
                 ('stripe_subscription_id', models.CharField(blank=True, db_index=True, max_length=255, null=True)),
                 ('stripe_customer_id', models.CharField(blank=True, db_index=True, max_length=255, null=True)),
-                ('status', models.CharField(choices=[('active', 'Active'), ('cancelled', 'Cancelled'), ('past_due', 'Past Due'), ('incomplete', 'Incomplete'), ('incomplete_expired', 'Incomplete Expired'), ('trialing', 'Trialing'), ('unpaid', 'Unpaid')], db_index=True, default='active', max_length=20)),
+                ('status', models.CharField(choices=[('active', 'Aktiivne'), ('cancelled', 'Tühistatud'), ('past_due', 'Makset ootel'), ('incomplete', 'Pooleli'), ('incomplete_expired', 'Pooleli – aegunud'), ('trialing', 'Prooviperioodil'), ('unpaid', 'Maksmata')], db_index=True, default='active', max_length=20)),
                 ('current_period_start', models.DateTimeField(blank=True, null=True)),
                 ('current_period_end', models.DateTimeField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),

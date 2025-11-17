@@ -9,10 +9,10 @@ class UserAdmin(BaseUserAdmin):
     list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'points', 'is_staff', 'date_joined')
     list_filter = ('role', 'is_staff', 'is_superuser', 'is_active', 'date_joined')
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('FamilyHub Profile', {'fields': ('role', 'points')}),
+        ('Luminara Profile', {'fields': ('role', 'points')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('FamilyHub Profile', {'fields': ('role', 'points')}),
+        ('Luminara Profile', {'fields': ('role', 'points')}),
     )
 
 

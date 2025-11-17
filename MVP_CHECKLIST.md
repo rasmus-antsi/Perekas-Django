@@ -40,10 +40,10 @@
 - [ ] **Create database backup strategy**
 
 ### 4. Admin Panel
-- [ ] **Register Task model in admin** - Currently not registered
-- [ ] **Register Reward model in admin** - Currently not registered
-- [ ] **Register ShoppingListItem model in admin** - Currently not registered
-- [ ] **Add useful list filters and search fields for all models**
+- [x] **Register Task model in admin** - Currently not registered
+- [x] **Register Reward model in admin** - Currently not registered
+- [x] **Register ShoppingListItem model in admin** - Currently not registered
+- [x] **Add useful list filters and search fields for all models**
 
 ---
 
@@ -173,7 +173,7 @@
 2. **Settings.py**: DEBUG = True (should be False in production)
 3. **Settings.py**: ALLOWED_HOSTS = [] (needs production hosts)
 4. **a_subscription/views.py**: Webhook signature verification incomplete
-5. **Admin panels**: Missing registrations for Task, Reward, ShoppingListItem
+5. ~~**Admin panels**: Missing registrations for Task, Reward, ShoppingListItem~~ ✅ Fixed
 6. **a_dashboard/views.py**: Settings view doesn't save changes
 7. **No automated monthly usage reset** - relies on get_current_month_usage creating new records
 8. **No subscription downgrade handling** when subscription expires

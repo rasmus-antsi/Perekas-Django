@@ -45,7 +45,7 @@ def onboarding(request):
                     owner=user,
                 )
                 family.members.add(user)
-                messages.success(request, f'Family "{family_name}" created successfully!')
+                messages.success(request, f'Pere "{family_name}" loodud edukalt!')
                 return redirect('a_dashboard:dashboard')
         
         elif action == 'join':
@@ -57,7 +57,7 @@ def onboarding(request):
                     
                     # Check if user is already a member
                     if family.owner == user or user in family.members.all():
-                        messages.info(request, 'You are already a member of this family.')
+                        messages.info(request, 'Sa oled selle pere liige juba.')
                         return redirect('a_dashboard:dashboard')
                     
                     # Check subscription limits
@@ -65,20 +65,20 @@ def onboarding(request):
                     if not can_add:
                         messages.error(
                             request,
-                            f'This family has reached the member limit for {user.get_role_display()}s '
-                            f'({current_count}/{limit}). Please upgrade the subscription.'
+                            f'Selle pere {user.get_role_display()}-limiit on täis ({current_count}/{limit}). '
+                            f'Palun uuenda tellimust.'
                         )
                     else:
                         family.members.add(user)
-                        messages.success(request, f'Successfully joined "{family.name}"!')
+                        messages.success(request, f'Liitusid perega "{family.name}"!')
                         return redirect('a_dashboard:dashboard')
                 except Family.DoesNotExist:
-                    error_message = 'Invalid family code. Please check and try again.'
+                    error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
         
         else:
             if action == 'create' and not is_parent:
-                messages.error(request, 'Only parent accounts can create families.')
-            error_message = 'Please correct the errors below.'
+                messages.error(request, 'Ainult lapsevanemad saavad peret luua.')
+            error_message = 'Palun paranda allolevad vead.'
     
     context = {
         'is_parent': is_parent,
@@ -102,7 +102,7 @@ def index(request):
     
     # Redirect children - they can't see the family page
     if user.role == User.ROLE_CHILD:
-        messages.info(request, 'Family management is only available for parents.')
+        messages.info(request, 'Pere haldamine on lubatud ainult lapsevanematele.')
         return redirect('a_dashboard:dashboard')
     
     # Get all family members
@@ -127,7 +127,7 @@ def index(request):
 def remove_member(request, user_id):
     """Remove a member from the family - only owner can do this"""
     if request.method != 'POST':
-        messages.error(request, 'Invalid request method.')
+        messages.error(request, 'Vale päringu meetod.')
         return redirect('a_family:index')
     
     user = request.user
@@ -139,7 +139,7 @@ def remove_member(request, user_id):
     
     # Only owner can remove members
     if family.owner != user:
-        messages.error(request, 'Only the family owner can remove members.')
+        messages.error(request, 'Ainult pere omanik saab liikmeid eemaldada.')
         return redirect('a_family:index')
     
     try:
@@ -147,16 +147,16 @@ def remove_member(request, user_id):
         
         # Can't remove the owner
         if member_to_remove == family.owner:
-            messages.error(request, 'You cannot remove the family owner.')
+            messages.error(request, 'Pere omanikku ei saa eemaldada.')
             return redirect('a_family:index')
         
         # Remove from members
         if member_to_remove in family.members.all():
             family.members.remove(member_to_remove)
-            messages.success(request, f'{member_to_remove.get_full_name() or member_to_remove.username} has been removed from the family.')
+            messages.success(request, f'{member_to_remove.get_full_name() or member_to_remove.username} eemaldati perest.')
         else:
-            messages.info(request, 'This user is not a member of your family.')
+            messages.info(request, 'See kasutaja ei kuulu sinu perre.')
     except User.DoesNotExist:
-        messages.error(request, 'User not found.')
+        messages.error(request, 'Kasutajat ei leitud.')
     
     return redirect('a_family:index')

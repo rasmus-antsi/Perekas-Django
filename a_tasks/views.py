@@ -70,9 +70,9 @@ def index(request):
                 if not can_create:
                     messages.error(
                         request,
-                        f"You've reached your monthly task limit ({limit} tasks). "
-                        f"You've created {current_count} tasks this month. "
-                        f"Please upgrade your subscription to create more tasks."
+                        f"Oled jõudnud oma kuise ülesandepiirini ({limit} ülesannet). "
+                        f"Oled sel kuul loonud {current_count} ülesannet. "
+                        f"Palun uuenda tellimust, et luua rohkem ülesandeid."
                     )
                     return redirect("a_tasks:index")
 

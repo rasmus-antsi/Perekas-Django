@@ -1,12 +1,12 @@
 {% extends "account/base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Create Account" %} | FamilyHub{% endblock %}
+{% block title %}Loo konto | Luminara{% endblock %}
 {% block content %}
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
-    <h1>{% trans "Create your FamilyHub account" %}</h1>
-    <p>Start organizing tasks, rewards, and shopping together.</p>
-  </div>
+      <h1>Loo oma Luminara konto</h1>
+      <p>Alusta pere ülesannete, preemiate ja ostude korraldamist ühes kohas.</p>
+    </div>
 
     <form method="post" action="{% url 'account_signup' %}" class="auth-form-minimal">
     {% csrf_token %}
@@ -24,15 +24,13 @@
     {% endfor %}
 
       <div class="auth-actions-minimal">
-        <button type="submit" class="landing-button primary">{% trans "Get Started" %}</button>
+        <button type="submit" class="landing-button primary">Alusta</button>
     </div>
   </form>
 
     <p class="auth-switch-minimal">
     {% url 'account_login' as login_url %}
-    {% blocktrans trimmed %}
-      Already have an account? <a href="{{ login_url }}">Sign in</a>.
-    {% endblocktrans %}
+      Juba konto olemas? <a href="{{ login_url }}">Logi sisse</a>.
   </p>
   </div>
 {% endblock %}

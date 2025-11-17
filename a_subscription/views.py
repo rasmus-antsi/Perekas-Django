@@ -37,7 +37,7 @@ def subscription_status(request):
 
     # Only family owner can view subscription
     if not family or family.owner != user:
-        messages.error(request, "You must be the family owner to view subscription details.")
+        messages.error(request, "Tellimuse vaatamiseks peab olema pere looja.")
         return redirect('a_dashboard:dashboard')
 
     tier = get_family_subscription(family)
@@ -56,6 +56,7 @@ def subscription_status(request):
     context = {
         'family': family,
         'tier': tier,
+        'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier),
         'subscription': subscription,
         'limits': limits,
         'usage': usage,
@@ -73,7 +74,7 @@ def upgrade(request):
 
     # Only family owner can upgrade
     if not family or family.owner != user:
-        messages.error(request, "You must be the family owner to upgrade subscription.")
+        messages.error(request, "Tellimuse uuendamiseks peab olema pere looja.")
         return redirect('a_dashboard:dashboard')
 
     if request.method == 'POST':
@@ -81,7 +82,7 @@ def upgrade(request):
         billing_period = request.POST.get('billing_period', 'monthly')  # monthly or yearly
 
         if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
-            messages.error(request, "Invalid subscription tier.")
+            messages.error(request, "Vigane paketivalik.")
             return redirect('a_subscription:status')
 
         # Get appropriate price ID
@@ -91,7 +92,7 @@ def upgrade(request):
             price_id = settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else settings.PRO_YEARLY_PRICE_ID
 
         if not settings.STRIPE_SECRET_KEY:
-            messages.error(request, "Stripe is not configured. Please contact support.")
+            messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
             return redirect('a_subscription:status')
 
         stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -131,7 +132,7 @@ def upgrade(request):
             return redirect(checkout_session.url)
 
         except stripe.error.StripeError as e:
-            messages.error(request, f"Stripe error: {str(e)}")
+            messages.error(request, f"Stripe'i viga: {str(e)}")
             return redirect('a_subscription:status')
 
     # GET request - show upgrade page
@@ -148,11 +149,11 @@ def upgrade_success(request):
     """Handle successful subscription upgrade"""
     session_id = request.GET.get('session_id')
     if not session_id:
-        messages.error(request, "Invalid session.")
+        messages.error(request, "Vigane seanss.")
         return redirect('a_subscription:status')
 
     if not settings.STRIPE_SECRET_KEY:
-        messages.error(request, "Stripe is not configured.")
+        messages.error(request, "Stripe pole seadistatud.")
         return redirect('a_subscription:status')
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -164,7 +165,7 @@ def upgrade_success(request):
         tier = session.metadata.get('tier')
 
         if str(request.user.id) != str(user_id):
-            messages.error(request, "Invalid session for your account.")
+            messages.error(request, "See seanss ei kuulu sinu kontole.")
             return redirect('a_subscription:status')
 
         # Get or create subscription
@@ -196,11 +197,11 @@ def upgrade_success(request):
 
         subscription.save()
 
-        messages.success(request, f"Successfully upgraded to {subscription.get_tier_display()} plan!")
+        messages.success(request, f"Pakett uuendati tasemele {subscription.get_tier_display()}!")
         return redirect('a_subscription:status')
 
     except stripe.error.StripeError as e:
-        messages.error(request, f"Error processing subscription: {str(e)}")
+        messages.error(request, f"Tekkis viga tellimuse töötlemisel: {str(e)}")
         return redirect('a_subscription:status')
 
 
@@ -212,7 +213,7 @@ def cancel(request):
 
     # Only family owner can cancel
     if not family or family.owner != user:
-        messages.error(request, "You must be the family owner to cancel subscription.")
+        messages.error(request, "Tellimuse tühistamiseks peab olema pere looja.")
         return redirect('a_dashboard:dashboard')
 
     subscription = Subscription.objects.filter(
@@ -221,7 +222,7 @@ def cancel(request):
     ).first()
 
     if not subscription:
-        messages.info(request, "You don't have an active subscription to cancel.")
+        messages.info(request, "Sul pole tühistamiseks aktiivset tellimust.")
         return redirect('a_subscription:status')
 
     if request.method == 'POST':
@@ -235,14 +236,14 @@ def cancel(request):
                 )
                 subscription.status = Subscription.STATUS_ACTIVE  # Still active until period ends
                 subscription.save()
-                messages.success(request, "Your subscription will be cancelled at the end of the billing period.")
+                messages.success(request, "Sinu tellimus tühistub arveldusperioodi lõpus.")
             except stripe.error.StripeError as e:
-                messages.error(request, f"Error cancelling subscription: {str(e)}")
+                messages.error(request, f"Viga tellimuse tühistamisel: {str(e)}")
         else:
             # Manual cancellation (no Stripe)
             subscription.status = Subscription.STATUS_CANCELLED
             subscription.save()
-            messages.success(request, "Subscription cancelled successfully.")
+            messages.success(request, "Tellimus tühistati edukalt.")
 
         return redirect('a_subscription:status')
 

@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About FamilyHub</title>
+    <title>Luminara | Meist</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,21 +18,21 @@
     
     <header class="landing-nav">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-        <span class="landing-logo">FH</span>
+        <span class="landing-logo">LU</span>
         <div>
-          <span class="landing-brand-title">FamilyHub</span>
-          <span class="landing-brand-tagline">Together Daily</span>
+          <span class="landing-brand-title">Luminara</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a class="active" href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+        <a href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a class="active" href="{% url 'a_landing:about' %}">Meist</a>
+        <a href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
-        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
-        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+        <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
       </div>
       <button class="landing-nav-toggle" aria-label="Toggle menu">
         <span aria-hidden="true"></span>
@@ -44,10 +44,10 @@
       <div class="mobile-menu-sidebar">
         <div class="mobile-menu-header">
           <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-            <span class="landing-logo">FH</span>
+            <span class="landing-logo">LU</span>
             <div>
-              <span class="landing-brand-title">FamilyHub</span>
-              <span class="landing-brand-tagline">Together Daily</span>
+              <span class="landing-brand-title">Luminara</span>
+              <span class="landing-brand-tagline">Koos iga päev</span>
             </div>
           </a>
           <button class="mobile-menu-close" aria-label="Close menu">
@@ -58,15 +58,15 @@
           </button>
         </div>
         <nav class="mobile-menu-links">
-          <a href="{% url 'a_landing:landing_index' %}">Home</a>
-          <a href="{% url 'a_landing:features' %}">Features</a>
-          <a class="active" href="{% url 'a_landing:about' %}">About</a>
-          <a href="{% url 'a_landing:plans' %}">Plans</a>
+          <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+          <a href="{% url 'a_landing:features' %}">Võimalused</a>
+          <a class="active" href="{% url 'a_landing:about' %}">Meist</a>
+          <a href="{% url 'a_landing:plans' %}">Paketid</a>
         </nav>
         <div class="mobile-menu-separator"></div>
         <div class="mobile-menu-actions">
-          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
-          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Alusta tasuta</a>
         </div>
       </div>
     </div>
@@ -74,11 +74,10 @@
     <main class="landing-main">
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Our Story</span>
-          <h1>Rooted in family life, designed for joyful productivity</h1>
+          <span class="section-eyebrow-minimal">Meie lugu</span>
+          <h1>Sündinud päris pereelust, loodud rõõmsaks tulemuslikkuseks</h1>
           <p>
-            FamilyHub was founded by parents who wanted to transform chore charts into moments of
-            connection. Today, we're powering households around the globe.
+            Luminara sündis lapsevanematest, kes soovisid muuta koristusgraafikud lähedushetkedeks. Täna aitame kodusid üle terve maailma.
           </p>
         </div>
       </section>
@@ -86,24 +85,21 @@
       <section class="section-minimal">
         <div class="features-grid-minimal">
           <div class="feature-card-minimal scroll-scale scroll-delay-1">
-            <h3>Mission</h3>
+            <h3>Missioon</h3>
             <p>
-              To empower households with tools that combine clarity, celebration, and collaboration—so
-              families spend less time coordinating and more time thriving together.
+              Anda peredele tööriistad, mis ühendavad selguse, tähistamise ja koostöö – nii kulub vähem aega koordineerimisele ja rohkem aega koos kasvamisele.
             </p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-2">
-            <h3>Vision</h3>
+            <h3>Visioon</h3>
             <p>
-              A world where every family, regardless of shape or size, enjoys smooth routines, shared
-              ownership, and joyful celebrations of progress.
+              Maailm, kus iga pere, sõltumata suurusest, naudib sujuvaid rutiine, jagatud vastutust ja rõõmu tehtud sammude üle.
             </p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-3">
-            <h3>Team</h3>
+            <h3>Meeskond</h3>
             <p>
-              We're designers, parents, educators, and dreamers. Together, we listen closely to the
-              households using FamilyHub and build alongside them.
+              Oleme disainerid, lapsevanemad, õpetajad ja unistajad. Kuulame tähelepanelikult Luminara kasutajaid ning ehitame koos nendega.
             </p>
           </div>
         </div>
@@ -111,27 +107,26 @@
 
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Milestones</span>
-          <h2>From kitchen table idea to global platform</h2>
+          <span class="section-eyebrow-minimal">Teetähised</span>
+          <h2>Köögilaua ideest ülemaailmseks platvormiks</h2>
         </div>
         <ol class="timeline-list">
           <li class="scroll-slide-up scroll-delay-1">
             <span class="timeline-year">2019</span>
-            <p>We prototype the first FamilyHub to help our own kids stay on top of chores.</p>
+            <p>Loome esimese Luminara prototüübi, et meie endi lapsed püsiksid kohustustega järjel.</p>
           </li>
           <li class="scroll-slide-up scroll-delay-2">
             <span class="timeline-year">2021</span>
-            <p>Public beta launches, bringing in the first 500 families who shape today's experience.</p>
+            <p>Avame avaliku beeta, kus esimesed 500 peret aitavad tänast kogemust kujundada.</p>
           </li>
           <li class="scroll-slide-up scroll-delay-3">
             <span class="timeline-year">2023</span>
-            <p>Rewards marketplace and shared shopping list go live, helping families celebrate wins.</p>
+            <p>Käivitame preemiaturu ja ühise ostunimekirja, et võidud oleksid veelgi nähtavamad.</p>
           </li>
           <li class="scroll-slide-up">
             <span class="timeline-year">2024</span>
             <p>
-              FamilyHub powers 12k+ households and introduces automations that keep routines flowing on
-              autopilot.
+              Luminara toetab 12k+ kodu ja lisab automaatika, mis hoiab rutiinid kindlas rütmis.
             </p>
           </li>
         </ol>
@@ -139,36 +134,26 @@
 
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">What guides us</span>
-          <h2>Values baked into every pixel</h2>
+          <span class="section-eyebrow-minimal">Mis meid juhib</span>
+          <h2>Väärtused igas pikslis</h2>
         </div>
         <div class="features-grid-minimal">
           <div class="feature-card-minimal scroll-scale scroll-delay-1">
-            <h3>Empathy first</h3>
-            <p>We build with families—not just for them. Every decision starts with listening.</p>
+            <h3>Empaatia enne kõike</h3>
+            <p>Ehitasime koos peredega, mitte ainult nende jaoks. Iga otsus algab kuulamisest.</p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-2">
-            <h3>Celebrate progress</h3>
-            <p>Always make room for delight. Every action should feel rewarding, not draining.</p>
+            <h3>Tähistame edusamme</h3>
+            <p>Loome alati ruumi rõõmuks. Iga tegevus peab tunduma motiveeriv, mitte kurnav.</p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-3">
-            <h3>Simple is powerful</h3>
-            <p>Clarity, contrast, and motion guide our design. Busy lives deserve effortless tools.</p>
+            <h3>Lihtsus on jõud</h3>
+            <p>Selgus, kontrast ja rahulik liikumine juhivad meie disaini – kiire elu väärib pingevabasid tööriistu.</p>
           </div>
         </div>
       </section>
     </main>
-
-    <footer class="landing-footer">
-      <div class="landing-footer-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
-        <a href="mailto:hello@familyhub.app">Support</a>
-      </div>
-      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
-    </footer>
+    {% include 'a_landing/partials/footer.html' %}
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');

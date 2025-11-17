@@ -1,11 +1,11 @@
 {% extends "account/base.html" %}
 {% load static %}
-{% block title %}Join or Create Family | FamilyHub{% endblock %}
+{% block title %}Liitu või loo pere | Luminara{% endblock %}
 {% block content %}
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
-      <h1>Welcome to FamilyHub!</h1>
-      <p>Create or join a family to get started</p>
+      <h1>Tere tulemast Luminara perre!</h1>
+      <p>Alustamiseks loo uus pere või liitu olemasolevaga.</p>
     </div>
 
     {% if messages %}
@@ -33,12 +33,12 @@
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
             </div>
-            <h2>Create a Family</h2>
-            <p>Start a new family group and invite members</p>
+            <h2>Loo pere</h2>
+            <p>Käivita uus pererühm ja kutsu liikmed liituma.</p>
           </div>
           
           <div class="auth-actions-minimal">
-            <button type="button" class="landing-button primary" onclick="openCreateModal()">Create Family</button>
+            <button type="button" class="landing-button primary" onclick="openCreateModal()">Loo pere</button>
           </div>
         </div>
       {% endif %}
@@ -52,8 +52,8 @@
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
           </div>
-          <h2>Join a Family</h2>
-          <p>Enter the family code to join an existing family</p>
+          <h2>Liitu perega</h2>
+          <p>Sisesta pere kood, et liituda olemasoleva perega.</p>
         </div>
         
         <form method="post" action="{% url 'a_family:onboarding' %}" class="auth-form-minimal">
@@ -69,7 +69,7 @@
           </div>
 
           <div class="auth-actions-minimal">
-            <button type="submit" class="landing-button primary">Join Family</button>
+            <button type="submit" class="landing-button primary">Liitu perega</button>
           </div>
         </form>
       </div>
@@ -80,8 +80,8 @@
       <div id="createFamilyModal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
           <div class="modal-header">
-            <h2>Create a Family</h2>
-            <button type="button" class="modal-close" onclick="closeCreateModal()" aria-label="Close">
+            <h2>Loo pere</h2>
+            <button type="button" class="modal-close" onclick="closeCreateModal()" aria-label="Sulge">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -102,8 +102,8 @@
             </div>
 
             <div class="auth-actions-minimal">
-              <button type="submit" class="landing-button primary">Create Family</button>
-              <button type="button" class="landing-button ghost" onclick="closeCreateModal()">Cancel</button>
+              <button type="submit" class="landing-button primary">Loo pere</button>
+              <button type="button" class="landing-button ghost" onclick="closeCreateModal()">Loobu</button>
             </div>
           </form>
         </div>

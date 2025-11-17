@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyHub | Organize Life Together</title>
+    <title>Luminara | Korralda pereelu ühes kohas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,21 +18,21 @@
     
     <header class="landing-nav">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-        <span class="landing-logo">FH</span>
+        <span class="landing-logo">LU</span>
         <div>
-          <span class="landing-brand-title">FamilyHub</span>
-          <span class="landing-brand-tagline">Together Daily</span>
+          <span class="landing-brand-title">Luminara</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="#hero">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="#hero">Kodu</a>
+        <a href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a href="{% url 'a_landing:about' %}">Meist</a>
+        <a href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
-        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
-        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+        <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
       </div>
       <button class="landing-nav-toggle" aria-label="Toggle menu">
         <span aria-hidden="true"></span>
@@ -44,10 +44,10 @@
       <div class="mobile-menu-sidebar">
         <div class="mobile-menu-header">
           <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-            <span class="landing-logo">FH</span>
+            <span class="landing-logo">LU</span>
             <div>
-              <span class="landing-brand-title">FamilyHub</span>
-              <span class="landing-brand-tagline">Together Daily</span>
+              <span class="landing-brand-title">Luminara</span>
+              <span class="landing-brand-tagline">Koos iga päev</span>
             </div>
           </a>
           <button class="mobile-menu-close" aria-label="Close menu">
@@ -58,15 +58,15 @@
           </button>
         </div>
         <nav class="mobile-menu-links">
-          <a href="#hero">Home</a>
-          <a href="{% url 'a_landing:features' %}">Features</a>
-          <a href="{% url 'a_landing:about' %}">About</a>
-          <a href="{% url 'a_landing:plans' %}">Plans</a>
+          <a href="#hero">Kodu</a>
+          <a href="{% url 'a_landing:features' %}">Võimalused</a>
+          <a href="{% url 'a_landing:about' %}">Meist</a>
+          <a href="{% url 'a_landing:plans' %}">Paketid</a>
         </nav>
         <div class="mobile-menu-separator"></div>
         <div class="mobile-menu-actions">
-          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
-          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Alusta tasuta</a>
         </div>
       </div>
     </div>
@@ -75,44 +75,43 @@
       <!-- Hero Section -->
       <section class="hero-full" id="hero">
         <div class="hero-content scroll-fade-in">
-          <span class="hero-eyebrow">Family routines Elevated</span>
-          <h1>Bring clarity, celebration, and collaboration to every day together.</h1>
+          <span class="hero-eyebrow">Pere rutiinid uuel tasemel</span>
+          <h1>Too igasse päeva selgust, rõõmu ja koostööd.</h1>
           <p class="hero-description">
-            FamilyHub combines shared task boards, motivational rewards, and a collaborative
-            shopping list into one elegant command center. Stay in sync—wherever life takes you.
+            Luminara ühendab ühised ülesandetahvlid, motiveerivad preemiad ja koostöö ostunimekirja ühte elegantsesse juhtimiskeskusesse. Püsige sünkroonis, kuhu iganes elu teid viib.
           </p>
           <div class="hero-actions">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
-            <a class="landing-button ghost" href="{% url 'a_landing:features' %}">Explore features</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:features' %}">Vaata võimalusi</a>
           </div>
         </div>
         <div class="hero-visual scroll-scale">
           <div class="hero-dashboard-preview">
             <header class="dashboard-header">
-              <span class="dashboard-label">Today</span>
-              <span class="dashboard-status">✨ Momentum is strong</span>
+              <span class="dashboard-label">Täna</span>
+              <span class="dashboard-status">✨ Hoogu on palju</span>
             </header>
             <ul class="dashboard-list">
               <li>
                 <div>
-                  <strong>Sarah</strong>
-                  <span>Homework sprint</span>
+                  <strong>Liis</strong>
+                  <span>Koolitöö finiš</span>
                 </div>
-                <span class="dashboard-points">+30 pts</span>
+                <span class="dashboard-points">+30 p</span>
               </li>
               <li>
                 <div>
-                  <strong>Mike</strong>
-                  <span>Walk the dog</span>
+                  <strong>Mart</strong>
+                  <span>Koeraga jalutuskäik</span>
                 </div>
-                <span class="dashboard-status-text">Completed</span>
+                <span class="dashboard-status-text">Valmis</span>
               </li>
               <li>
                 <div>
-                  <strong>Emma</strong>
-                  <span>Reward: Game night</span>
+                  <strong>Kertu</strong>
+                  <span>Preemia: mänguõhtu</span>
                 </div>
-                <span class="dashboard-reward">Claimed</span>
+                <span class="dashboard-reward">Vastu võetud</span>
               </li>
             </ul>
           </div>
@@ -122,30 +121,30 @@
       <!-- Features Section -->
       <section class="section-minimal" id="features">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">What we offer</span>
-          <h2>Everything you need to plan, act, and celebrate together</h2>
-          <p>Dynamic tools keep everyone energized—the difference between checking boxes and creating shared wins.</p>
+          <span class="section-eyebrow-minimal">Mida pakume</span>
+          <h2>Kõik, mida on vaja planeerimiseks, tegutsemiseks ja ühiseks tähistamiseks</h2>
+          <p>Dünaamilised tööriistad hoiavad kõiki motiveerituna – vahe on lihtsalt kastide märkimisel ja päris ühiste võitude loomisel.</p>
         </div>
         <div class="features-grid-minimal">
           <div class="feature-card-minimal scroll-scale scroll-delay-1">
             <div class="feature-icon-minimal">✓</div>
-            <h3>Task Management</h3>
-            <p>Shared task boards that help everyone stay organized and accountable.</p>
+            <h3>Ülesannete haldus</h3>
+            <p>Ühised tahvlid, mis hoiavad kogu pere organiseerituna ja vastutavana.</p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-2">
             <div class="feature-icon-minimal">⭐</div>
-            <h3>Rewards System</h3>
-            <p>Motivational rewards that celebrate progress and achievements together.</p>
+            <h3>Preemiamäng</h3>
+            <p>Motiveerivad preemiad, mis tähistavad igat sammu ja loovad harjumusi.</p>
           </div>
           <div class="feature-card-minimal scroll-scale scroll-delay-3">
             <div class="feature-icon-minimal">🛒</div>
-            <h3>Shopping Lists</h3>
-            <p>Collaborative shopping lists that keep your household synchronized.</p>
+            <h3>Ostunimekirjad</h3>
+            <p>Koostöö nimekirjad, mis hoiavad majapidamise varud korras ja jagatud.</p>
           </div>
           <div class="feature-card-minimal scroll-scale">
             <div class="feature-icon-minimal">⚡</div>
-            <h3>Automations</h3>
-            <p>Smart automations that keep routines flowing on autopilot.</p>
+            <h3>Automatiseerimine</h3>
+            <p>Nutika automaatika abil liiguvad pere rutiinid peaaegu iseseisvalt.</p>
           </div>
         </div>
       </section>
@@ -155,15 +154,15 @@
         <div class="stats-grid-minimal">
           <div class="stat-item-minimal scroll-fade-in scroll-delay-1">
             <div class="stat-number-minimal">12k+</div>
-            <div class="stat-label-minimal">Households</div>
+            <div class="stat-label-minimal">Perekonda</div>
           </div>
           <div class="stat-item-minimal scroll-fade-in scroll-delay-2">
             <div class="stat-number-minimal">500k+</div>
-            <div class="stat-label-minimal">Tasks Completed</div>
+            <div class="stat-label-minimal">Täitunud ülesannet</div>
           </div>
           <div class="stat-item-minimal scroll-fade-in scroll-delay-3">
             <div class="stat-number-minimal">98%</div>
-            <div class="stat-label-minimal">Satisfaction Rate</div>
+            <div class="stat-label-minimal">Rahulolu</div>
           </div>
         </div>
       </section>
@@ -171,21 +170,21 @@
       <!-- Testimonials Section -->
       <section class="section-minimal" id="testimonials">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Loved by families</span>
-          <h2>"FamilyHub turned our to-do list into something our kids cheer for."</h2>
+          <span class="section-eyebrow-minimal">Perede lemmik</span>
+          <h2>"Luminara muutis meie to-do nimekirja millekski, mille üle lapsed rõõmustavad."</h2>
         </div>
         <div class="testimonials-grid-minimal">
           <div class="testimonial-card-minimal scroll-slide-up scroll-delay-1">
-            <p>"We went from chore arguments to high-fives. Everyone knows what matters today, and the rewards feel like mini-celebrations."</p>
-            <span class="testimonial-author">— The Taylor Family</span>
+            <p>"Tülidest said viisipõksud. Kõik teavad, mis täna tähtis on, ja preemiad tunnevad end väikeste pidustustena."</p>
+            <span class="testimonial-author">— Perekond Tamm</span>
           </div>
           <div class="testimonial-card-minimal scroll-slide-up scroll-delay-2">
-            <p>"FamilyHub gives our teens agency. They pick rewards, they own their points, and they even remind us about shopping now."</p>
-            <span class="testimonial-author">— The Singh Family</span>
+            <p>"Luminara annab meie teismelistele vastutuse. Nad valivad preemiad, hoiavad oma punktidel silma peal ja tuletavad isegi oste meelde."</p>
+            <span class="testimonial-author">— Perekond Saar</span>
           </div>
           <div class="testimonial-card-minimal scroll-slide-up scroll-delay-3">
-            <p>"The dashboard is our new morning ritual. Tasks, groceries, weekend plans—it's all in motion, together."</p>
-            <span class="testimonial-author">— The Martins</span>
+            <p>"Töölaud on meie uus hommikurituaal. Ülesanded, poenimekiri ja nädalavahetuse plaanid – kõik liigub koos."</p>
+            <span class="testimonial-author">— Perekond Mets</span>
           </div>
         </div>
       </section>
@@ -193,26 +192,17 @@
       <!-- CTA Section -->
       <section class="section-minimal section-cta" id="get-started">
         <div class="cta-content-minimal scroll-slide-up">
-          <h2>Ready to power joyful productivity?</h2>
-          <p>Start for free—no credit card required—and unlock the FamilyHub experience.</p>
+          <h2>Valmis looma rõõmsat tulemuslikkust?</h2>
+          <p>Alusta tasuta – krediitkaarti pole vaja – ja avasta Luminara kogemus.</p>
           <div class="cta-actions-minimal">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
-            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">View plans</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
+            <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Vaata pakette</a>
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="landing-footer">
-      <div class="landing-footer-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
-        <a href="mailto:hello@familyhub.app">Support</a>
-      </div>
-      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
-    </footer>
+    {% include 'a_landing/partials/footer.html' %}
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');
