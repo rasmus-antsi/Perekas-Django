@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Tasks | FamilyHub{% endblock %}
+{% block title %}Ülesanded | Luminara{% endblock %}
 
 {% block nav_tasks_active %} active{% endblock %}
 
@@ -8,20 +8,20 @@
   <div class="page-container">
     <header class="page-header">
       <div>
-        <h1 class="page-title">Tasks</h1>
+        <h1 class="page-title">Ülesanded</h1>
         {% if has_family %}
           <p class="page-subtitle">
-            Manage household tasks, track points, and celebrate wins.
+            Korralda koduseid tegemisi, jälgi punkte ja tähista väikeseid võite.
           </p>
         {% else %}
-          <p class="page-subtitle">Create or join a family to start assigning tasks.</p>
+          <p class="page-subtitle">Loo või liitu perega, et hakata ülesandeid jagama.</p>
         {% endif %}
       </div>
       {% if is_parent %}
         <div class="task-toolbar">
           <button type="button" class="primary-button" data-open-task-modal="create">
             <span aria-hidden="true">+</span>
-            <span>Add Task</span>
+            <span>Lisa ülesanne</span>
           </button>
         </div>
       {% endif %}
@@ -29,13 +29,13 @@
 
     {% if not has_family %}
       <section class="empty-state">
-        <p>No family connected yet. Once you create or join one, you can start managing tasks.</p>
+        <p>Perekonda pole veel ühendatud. Kui lood või liitud perega, saad hakata ülesandeid haldama.</p>
       </section>
     {% else %}
       <section class="task-section">
         <header class="list-section-header">
           <span class="list-section-icon need-icon" aria-hidden="true"></span>
-          <h2>Active Tasks</h2>
+          <h2>Aktiivsed ülesanded</h2>
         </header>
         <div class="task-grid">
           {% if active_tasks %}
@@ -50,20 +50,20 @@
                   </div>
                   <span class="task-points points-chip">
                     <span class="points-value">{{ task.points }}</span>
-                    <span class="points-label">pts</span>
+                    <span class="points-label">pkt</span>
                   </span>
                 </div>
                 <div class="task-meta">
-                  <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
+                  <span class="task-badge priority">Tähtsus: {{ task.get_priority_display }}</span>
                   <span class="task-badge assigned">
                     {% if task.assigned_to %}
-                      Assigned to {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                      Määratud kasutajale {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
                     {% else %}
-                      Open task • any child can complete
+                      Avatud ülesanne • iga laps võib täita
                     {% endif %}
                   </span>
                   {% if task.due_date %}
-                    <span class="task-badge due">Due {{ task.due_date|date:"M j" }}</span>
+                    <span class="task-badge due">Tähtaeg {{ task.due_date|date:"j. M" }}</span>
                   {% endif %}
                 </div>
                 <div class="task-actions">
@@ -72,7 +72,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="complete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button success" aria-label="Mark {{ task.name }} complete">
+                      <button type="submit" class="icon-button success" aria-label="Märgi {{ task.name }} tehtuks">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -101,7 +101,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button" aria-label="Delete {{ task.name }}">
+                      <button type="submit" class="icon-button" aria-label="Kustuta {{ task.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -113,7 +113,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state full-row">No active tasks. Take a moment to relax!</p>
+            <p class="empty-state full-row">Aktiivseid ülesandeid pole. Võta hetk puhkuseks!</p>
           {% endif %}
         </div>
       </section>
@@ -121,7 +121,7 @@
       <section class="task-section">
         <header class="list-section-header">
           <span class="list-section-icon accent-icon" aria-hidden="true"></span>
-          <h2>Awaiting Approval</h2>
+          <h2>Ootab kinnitust</h2>
         </header>
         <div class="task-grid">
           {% if pending_tasks %}
@@ -131,8 +131,8 @@
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
                     <p class="task-description">
-                      Completed by {{ task.completed_by.get_full_name|default:task.completed_by.username }}
-                      on {{ task.completed_at|date:"M j, g:i a" }}
+                      Lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }}
+                      {{ task.completed_at|date:"j. M, H:i" }}
                     </p>
                   </div>
                   <span class="task-points points-chip">
@@ -141,12 +141,12 @@
                   </span>
                 </div>
                 <div class="task-meta">
-                  <span class="task-badge priority">Priority: {{ task.get_priority_display }}</span>
+                  <span class="task-badge priority">Tähtsus: {{ task.get_priority_display }}</span>
                   <span class="task-badge assigned">
                     {% if task.assigned_to %}
-                      Assigned to {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                      Määratud kasutajale {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
                     {% else %}
-                      Open task • completed by {{ task.completed_by.get_full_name|default:task.completed_by.username }}
+                      Avatud ülesanne • lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }}
                     {% endif %}
                   </span>
                 </div>
@@ -156,7 +156,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="approve">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button success" aria-label="Approve {{ task.name }}">
+                      <button type="submit" class="icon-button success" aria-label="Kinnita {{ task.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
@@ -166,7 +166,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="reopen">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button" aria-label="Reopen {{ task.name }}">
+                      <button type="submit" class="icon-button" aria-label="Ava {{ task.name }} uuesti">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <path d="M3 12a9 9 0 1 0 9-9"></path>
                           <polyline points="3 3 3 12 12 12"></polyline>
@@ -178,7 +178,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state full-row">No completed tasks waiting for approval right now.</p>
+            <p class="empty-state full-row">Kinnitust ootavaid ülesandeid pole.</p>
           {% endif %}
         </div>
       </section>
@@ -186,7 +186,7 @@
       <section class="task-section">
         <header class="list-section-header">
           <span class="list-section-icon cart-icon" aria-hidden="true"></span>
-          <h2>Approved Tasks</h2>
+          <h2>Kinnitatud ülesanded</h2>
         </header>
         <div class="task-grid">
           {% if approved_tasks %}
@@ -196,8 +196,8 @@
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
                     <p class="task-description">
-                      Approved by {{ task.approved_by.get_full_name|default:task.approved_by.username }}
-                      on {{ task.approved_at|date:"M j, g:i a" }}
+                      Kinnitas {{ task.approved_by.get_full_name|default:task.approved_by.username }}
+                      {{ task.approved_at|date:"j. M, H:i" }}
                     </p>
                   </div>
                   <span class="task-points points-chip">
@@ -208,7 +208,7 @@
                 <div class="task-meta">
                   <span class="task-badge assigned">
                     {% with winner=task.assigned_to|default:task.completed_by %}
-                      Earned by {{ winner.get_full_name|default:winner.username }}
+                      Punktid teenis {{ winner.get_full_name|default:winner.username }}
                     {% endwith %}
                   </span>
                 </div>
@@ -218,7 +218,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button" aria-label="Delete {{ task.name }}">
+                      <button type="submit" class="icon-button" aria-label="Kustuta {{ task.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -230,7 +230,7 @@
               </article>
             {% endfor %}
           {% else %}
-            <p class="empty-state full-row">No approved tasks yet. Keep up the great work!</p>
+            <p class="empty-state full-row">Kinnitatud ülesandeid veel pole. Jätkake samas vaimus!</p>
           {% endif %}
         </div>
       </section>
@@ -241,29 +241,29 @@
     <div class="task-modal" id="task-modal" aria-hidden="true" role="dialog" aria-modal="true">
       <div class="task-modal-overlay" data-close-modal></div>
       <div class="task-modal-content">
-        <button type="button" class="task-modal-close" data-close-modal aria-label="Close task form">
+        <button type="button" class="task-modal-close" data-close-modal aria-label="Sulge ülesande vorm">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        <h2 class="task-modal-title" data-modal-title>Add Task</h2>
+        <h2 class="task-modal-title" data-modal-title>Lisa ülesanne</h2>
         <form method="post" class="task-modal-form" id="task-modal-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="create">
           <input type="hidden" name="task_id" value="">
           <label>
-            <span>Task name</span>
-            <input type="text" name="name" placeholder="Morning chores" required>
+            <span>Ülesande nimi</span>
+            <input type="text" name="name" placeholder="Hommikused tegemised" required>
           </label>
           <label>
-            <span>Description</span>
-            <textarea name="description" rows="3" placeholder="Add helpful details or reminders..."></textarea>
+            <span>Kirjeldus</span>
+            <textarea name="description" rows="3" placeholder="Lisa täpsustused või meeldetuletused..."></textarea>
           </label>
           <label>
-            <span>Assign to</span>
+            <span>Määra kasutajale</span>
             <select name="assigned_to">
-              <option value="">Open task (any child)</option>
+              <option value="">Avatud ülesanne (ükskõik milline laps)</option>
               {% for member in family_members %}
                 <option value="{{ member.id }}">
                   {{ member.get_full_name|default:member.username }}
@@ -276,26 +276,26 @@
           </label>
           <div class="task-modal-grid">
             <label>
-              <span>Points</span>
+              <span>Punktid</span>
               <input type="number" name="points" min="0" value="25">
             </label>
             <label>
-              <span>Priority</span>
+              <span>Tähtsus</span>
               <select name="priority">
-                <option value="0">Low</option>
-                <option value="1">Medium</option>
-                <option value="2">High</option>
+                <option value="0">Madal</option>
+                <option value="1">Keskmine</option>
+                <option value="2">Kõrge</option>
               </select>
             </label>
             <label>
-              <span>Due date</span>
+              <span>Tähtaeg</span>
               <input type="date" name="due_date">
             </label>
           </div>
           <div class="form-actions">
             <button type="submit" class="primary-button">
               <span aria-hidden="true" data-submit-icon>+</span>
-              <span data-submit-label>Save Task</span>
+              <span data-submit-label>Salvesta ülesanne</span>
             </button>
           </div>
         </form>
@@ -333,15 +333,15 @@
           if (mode === 'create') {
             actionInput.value = 'create';
             idInput.value = '';
-            titleEl.textContent = 'Add Task';
-            submitLabel.textContent = 'Save Task';
+            titleEl.textContent = 'Lisa ülesanne';
+            submitLabel.textContent = 'Salvesta ülesanne';
             submitIcon.textContent = submitIcon.dataset.createIcon || '+';
             assignedSelect.value = '';
           } else {
             actionInput.value = 'update';
             idInput.value = data.id || '';
-            titleEl.textContent = 'Edit Task';
-            submitLabel.textContent = 'Update Task';
+            titleEl.textContent = 'Muuda ülesannet';
+            submitLabel.textContent = 'Uuenda ülesannet';
             submitIcon.textContent = submitIcon.dataset.editIcon || '✔';
 
             nameInput.value = data.name || '';

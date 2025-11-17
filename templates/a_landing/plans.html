@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FamilyHub Plans</title>
+    <title>Luminara | Paketid</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -18,21 +18,21 @@
     
     <header class="landing-nav">
       <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-        <span class="landing-logo">FH</span>
+        <span class="landing-logo">LU</span>
         <div>
-          <span class="landing-brand-title">FamilyHub</span>
-          <span class="landing-brand-tagline">Together Daily</span>
+          <span class="landing-brand-title">Luminara</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a class="active" href="{% url 'a_landing:plans' %}">Plans</a>
+        <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+        <a href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a href="{% url 'a_landing:about' %}">Meist</a>
+        <a class="active" href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
-        <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
-        <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+        <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+        <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
       </div>
       <button class="landing-nav-toggle" aria-label="Toggle menu">
         <span aria-hidden="true"></span>
@@ -44,10 +44,10 @@
       <div class="mobile-menu-sidebar">
         <div class="mobile-menu-header">
           <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
-            <span class="landing-logo">FH</span>
+            <span class="landing-logo">LU</span>
             <div>
-              <span class="landing-brand-title">FamilyHub</span>
-              <span class="landing-brand-tagline">Together Daily</span>
+              <span class="landing-brand-title">Luminara</span>
+              <span class="landing-brand-tagline">Koos iga päev</span>
             </div>
           </a>
           <button class="mobile-menu-close" aria-label="Close menu">
@@ -58,15 +58,15 @@
           </button>
         </div>
         <nav class="mobile-menu-links">
-          <a href="{% url 'a_landing:landing_index' %}">Home</a>
-          <a href="{% url 'a_landing:features' %}">Features</a>
-          <a href="{% url 'a_landing:about' %}">About</a>
-          <a class="active" href="{% url 'a_landing:plans' %}">Plans</a>
+          <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+          <a href="{% url 'a_landing:features' %}">Võimalused</a>
+          <a href="{% url 'a_landing:about' %}">Meist</a>
+          <a class="active" href="{% url 'a_landing:plans' %}">Paketid</a>
         </nav>
         <div class="mobile-menu-separator"></div>
         <div class="mobile-menu-actions">
-          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
-          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Alusta tasuta</a>
         </div>
       </div>
     </div>
@@ -74,9 +74,9 @@
     <main class="landing-main">
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Flexible pricing</span>
-          <h1>Plans for every rhythm of family life</h1>
-          <p>Start free and grow into advanced automations, insights, and priority celebration tools.</p>
+          <span class="section-eyebrow-minimal">Paindlik hinnastus</span>
+          <h1>Paketid iga pere rütmi jaoks</h1>
+          <p>Alusta tasuta ja kasva edasi automatiseerimise, süvitsivaatete ja tähtsate tähistamisteni.</p>
         </div>
       </section>
 
@@ -84,43 +84,43 @@
         <div class="plans-layout">
           <div class="plans-top-row">
             <article class="plan-card plan-featured scroll-scale scroll-delay-1">
-              <h2>STARTER</h2>
-              <p class="plan-price">$9.99<span>/m</span></p>
+              <h2>ALGUS</h2>
+              <p class="plan-price">€9.99<span>/kuu</span></p>
               <ul>
-                <li>2 parents</li>
-                <li>2 children</li>
-                <li>20 tasks per month</li>
-                <li>15 rewards per month</li>
-                <li>Shopping list access</li>
+                <li>2 lapsevanemat</li>
+                <li>2 last</li>
+                <li>20 ülesannet kuus</li>
+                <li>15 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
               </ul>
-              <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+              <a class="landing-button primary" href="{% url 'account_signup' %}">Vali pakett</a>
             </article>
 
             <article class="plan-card scroll-scale scroll-delay-2">
               <h2>PRO</h2>
-              <p class="plan-price">$19.99<span>/m</span></p>
+              <p class="plan-price">€19.99<span>/kuu</span></p>
               <ul>
-                <li>4 parents</li>
-                <li>10 children</li>
-                <li>100 tasks per month</li>
-                <li>50 rewards per month</li>
-                <li>Shopping list access</li>
+                <li>4 lapsevanemat</li>
+                <li>10 last</li>
+                <li>100 ülesannet kuus</li>
+                <li>50 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
               </ul>
-              <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
+              <a class="landing-button secondary" href="{% url 'account_signup' %}">Vali pakett</a>
             </article>
           </div>
 
           <div class="plan-free-wrapper scroll-scale scroll-delay-3">
             <article class="plan-card plan-free">
-              <h2>FREE</h2>
+              <h2>TASUTA</h2>
               <ul>
-                <li>1 parent</li>
-                <li>1 child</li>
-                <li>5 tasks per month</li>
-                <li>3 rewards per month</li>
-                <li class="no-access">No shopping list access</li>
+                <li>1 lapsevanem</li>
+                <li>1 laps</li>
+                <li>5 ülesannet kuus</li>
+                <li>3 preemiat kuus</li>
+                <li class="no-access">Ostunimekiri puudub</li>
               </ul>
-              <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
+              <a class="landing-button secondary" href="{% url 'account_signup' %}">Alusta tasuta</a>
             </article>
           </div>
         </div>
@@ -128,42 +128,42 @@
 
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Feature matrix</span>
-          <h2>Compare features side by side</h2>
+          <span class="section-eyebrow-minimal">Võrdlus</span>
+          <h2>Võrdle võimalusi kõrvuti</h2>
         </div>
         <div class="comparison-table scroll-slide-up">
           <div class="comparison-row header">
-            <span>Included features</span>
-            <span>FREE</span>
-            <span>STARTER</span>
+            <span>Kaasa tulevad võimalused</span>
+            <span>TASUTA</span>
+            <span>ALGUS</span>
             <span>PRO</span>
           </div>
           <div class="comparison-row">
-            <span>Parents</span>
+            <span>Lapsevanemad</span>
             <span data-plan="FREE">1</span>
             <span data-plan="STARTER">2</span>
             <span data-plan="PRO">4</span>
           </div>
           <div class="comparison-row">
-            <span>Children</span>
+            <span>Lapsed</span>
             <span data-plan="FREE">1</span>
             <span data-plan="STARTER">2</span>
             <span data-plan="PRO">10</span>
           </div>
           <div class="comparison-row">
-            <span>Tasks per month</span>
+            <span>Ülesandeid kuus</span>
             <span data-plan="FREE">5</span>
             <span data-plan="STARTER">20</span>
             <span data-plan="PRO">100</span>
           </div>
           <div class="comparison-row">
-            <span>Rewards per month</span>
+            <span>Preemiaid kuus</span>
             <span data-plan="FREE">3</span>
             <span data-plan="STARTER">15</span>
             <span data-plan="PRO">50</span>
           </div>
           <div class="comparison-row">
-            <span>Shopping list access</span>
+            <span>Ostunimekiri</span>
             <span data-plan="FREE" class="no-access">—</span>
             <span data-plan="STARTER" class="has-access">✔︎</span>
             <span data-plan="PRO" class="has-access">✔︎</span>
@@ -173,37 +173,27 @@
 
       <section class="section-minimal">
         <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">FAQ</span>
-          <h2>Frequently asked questions</h2>
-          <p>Need a hand deciding? Here are the top questions families ask.</p>
+          <span class="section-eyebrow-minimal">KKK</span>
+          <h2>Korduma kippuvad küsimused</h2>
+          <p>Ei suuda valida? Siin on vastused, mida pered enim küsivad.</p>
         </div>
         <div class="faq-grid scroll-slide-up">
           <details open>
-            <summary>Can we change plans at any time?</summary>
-            <p>Absolutely. Upgrade, downgrade, or cancel whenever you need—your data stays safe.</p>
+            <summary>Kas saame paketti igal ajal muuta?</summary>
+            <p>Muidugi. Uuenda, alanda või lõpeta teenus siis, kui vaja – sinu andmed jäävad alles.</p>
           </details>
           <details>
-            <summary>Is STARTER available annually?</summary>
-            <p>Yes, save 15% with annual billing. Switch in your account settings after signup.</p>
+            <summary>Kas ALGUS pakett on saadaval aastamaksena?</summary>
+            <p>Jah, aastase arveldusega säästad 15%. Vaheta arveldust pärast liitumist oma kontoseadetes.</p>
           </details>
           <details>
-            <summary>Do you offer nonprofit or school pricing?</summary>
-            <p>We love working with community organisations. Reach out and we’ll tailor a plan.</p>
+            <summary>Kas pakute erihinda koolidele või MTÜdele?</summary>
+            <p>Armastame kogukondadega koostööd. Kirjuta meile ja paneme koos sobiva paketi kokku.</p>
           </details>
         </div>
       </section>
     </main>
-
-    <footer class="landing-footer">
-      <div class="landing-footer-links">
-        <a href="{% url 'a_landing:landing_index' %}">Home</a>
-        <a href="{% url 'a_landing:features' %}">Features</a>
-        <a href="{% url 'a_landing:about' %}">About</a>
-        <a href="{% url 'a_landing:plans' %}">Plans</a>
-        <a href="mailto:hello@familyhub.app">Support</a>
-      </div>
-      <p>© {% now "Y" %} FamilyHub. All rights reserved.</p>
-    </footer>
+    {% include 'a_landing/partials/footer.html' %}
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');

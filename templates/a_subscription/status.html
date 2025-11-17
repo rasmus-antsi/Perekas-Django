@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Subscription | FamilyHub{% endblock %}
+{% block title %}Tellimus | Luminara{% endblock %}
 
 {% block nav_subscription_active %} active{% endblock %}
 
@@ -8,12 +8,12 @@
   <div class="page-container settings-page">
     <section class="settings-header">
       <div>
-        <h1 class="page-title">Subscription</h1>
-        <p class="page-subtitle">Manage your family subscription and view usage</p>
+        <h1 class="page-title">Tellimus</h1>
+        <p class="page-subtitle">Halda pere tellimust ja vaata kasutust.</p>
       </div>
       {% if family %}
         <div class="settings-family-chip">
-          <span class="chip-label">Current Family</span>
+          <span class="chip-label">Praegune pere</span>
           <span class="chip-value">{{ family.name }}</span>
         </div>
       {% endif %}
@@ -31,7 +31,7 @@
 
     {% if not family %}
       <section class="empty-state full-row">
-        <p>No family profile found. You must be the family owner to manage subscriptions.</p>
+        <p>Pereprofiili ei leitud. Tellimust saab hallata ainult pere looja.</p>
       </section>
     {% else %}
       <div class="settings-grid">
@@ -40,36 +40,36 @@
             <div class="card-title-wrap">
               <span class="card-icon icon-purple"></span>
               <div>
-                <h2>Current Plan</h2>
-                <p>Your active subscription tier and billing information.</p>
+                <h2>Aktiivne paket</h2>
+                <p>Sinu kehtiv tellimus ja arveldusinfo.</p>
               </div>
             </div>
           </header>
           <div class="settings-card-body">
             <div class="subscription-plan">
               <div class="plan-badge plan-badge-{{ tier|lower }}">
-                <span>{{ tier }}</span>
+                <span>{{ display_tier }}</span>
               </div>
-              <h3 class="plan-name">{{ tier }} Plan</h3>
+              <h3 class="plan-name">{{ display_tier }} pakett</h3>
               {% if subscription %}
                 <div class="plan-details">
-                  <p><strong>Status:</strong> {{ subscription.get_status_display }}</p>
+                  <p><strong>Olek:</strong> {{ subscription.get_status_display }}</p>
                   {% if subscription.current_period_end %}
-                    <p><strong>Renews:</strong> {{ subscription.current_period_end|date:"F d, Y" }}</p>
+                    <p><strong>Uueneb:</strong> {{ subscription.current_period_end|date:"j. F Y" }}</p>
                   {% endif %}
                   {% if subscription.stripe_subscription_id %}
-                    <p><strong>Subscription ID:</strong> {{ subscription.stripe_subscription_id|truncatechars:20 }}</p>
+                    <p><strong>Tellimuse ID:</strong> {{ subscription.stripe_subscription_id|truncatechars:20 }}</p>
                   {% endif %}
                 </div>
                 {% if subscription.status == 'active' and subscription.tier != 'FREE' %}
                   <form method="post" action="{% url 'a_subscription:cancel' %}" style="margin-top: 1.5rem;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-ghost">Cancel Subscription</button>
+                    <button type="submit" class="btn btn-ghost">Tühista tellimus</button>
                   </form>
                 {% endif %}
               {% else %}
-                <p class="plan-description">You're currently on the free tier.</p>
-                <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary" style="margin-top: 1.5rem;">Upgrade Plan</a>
+                <p class="plan-description">Kasutad hetkel tasuta paketti.</p>
+                <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary" style="margin-top: 1.5rem;">Uuenda paketti</a>
               {% endif %}
             </div>
           </div>
@@ -80,36 +80,36 @@
             <div class="card-title-wrap">
               <span class="card-icon icon-green"></span>
               <div>
-                <h2>Plan Limits</h2>
-                <p>Features and limits for your current subscription tier.</p>
+                <h2>Paketipiirangud</h2>
+                <p>Funktsioonid ja mahud sinu kehtiva paketi kohta.</p>
               </div>
             </div>
           </header>
           <div class="settings-card-body">
             <div class="limits-list">
               <div class="limit-item">
-                <span class="limit-label">Max Parents</span>
+                <span class="limit-label">Lapsevanemaid kuni</span>
                 <span class="limit-value">{{ limits.max_parents }}</span>
               </div>
               <div class="limit-item">
-                <span class="limit-label">Max Children</span>
+                <span class="limit-label">Lapsi kuni</span>
                 <span class="limit-value">{{ limits.max_children }}</span>
               </div>
               <div class="limit-item">
-                <span class="limit-label">Tasks per Month</span>
+                <span class="limit-label">Ülesandeid kuus</span>
                 <span class="limit-value">{{ limits.max_tasks_per_month }}</span>
               </div>
               <div class="limit-item">
-                <span class="limit-label">Rewards per Month</span>
+                <span class="limit-label">Preemiaid kuus</span>
                 <span class="limit-value">{{ limits.max_rewards_per_month }}</span>
               </div>
               <div class="limit-item">
-                <span class="limit-label">Shopping List</span>
+                <span class="limit-label">Ostunimekirja funktsioon</span>
                 <span class="limit-value">
                   {% if limits.shopping_list_enabled %}
-                    <span style="color: #10b981;">Enabled</span>
+                    <span style="color: #10b981;">Sisselülitatud</span>
                   {% else %}
-                    <span style="color: #ef4444;">Disabled</span>
+                    <span style="color: #ef4444;">Väljas</span>
                   {% endif %}
                 </span>
               </div>
@@ -122,8 +122,8 @@
             <div class="card-title-wrap">
               <span class="card-icon icon-orange"></span>
               <div>
-                <h2>Monthly Usage</h2>
-                <p>Track your usage for the current month.</p>
+                <h2>Kuu kasutus</h2>
+                <p>Jälgi selle kuu mahu kasutamist.</p>
               </div>
             </div>
           </header>
@@ -132,27 +132,27 @@
               <div class="usage-stats">
                 <div class="usage-item">
                   <div class="usage-header">
-                    <span class="usage-label">Tasks Created</span>
+                    <span class="usage-label">Loodud ülesandeid</span>
                     <span class="usage-count">{{ usage.tasks_created }} / {{ limits.max_tasks_per_month }}</span>
                   </div>
                   <div class="usage-bar">
                     <div class="usage-bar-fill" style="width: {% widthratio usage.tasks_created limits.max_tasks_per_month 100 %}%;"></div>
                   </div>
-                  <span class="usage-remaining">{{ tasks_remaining }} remaining</span>
+                  <span class="usage-remaining">{{ tasks_remaining }} jäänud</span>
                 </div>
                 <div class="usage-item">
                   <div class="usage-header">
-                    <span class="usage-label">Rewards Created</span>
+                    <span class="usage-label">Loodud preemiaid</span>
                     <span class="usage-count">{{ usage.rewards_created }} / {{ limits.max_rewards_per_month }}</span>
                   </div>
                   <div class="usage-bar">
                     <div class="usage-bar-fill" style="width: {% widthratio usage.rewards_created limits.max_rewards_per_month 100 %}%;"></div>
                   </div>
-                  <span class="usage-remaining">{{ rewards_remaining }} remaining</span>
+                  <span class="usage-remaining">{{ rewards_remaining }} jäänud</span>
                 </div>
               </div>
             {% else %}
-              <p class="empty-state">No usage data for this month yet.</p>
+              <p class="empty-state">Selle kuu kasutus pole veel alanud.</p>
             {% endif %}
           </div>
         </section>
@@ -163,19 +163,19 @@
               <div class="card-title-wrap">
                 <span class="card-icon icon-teal"></span>
                 <div>
-                  <h2>Upgrade Your Plan</h2>
-                  <p>Unlock more features and higher limits.</p>
+                  <h2>Uuenda paketti</h2>
+                  <p>Ava rohkem funktsioone ja suuremad mahud.</p>
                 </div>
               </div>
             </header>
             <div class="settings-card-body">
-              <p>Upgrade to Starter or Pro to get more features:</p>
+              <p>Uuenda paketile Algtase või Pro, et saada:</p>
               <ul style="margin: 1rem 0; padding-left: 1.5rem;">
-                <li>More family members</li>
-                <li>Higher task and reward limits</li>
-                <li>Shopping list access</li>
+                <li>Rohkem pereliikmeid</li>
+                <li>Kõrgemad ülesannete ja preemiate piirangud</li>
+                <li>Ostunimekirja funktsioon</li>
               </ul>
-              <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary">View Plans</a>
+              <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary">Vaata pakette</a>
             </div>
           </section>
         {% endif %}

@@ -1,10 +1,10 @@
 {% load i18n %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="et">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% trans "Confirm your email" %}</title>
+  <title>Kinnita oma e-post</title>
   <style>
     body {
       margin: 0;
@@ -96,28 +96,28 @@
   <div class="email-container">
     <div class="email-card">
       <div class="email-header">
-        <div class="email-logo">FH</div>
-        <h1 class="email-title">{% trans "Confirm your email" %}</h1>
-        <p class="email-subtitle">{% trans "FamilyHub" %}</p>
+        <div class="email-logo">LU</div>
+        <h1 class="email-title">Kinnita oma e-post</h1>
+        <p class="email-subtitle">Luminara</p>
       </div>
       
       <div class="email-content">
-        <p>{% trans "Hi" %} {{ user.get_full_name|default:user.username }},</p>
-        <p>{% trans "Please confirm your email address by clicking the button below:" %}</p>
+        <p>Tere, {{ user.get_full_name|default:user.username }}!</p>
+        <p>Palun kinnita oma e-posti aadress, klõpsates allolevat nuppu.</p>
         
         <div style="text-align: center;">
-          <a href="{{ activate_url }}" class="email-button">{% trans "Confirm Email Address" %}</a>
+          <a href="{{ activate_url }}" class="email-button">Kinnita e-post</a>
         </div>
         
         <p style="font-size: 14px; color: rgba(148, 163, 184, 0.8);">
-          {% trans "Or copy and paste this link into your browser:" %}
+          Või kopeeri see link oma brauserisse:
         </p>
         <a href="{{ activate_url }}" class="email-link">{{ activate_url }}</a>
       </div>
       
       <div class="email-footer">
-        <p>{% trans "If you didn't request this email, you can safely ignore it." %}</p>
-        <p style="margin-top: 8px;">© {% now "Y" %} FamilyHub. {% trans "All rights reserved." %}</p>
+        <p>Kui sa seda kirja ei oodanud, võid selle julgelt tähelepanuta jätta.</p>
+        <p style="margin-top: 8px;">© {% now "Y" %} Luminara. Kõik õigused kaitstud.</p>
       </div>
     </div>
   </div>
