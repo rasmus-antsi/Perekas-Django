@@ -39,9 +39,41 @@
       </button>
     </header>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+      <div class="mobile-menu-sidebar">
+        <div class="mobile-menu-header">
+          <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+            <span class="landing-logo">FH</span>
+            <div>
+              <span class="landing-brand-title">FamilyHub</span>
+              <span class="landing-brand-tagline">Together Daily</span>
+            </div>
+          </a>
+          <button class="mobile-menu-close" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="mobile-menu-links">
+          <a href="{% url 'a_landing:landing_index' %}">Home</a>
+          <a href="{% url 'a_landing:features' %}">Features</a>
+          <a href="{% url 'a_landing:about' %}">About</a>
+          <a class="active" href="{% url 'a_landing:plans' %}">Plans</a>
+        </nav>
+        <div class="mobile-menu-separator"></div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+        </div>
+      </div>
+    </div>
+
     <main class="landing-main">
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Flexible pricing</span>
           <h1>Plans for every rhythm of family life</h1>
           <p>Start free and grow into advanced automations, insights, and priority celebration tools.</p>
@@ -49,54 +81,57 @@
       </section>
 
       <section class="section-minimal">
-        <div class="plans-grid">
-        <article class="plan-card">
-          <h2>FREE</h2>
-          <p class="plan-price">Free</p>
-          <ul>
-            <li>1 parent</li>
-            <li>1 child</li>
-            <li>5 tasks per month</li>
-            <li>3 rewards per month</li>
-            <li class="no-access">No shopping list access</li>
-          </ul>
-          <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
-        </article>
+        <div class="plans-layout">
+          <div class="plans-top-row">
+            <article class="plan-card plan-featured scroll-scale scroll-delay-1">
+              <h2>STARTER</h2>
+              <p class="plan-price">$9.99<span>/m</span></p>
+              <ul>
+                <li>2 parents</li>
+                <li>2 children</li>
+                <li>20 tasks per month</li>
+                <li>15 rewards per month</li>
+                <li>Shopping list access</li>
+              </ul>
+              <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+            </article>
 
-        <article class="plan-card plan-featured">
-          <h2>STARTER</h2>
-          <p class="plan-price">$9.99<span>/m</span></p>
-          <ul>
-            <li>2 parents</li>
-            <li>2 children</li>
-            <li>20 tasks per month</li>
-            <li>15 rewards per month</li>
-            <li>Shopping list access</li>
-          </ul>
-          <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
-        </article>
+            <article class="plan-card scroll-scale scroll-delay-2">
+              <h2>PRO</h2>
+              <p class="plan-price">$19.99<span>/m</span></p>
+              <ul>
+                <li>4 parents</li>
+                <li>10 children</li>
+                <li>100 tasks per month</li>
+                <li>50 rewards per month</li>
+                <li>Shopping list access</li>
+              </ul>
+              <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
+            </article>
+          </div>
 
-        <article class="plan-card">
-          <h2>PRO</h2>
-          <p class="plan-price">$19.99<span>/m</span></p>
-          <ul>
-            <li>4 parents</li>
-            <li>10 children</li>
-            <li>100 tasks per month</li>
-            <li>50 rewards per month</li>
-            <li>Shopping list access</li>
-          </ul>
-          <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
-        </article>
+          <div class="plan-free-wrapper scroll-scale scroll-delay-3">
+            <article class="plan-card plan-free">
+              <h2>FREE</h2>
+              <ul>
+                <li>1 parent</li>
+                <li>1 child</li>
+                <li>5 tasks per month</li>
+                <li>3 rewards per month</li>
+                <li class="no-access">No shopping list access</li>
+              </ul>
+              <a class="landing-button secondary" href="{% url 'account_signup' %}">Get Started</a>
+            </article>
+          </div>
         </div>
       </section>
 
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Feature matrix</span>
           <h2>Compare features side by side</h2>
         </div>
-        <div class="comparison-table">
+        <div class="comparison-table scroll-slide-up">
           <div class="comparison-row header">
             <span>Included features</span>
             <span>FREE</span>
@@ -105,44 +140,44 @@
           </div>
           <div class="comparison-row">
             <span>Parents</span>
-            <span>1</span>
-            <span>2</span>
-            <span>4</span>
+            <span data-plan="FREE">1</span>
+            <span data-plan="STARTER">2</span>
+            <span data-plan="PRO">4</span>
           </div>
           <div class="comparison-row">
             <span>Children</span>
-            <span>1</span>
-            <span>2</span>
-            <span>10</span>
+            <span data-plan="FREE">1</span>
+            <span data-plan="STARTER">2</span>
+            <span data-plan="PRO">10</span>
           </div>
           <div class="comparison-row">
             <span>Tasks per month</span>
-            <span>5</span>
-            <span>20</span>
-            <span>100</span>
+            <span data-plan="FREE">5</span>
+            <span data-plan="STARTER">20</span>
+            <span data-plan="PRO">100</span>
           </div>
           <div class="comparison-row">
             <span>Rewards per month</span>
-            <span>3</span>
-            <span>15</span>
-            <span>50</span>
+            <span data-plan="FREE">3</span>
+            <span data-plan="STARTER">15</span>
+            <span data-plan="PRO">50</span>
           </div>
           <div class="comparison-row">
             <span>Shopping list access</span>
-            <span>—</span>
-            <span>✔︎</span>
-            <span>✔︎</span>
+            <span data-plan="FREE" class="no-access">—</span>
+            <span data-plan="STARTER" class="has-access">✔︎</span>
+            <span data-plan="PRO" class="has-access">✔︎</span>
           </div>
         </div>
       </section>
 
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">FAQ</span>
-          <h2>All plans include a free 14-day trial</h2>
+          <h2>Frequently asked questions</h2>
           <p>Need a hand deciding? Here are the top questions families ask.</p>
         </div>
-        <div class="faq-grid">
+        <div class="faq-grid scroll-slide-up">
           <details open>
             <summary>Can we change plans at any time?</summary>
             <p>Absolutely. Upgrade, downgrade, or cancel whenever you need—your data stays safe.</p>
@@ -172,15 +207,60 @@
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');
-      const navLinks = document.querySelector('.landing-nav-links');
-      const navActions = document.querySelector('.landing-nav-actions');
-      if (toggle) {
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      
+      if (toggle && mobileMenuOverlay) {
         toggle.addEventListener('click', () => {
-          toggle.classList.toggle('open');
-          navLinks.classList.toggle('open');
-          navActions.classList.toggle('open');
+          mobileMenuOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
         });
       }
+      
+      function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+      }
+      
+      if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+          if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+          }
+        });
+      }
+      
+      // Close menu when clicking on a link
+      const mobileMenuLinks = document.querySelectorAll('.mobile-menu-links a, .mobile-menu-actions a');
+      mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          setTimeout(closeMobileMenu, 100);
+        });
+      });
+
+      // Scroll animations with Intersection Observer
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-fade-in, .scroll-scale, .scroll-slide-up').forEach(el => {
+        observer.observe(el);
+      });
     </script>
   </body>
 </html>
