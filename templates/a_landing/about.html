@@ -39,9 +39,41 @@
       </button>
     </header>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+      <div class="mobile-menu-sidebar">
+        <div class="mobile-menu-header">
+          <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+            <span class="landing-logo">FH</span>
+            <div>
+              <span class="landing-brand-title">FamilyHub</span>
+              <span class="landing-brand-tagline">Together Daily</span>
+            </div>
+          </a>
+          <button class="mobile-menu-close" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="mobile-menu-links">
+          <a href="{% url 'a_landing:landing_index' %}">Home</a>
+          <a href="{% url 'a_landing:features' %}">Features</a>
+          <a class="active" href="{% url 'a_landing:about' %}">About</a>
+          <a href="{% url 'a_landing:plans' %}">Plans</a>
+        </nav>
+        <div class="mobile-menu-separator"></div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+        </div>
+      </div>
+    </div>
+
     <main class="landing-main">
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Our Story</span>
           <h1>Rooted in family life, designed for joyful productivity</h1>
           <p>
@@ -53,21 +85,21 @@
 
       <section class="section-minimal">
         <div class="features-grid-minimal">
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-1">
             <h3>Mission</h3>
             <p>
               To empower households with tools that combine clarity, celebration, and collaboration—so
               families spend less time coordinating and more time thriving together.
             </p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-2">
             <h3>Vision</h3>
             <p>
               A world where every family, regardless of shape or size, enjoys smooth routines, shared
               ownership, and joyful celebrations of progress.
             </p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-3">
             <h3>Team</h3>
             <p>
               We're designers, parents, educators, and dreamers. Together, we listen closely to the
@@ -78,24 +110,24 @@
       </section>
 
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Milestones</span>
           <h2>From kitchen table idea to global platform</h2>
         </div>
         <ol class="timeline-list">
-          <li>
+          <li class="scroll-slide-up scroll-delay-1">
             <span class="timeline-year">2019</span>
             <p>We prototype the first FamilyHub to help our own kids stay on top of chores.</p>
           </li>
-          <li>
+          <li class="scroll-slide-up scroll-delay-2">
             <span class="timeline-year">2021</span>
-            <p>Public beta launches, bringing in the first 500 families who shape today’s experience.</p>
+            <p>Public beta launches, bringing in the first 500 families who shape today's experience.</p>
           </li>
-          <li>
+          <li class="scroll-slide-up scroll-delay-3">
             <span class="timeline-year">2023</span>
             <p>Rewards marketplace and shared shopping list go live, helping families celebrate wins.</p>
           </li>
-          <li>
+          <li class="scroll-slide-up">
             <span class="timeline-year">2024</span>
             <p>
               FamilyHub powers 12k+ households and introduces automations that keep routines flowing on
@@ -106,20 +138,20 @@
       </section>
 
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">What guides us</span>
           <h2>Values baked into every pixel</h2>
         </div>
         <div class="features-grid-minimal">
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-1">
             <h3>Empathy first</h3>
             <p>We build with families—not just for them. Every decision starts with listening.</p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-2">
             <h3>Celebrate progress</h3>
             <p>Always make room for delight. Every action should feel rewarding, not draining.</p>
           </div>
-          <div class="feature-card-minimal">
+          <div class="feature-card-minimal scroll-scale scroll-delay-3">
             <h3>Simple is powerful</h3>
             <p>Clarity, contrast, and motion guide our design. Busy lives deserve effortless tools.</p>
           </div>
@@ -140,15 +172,60 @@
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');
-      const navLinks = document.querySelector('.landing-nav-links');
-      const navActions = document.querySelector('.landing-nav-actions');
-      if (toggle) {
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      
+      if (toggle && mobileMenuOverlay) {
         toggle.addEventListener('click', () => {
-          toggle.classList.toggle('open');
-          navLinks.classList.toggle('open');
-          navActions.classList.toggle('open');
+          mobileMenuOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
         });
       }
+      
+      function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+      }
+      
+      if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+          if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+          }
+        });
+      }
+      
+      // Close menu when clicking on a link
+      const mobileMenuLinks = document.querySelectorAll('.mobile-menu-links a, .mobile-menu-actions a');
+      mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          setTimeout(closeMobileMenu, 100);
+        });
+      });
+
+      // Scroll animations with Intersection Observer
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-fade-in, .scroll-scale, .scroll-slide-up').forEach(el => {
+        observer.observe(el);
+      });
     </script>
   </body>
 </html>

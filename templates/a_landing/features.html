@@ -39,9 +39,41 @@
       </button>
     </header>
 
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenuOverlay">
+      <div class="mobile-menu-sidebar">
+        <div class="mobile-menu-header">
+          <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+            <span class="landing-logo">FH</span>
+            <div>
+              <span class="landing-brand-title">FamilyHub</span>
+              <span class="landing-brand-tagline">Together Daily</span>
+            </div>
+          </a>
+          <button class="mobile-menu-close" aria-label="Close menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="mobile-menu-links">
+          <a href="{% url 'a_landing:landing_index' %}">Home</a>
+          <a class="active" href="{% url 'a_landing:features' %}">Features</a>
+          <a href="{% url 'a_landing:about' %}">About</a>
+          <a href="{% url 'a_landing:plans' %}">Plans</a>
+        </nav>
+        <div class="mobile-menu-separator"></div>
+        <div class="mobile-menu-actions">
+          <a class="mobile-menu-login" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary mobile-menu-cta" href="{% url 'account_signup' %}">Get Started</a>
+        </div>
+      </div>
+    </div>
+
     <main class="landing-main">
       <section class="section-minimal">
-        <div class="section-header-minimal">
+        <div class="section-header-minimal scroll-fade-in">
           <span class="section-eyebrow-minimal">Feature Spotlight</span>
           <h1>Tools that energise every member of the family</h1>
           <p>
@@ -53,7 +85,7 @@
 
       <section class="section-minimal">
         <div class="features-grid-minimal">
-          <article class="feature-card-minimal">
+          <article class="feature-card-minimal scroll-scale scroll-delay-1">
             <div class="feature-visual feature-visual-dynamics"></div>
             <h3>Dynamic task boards</h3>
             <p>
@@ -66,7 +98,7 @@
               <li>Progress analytics with weekly snapshots</li>
             </ul>
           </article>
-          <article class="feature-card-minimal">
+          <article class="feature-card-minimal scroll-scale scroll-delay-2">
             <div class="feature-visual feature-visual-motivational"></div>
             <h3>Motivational rewards marketplace</h3>
             <p>
@@ -79,7 +111,7 @@
               <li>Shared wishlists keep everyone inspired</li>
             </ul>
           </article>
-          <article class="feature-card-minimal">
+          <article class="feature-card-minimal scroll-scale scroll-delay-3">
             <div class="feature-visual feature-visual-shopping"></div>
             <h3>Unified shopping list</h3>
             <p>
@@ -96,11 +128,11 @@
       </section>
 
       <section class="section-minimal section-cta">
-        <div class="cta-content-minimal">
+        <div class="cta-content-minimal scroll-slide-up">
           <h2>Bring the full toolkit to your home</h2>
           <p>Start free today and discover how effortless family organisation can feel.</p>
           <div class="cta-actions-minimal">
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Start free trial</a>
+            <a class="landing-button primary" href="{% url 'account_signup' %}">Start for free</a>
             <a class="landing-button ghost" href="{% url 'a_landing:plans' %}">Review plans</a>
           </div>
         </div>
@@ -120,15 +152,60 @@
 
     <script>
       const toggle = document.querySelector('.landing-nav-toggle');
-      const navLinks = document.querySelector('.landing-nav-links');
-      const navActions = document.querySelector('.landing-nav-actions');
-      if (toggle) {
+      const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+      const mobileMenuClose = document.querySelector('.mobile-menu-close');
+      
+      if (toggle && mobileMenuOverlay) {
         toggle.addEventListener('click', () => {
-          toggle.classList.toggle('open');
-          navLinks.classList.toggle('open');
-          navActions.classList.toggle('open');
+          mobileMenuOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
         });
       }
+      
+      function closeMobileMenu() {
+        if (mobileMenuOverlay) {
+          mobileMenuOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (mobileMenuClose) {
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+      }
+      
+      if (mobileMenuOverlay) {
+        mobileMenuOverlay.addEventListener('click', (e) => {
+          if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+          }
+        });
+      }
+      
+      // Close menu when clicking on a link
+      const mobileMenuLinks = document.querySelectorAll('.mobile-menu-links a, .mobile-menu-actions a');
+      mobileMenuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          setTimeout(closeMobileMenu, 100);
+        });
+      });
+
+      // Scroll animations with Intersection Observer
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll('.scroll-fade-in, .scroll-scale, .scroll-slide-up').forEach(el => {
+        observer.observe(el);
+      });
     </script>
   </body>
 </html>
