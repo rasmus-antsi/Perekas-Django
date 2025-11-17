@@ -11,8 +11,10 @@ A private SaaS application for family task management, rewards, and organization
 - [Environment Variables](#environment-variables)
 - [Database](#database)
 - [Development](#development)
+  - [Git Workflow & Branching](#git-workflow--branching)
 - [Application Overview](#application-overview)
 - [Subscription Tiers](#subscription-tiers)
+- [Contributing](#contributing)
 
 ## Features
 
@@ -183,6 +185,108 @@ pip freeze > requirements.txt
 pip install -r requirements.txt
 ```
 
+### Git Workflow & Branching
+
+This project uses Git for version control. Follow these guidelines for working with branches:
+
+#### Main Branch
+- `master` - Main production-ready branch. All code here should be stable and tested.
+
+#### Creating a Feature Branch
+
+1. **Update your local master branch**:
+   ```bash
+   git checkout master
+   git pull origin master
+   ```
+
+2. **Create and switch to a new feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+   
+   Branch naming conventions:
+   - `feature/feature-name` - New features (e.g., `feature/add-notifications`)
+   - `bugfix/issue-description` - Bug fixes (e.g., `bugfix/fix-points-calculation`)
+   - `hotfix/critical-issue` - Critical production fixes
+   - `refactor/component-name` - Code refactoring
+
+3. **Make your changes and commit**:
+   ```bash
+   git add .
+   git commit -m "Descriptive commit message"
+   ```
+
+4. **Push your branch to remote**:
+   ```bash
+   git push -u origin feature/your-feature-name
+   ```
+
+5. **Create a Pull Request** (if using GitHub/GitLab):
+   - Push your branch and create a PR to merge into `master`
+   - Request code review before merging
+
+#### Syncing Your Branch with Master
+
+If `master` has been updated while you're working on your feature:
+
+```bash
+# From your feature branch
+git checkout feature/your-feature-name
+git fetch origin
+git merge origin/master
+# Resolve any conflicts, then:
+git push
+```
+
+Or using rebase (cleaner history):
+
+```bash
+git checkout feature/your-feature-name
+git fetch origin
+git rebase origin/master
+# Resolve conflicts if any, then:
+git push --force-with-lease  # Only if you've already pushed this branch
+```
+
+#### Switching Branches
+
+```bash
+# List all branches
+git branch -a
+
+# Switch to a branch
+git checkout branch-name
+
+# Switch to master
+git checkout master
+```
+
+#### Deleting Branches
+
+```bash
+# Delete local branch (after merging)
+git branch -d feature/your-feature-name
+
+# Force delete (if not merged)
+git branch -D feature/your-feature-name
+
+# Delete remote branch
+git push origin --delete feature/your-feature-name
+```
+
+#### Best Practices
+
+- ✅ Always create a branch for new features or fixes
+- ✅ Keep branches focused on a single feature/fix
+- ✅ Write clear, descriptive commit messages
+- ✅ Keep your branch up-to-date with `master`
+- ✅ Test your changes before pushing
+- ✅ Run migrations before committing database changes
+- ❌ Don't commit directly to `master` (unless it's a critical hotfix)
+- ❌ Don't commit sensitive data (`.env`, credentials, etc.)
+- ❌ Don't commit large binary files or `__pycache__` directories
+
 ## Application Overview
 
 ### Apps
@@ -303,11 +407,14 @@ Subscription limits are enforced in `a_subscription/utils.py`. When adding featu
 
 This is a private SaaS project. Follow these guidelines:
 
-1. Create feature branches from `master`
-2. Write meaningful commit messages
-3. Test changes thoroughly before committing
-4. Run migrations before pushing database changes
-5. Update this README when adding new features or changing architecture
+1. **Use branches**: Always create feature branches from `master` (see [Git Workflow & Branching](#git-workflow--branching))
+2. **Write meaningful commit messages**: Describe what and why, not how
+3. **Test changes thoroughly**: Run tests before committing
+4. **Run migrations**: Before pushing database changes, ensure migrations are up-to-date
+5. **Update documentation**: Update this README when adding new features or changing architecture
+6. **Code review**: Request reviews before merging to `master`
+
+For detailed branch workflow, see the [Git Workflow & Branching](#git-workflow--branching) section above.
 
 ## License
 
