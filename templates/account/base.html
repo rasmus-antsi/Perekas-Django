@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}FamilyHub{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,54 +13,54 @@
     >
     <link rel="stylesheet" href="{% static 'styles.css' %}">
   </head>
-  <body class="auth-body">
-    <div class="auth-background"></div>
-
-    <div class="auth-shell">
-      <div class="auth-card">
-        <div class="auth-card-inner">
-          <section class="auth-visual" aria-hidden="true">
-            <div class="auth-visual-glow glow-one"></div>
-            <div class="auth-visual-glow glow-two"></div>
-            <div class="auth-visual-header">
-              <span class="auth-logo">FH</span>
-              <div>
-                <span class="auth-brand-title">FamilyHub</span>
-                <span class="auth-brand-tagline">Together Daily</span>
-              </div>
-            </div>
-            <div class="auth-visual-body">
-              <h2>Unlock calm, connected family routines</h2>
-              <p>
-                Keep tasks, rewards, and the weekly shopping list flowing together. Celebrate wins,
-                stay organized, and keep everyone in sync.
-              </p>
-            </div>
-            <div class="auth-visual-cards">
-              <div class="auth-visual-card">
-                <span class="card-label">Families organized</span>
-                <span class="card-value">12k+</span>
-              </div>
-              <div class="auth-visual-card">
-                <span class="card-label">Rewards shared</span>
-                <span class="card-value">58k</span>
-              </div>
-            </div>
-          </section>
-
-          <main class="auth-form-wrapper">
-            <a href="{% url 'a_landing:landing_index' %}" class="auth-card-brand">
-              <span class="auth-logo">FH</span>
-              <div>
-                <span class="auth-brand-title">FamilyHub</span>
-                <span class="auth-brand-tagline">Together Daily</span>
-              </div>
-            </a>
-            {% block content %}{% endblock %}
-          </main>
+  <body class="landing-body">
+    <div class="landing-background"></div>
+    
+    <header class="landing-nav">
+      <a href="{% url 'a_landing:landing_index' %}" class="landing-brand">
+        <span class="landing-logo">FH</span>
+        <div>
+          <span class="landing-brand-title">FamilyHub</span>
+          <span class="landing-brand-tagline">Together Daily</span>
         </div>
+      </a>
+      <nav class="landing-nav-links">
+        <a href="{% url 'a_landing:landing_index' %}">Home</a>
+        <a href="{% url 'a_landing:features' %}">Features</a>
+        <a href="{% url 'a_landing:about' %}">About</a>
+        <a href="{% url 'a_landing:plans' %}">Plans</a>
+      </nav>
+      <div class="landing-nav-actions">
+        {% if user.is_authenticated %}
+          <a class="landing-link" href="{% url 'a_dashboard:dashboard' %}">Dashboard</a>
+        {% else %}
+          <a class="landing-link" href="{% url 'account_login' %}">Log in</a>
+          <a class="landing-button primary" href="{% url 'account_signup' %}">Get Started</a>
+        {% endif %}
       </div>
-    </div>
+      <button class="landing-nav-toggle" aria-label="Toggle menu">
+        <span aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <main class="auth-main">
+      <div class="auth-container">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+
+    <script>
+      const toggle = document.querySelector('.landing-nav-toggle');
+      const navLinks = document.querySelector('.landing-nav-links');
+      const navActions = document.querySelector('.landing-nav-actions');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          toggle.classList.toggle('open');
+          navLinks.classList.toggle('open');
+          navActions.classList.toggle('open');
+        });
+      }
+    </script>
   </body>
 </html>
 
