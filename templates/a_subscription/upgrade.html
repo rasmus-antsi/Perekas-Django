@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Upgrade Subscription | FamilyHub{% endblock %}
+
+{% block nav_subscription_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container settings-page">
+    <section class="settings-header">
+      <div>
+        <h1 class="page-title">Upgrade Subscription</h1>
+        <p class="page-subtitle">Choose a plan that fits your family's needs</p>
+      </div>
+      <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">← Back to Subscription</a>
+    </section>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="plans-grid">
+      <div class="plan-card {% if current_tier == 'FREE' %}plan-current{% endif %}">
+        <div class="plan-card-header">
+          <h3 class="plan-card-title">Free</h3>
+          <div class="plan-card-price">$0<span>/month</span></div>
+        </div>
+        <div class="plan-card-features">
+          <ul>
+            <li>1 Parent</li>
+            <li>1 Child</li>
+            <li>5 Tasks per month</li>
+            <li>3 Rewards per month</li>
+            <li>No Shopping List</li>
+          </ul>
+        </div>
+        {% if current_tier == 'FREE' %}
+          <div class="plan-card-action">
+            <span class="plan-current-badge">Current Plan</span>
+          </div>
+        {% else %}
+          <div class="plan-card-action">
+            <span class="plan-disabled">Downgrade not available</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="plan-card plan-featured {% if current_tier == 'STARTER' %}plan-current{% endif %}">
+        <div class="plan-card-badge">Popular</div>
+        <div class="plan-card-header">
+          <h3 class="plan-card-title">Starter</h3>
+          <div class="plan-card-price">$9.99<span>/month</span></div>
+        </div>
+        <div class="plan-card-features">
+          <ul>
+            <li>2 Parents</li>
+            <li>2 Children</li>
+            <li>20 Tasks per month</li>
+            <li>15 Rewards per month</li>
+            <li>Shopping List ✓</li>
+          </ul>
+        </div>
+        <div class="plan-card-action">
+          {% if current_tier == 'STARTER' %}
+            <span class="plan-current-badge">Current Plan</span>
+          {% else %}
+            <form method="post" action="{% url 'a_subscription:upgrade' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="STARTER">
+              <input type="hidden" name="billing_period" value="monthly">
+              <button type="submit" class="btn btn-primary">Upgrade to Starter</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="plan-card {% if current_tier == 'PRO' %}plan-current{% endif %}">
+        <div class="plan-card-header">
+          <h3 class="plan-card-title">Pro</h3>
+          <div class="plan-card-price">$19.99<span>/month</span></div>
+        </div>
+        <div class="plan-card-features">
+          <ul>
+            <li>4 Parents</li>
+            <li>10 Children</li>
+            <li>100 Tasks per month</li>
+            <li>50 Rewards per month</li>
+            <li>Shopping List ✓</li>
+          </ul>
+        </div>
+        <div class="plan-card-action">
+          {% if current_tier == 'PRO' %}
+            <span class="plan-current-badge">Current Plan</span>
+          {% else %}
+            <form method="post" action="{% url 'a_subscription:upgrade' %}">
+              {% csrf_token %}
+              <input type="hidden" name="tier" value="PRO">
+              <input type="hidden" name="billing_period" value="monthly">
+              <button type="submit" class="btn btn-primary">Upgrade to Pro</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="upgrade-note">
+      <p><strong>Note:</strong> Upgrading will redirect you to Stripe Checkout to complete payment. Your subscription will be activated immediately after successful payment.</p>
+    </div>
+  </div>
+
+  <style>
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+    .plan-card {
+      position: relative;
+      background: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 1rem;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .plan-card-featured {
+      border-color: #3b82f6;
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.1);
+    }
+    .plan-card-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3b82f6;
+      color: white;
+      padding: 0.25rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .plan-card-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .plan-card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #111827;
+    }
+    .plan-card-price {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #111827;
+    }
+    .plan-card-price span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: #6b7280;
+    }
+    .plan-card-features {
+      flex: 1;
+      margin-bottom: 1.5rem;
+    }
+    .plan-card-features ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .plan-card-features li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f3f4f6;
+      color: #374151;
+    }
+    .plan-card-features li:last-child {
+      border-bottom: none;
+    }
+    .plan-card-action {
+      margin-top: auto;
+    }
+    .plan-current-badge {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: #d1fae5;
+      color: #065f46;
+      border-radius: 0.5rem;
+      font-weight: 600;
+    }
+    .plan-disabled {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: #f3f4f6;
+      color: #6b7280;
+      border-radius: 0.5rem;
+    }
+    .plan-current {
+      border-color: #10b981;
+    }
+    .upgrade-note {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 0.5rem;
+      color: #92400e;
+    }
+    .messages {
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .message-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .message-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+  </style>
+{% endblock %}
+

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Cancel Subscription | FamilyHub{% endblock %}
+
+{% block nav_subscription_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container settings-page">
+    <section class="settings-header">
+      <div>
+        <h1 class="page-title">Cancel Subscription</h1>
+        <p class="page-subtitle">Cancel your subscription</p>
+      </div>
+      <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">← Back to Subscription</a>
+    </section>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="settings-grid">
+      <section class="settings-card">
+        <header class="settings-card-header card-header">
+          <div class="card-title-wrap">
+            <span class="card-icon icon-orange"></span>
+            <div>
+              <h2>Cancel Subscription</h2>
+              <p>Your subscription will remain active until the end of your billing period.</p>
+            </div>
+          </div>
+        </header>
+        <div class="settings-card-body">
+          {% if subscription %}
+            <div class="cancel-info">
+              <p><strong>Current Plan:</strong> {{ subscription.get_tier_display }}</p>
+              {% if subscription.current_period_end %}
+                <p><strong>Access until:</strong> {{ subscription.current_period_end|date:"F d, Y" }}</p>
+              {% endif %}
+              <p class="cancel-warning">
+                After cancellation, your subscription will remain active until the end of your current billing period. 
+                After that, you'll be downgraded to the Free plan.
+              </p>
+            </div>
+            <form method="post" class="cancel-form">
+              {% csrf_token %}
+              <div class="form-actions">
+                <button type="submit" class="btn btn-danger">Cancel Subscription</button>
+                <a href="{% url 'a_subscription:status' %}" class="btn btn-ghost">Keep Subscription</a>
+              </div>
+            </form>
+          {% else %}
+            <p class="empty-state">No active subscription found.</p>
+            <a href="{% url 'a_subscription:status' %}" class="btn btn-primary">Back to Subscription</a>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <style>
+    .cancel-info {
+      margin-bottom: 2rem;
+    }
+    .cancel-info p {
+      margin: 1rem 0;
+      color: #374151;
+    }
+    .cancel-warning {
+      padding: 1rem;
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 0.5rem;
+      color: #92400e;
+      margin-top: 1.5rem !important;
+    }
+    .cancel-form {
+      margin-top: 2rem;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      border: none;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .messages {
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .message-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .message-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+  </style>
+{% endblock %}
+

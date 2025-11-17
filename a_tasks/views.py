@@ -1,11 +1,13 @@
 import itertools
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from a_family.models import Family, UserProfile
+from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Task
 
@@ -58,6 +60,17 @@ def index(request):
             points_raw = request.POST.get("points", "0")
 
             if name:
+                # Check subscription limit before creating
+                can_create, current_count, limit, tier = check_subscription_limit(family, 'tasks', 1)
+                if not can_create:
+                    messages.error(
+                        request,
+                        f"You've reached your monthly task limit ({limit} tasks). "
+                        f"You've created {current_count} tasks this month. "
+                        f"Please upgrade your subscription to create more tasks."
+                    )
+                    return redirect("a_tasks:index")
+
                 try:
                     priority_value = int(priority)
                 except (TypeError, ValueError):
@@ -84,6 +97,8 @@ def index(request):
                     priority=priority_value,
                     points=points_value,
                 )
+                # Increment usage counter
+                increment_usage(family, 'tasks', 1)
 
         elif action == "update" and is_parent:
             task = _get_task()

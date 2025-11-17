@@ -11,6 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +46,7 @@ INSTALLED_APPS = [
     'a_landing',
     'a_dashboard',
     'a_family',
+    'a_subscription',
     'a_shopping',
     'a_rewards',
     'a_tasks',
@@ -160,3 +165,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+
+STARTER_MONTHLY_PRICE_ID = 'price_1SUGe6BzIQ6d8qpukWcYlrNE'
+STARTER_YEARLY_PRICE_ID = 'price_1SUGe7BzIQ6d8qpuSGxJjuAD'
+PRO_MONTHLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuSWLYAOtF'
+PRO_YEARLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuYZaZjTRN'

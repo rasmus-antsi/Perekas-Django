@@ -1,10 +1,12 @@
 import itertools
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from a_family.models import Family, UserProfile
+from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Reward
 
@@ -56,6 +58,17 @@ def index(request):
             points_raw = request.POST.get("points", "0")
 
             if name:
+                # Check subscription limit before creating
+                can_create, current_count, limit, tier = check_subscription_limit(family, 'rewards', 1)
+                if not can_create:
+                    messages.error(
+                        request,
+                        f"You've reached your monthly reward limit ({limit} rewards). "
+                        f"You've created {current_count} rewards this month. "
+                        f"Please upgrade your subscription to create more rewards."
+                    )
+                    return redirect("a_rewards:index")
+
                 try:
                     points_value = max(0, int(points_raw))
                 except (TypeError, ValueError):
@@ -68,6 +81,8 @@ def index(request):
                     family=family,
                     created_by=user,
                 )
+                # Increment usage counter
+                increment_usage(family, 'rewards', 1)
 
         elif action == "update" and is_parent:
             reward = _get_reward()

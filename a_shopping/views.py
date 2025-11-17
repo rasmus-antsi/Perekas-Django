@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.shortcuts import redirect, render
 
 from a_family.models import Family
+from a_subscription.utils import has_shopping_list_access
 
 from .models import ShoppingListItem
 
@@ -15,6 +17,15 @@ def index(request):
         family = user.families.first()
     if family is None:
         family = Family.objects.filter(owner=user).first()
+
+    # Check if family has shopping list access
+    if family and not has_shopping_list_access(family):
+        messages.warning(
+            request,
+            "Shopping list is only available with Starter or Pro subscription. "
+            "Please upgrade your subscription to access this feature."
+        )
+        return redirect('a_subscription:status')
 
     if request.method == "POST":
         action = request.POST.get("action")

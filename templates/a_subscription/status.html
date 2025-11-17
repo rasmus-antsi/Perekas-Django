@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription | FamilyHub{% endblock %}
+
+{% block nav_subscription_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container settings-page">
+    <section class="settings-header">
+      <div>
+        <h1 class="page-title">Subscription</h1>
+        <p class="page-subtitle">Manage your family subscription and view usage</p>
+      </div>
+      {% if family %}
+        <div class="settings-family-chip">
+          <span class="chip-label">Current Family</span>
+          <span class="chip-value">{{ family.name }}</span>
+        </div>
+      {% endif %}
+    </section>
+
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if not family %}
+      <section class="empty-state full-row">
+        <p>No family profile found. You must be the family owner to manage subscriptions.</p>
+      </section>
+    {% else %}
+      <div class="settings-grid">
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-purple"></span>
+              <div>
+                <h2>Current Plan</h2>
+                <p>Your active subscription tier and billing information.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <div class="subscription-plan">
+              <div class="plan-badge plan-badge-{{ tier|lower }}">
+                <span>{{ tier }}</span>
+              </div>
+              <h3 class="plan-name">{{ tier }} Plan</h3>
+              {% if subscription %}
+                <div class="plan-details">
+                  <p><strong>Status:</strong> {{ subscription.get_status_display }}</p>
+                  {% if subscription.current_period_end %}
+                    <p><strong>Renews:</strong> {{ subscription.current_period_end|date:"F d, Y" }}</p>
+                  {% endif %}
+                  {% if subscription.stripe_subscription_id %}
+                    <p><strong>Subscription ID:</strong> {{ subscription.stripe_subscription_id|truncatechars:20 }}</p>
+                  {% endif %}
+                </div>
+                {% if subscription.status == 'active' and subscription.tier != 'FREE' %}
+                  <form method="post" action="{% url 'a_subscription:cancel' %}" style="margin-top: 1.5rem;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost">Cancel Subscription</button>
+                  </form>
+                {% endif %}
+              {% else %}
+                <p class="plan-description">You're currently on the free tier.</p>
+                <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary" style="margin-top: 1.5rem;">Upgrade Plan</a>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-green"></span>
+              <div>
+                <h2>Plan Limits</h2>
+                <p>Features and limits for your current subscription tier.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <div class="limits-list">
+              <div class="limit-item">
+                <span class="limit-label">Max Parents</span>
+                <span class="limit-value">{{ limits.max_parents }}</span>
+              </div>
+              <div class="limit-item">
+                <span class="limit-label">Max Children</span>
+                <span class="limit-value">{{ limits.max_children }}</span>
+              </div>
+              <div class="limit-item">
+                <span class="limit-label">Tasks per Month</span>
+                <span class="limit-value">{{ limits.max_tasks_per_month }}</span>
+              </div>
+              <div class="limit-item">
+                <span class="limit-label">Rewards per Month</span>
+                <span class="limit-value">{{ limits.max_rewards_per_month }}</span>
+              </div>
+              <div class="limit-item">
+                <span class="limit-label">Shopping List</span>
+                <span class="limit-value">
+                  {% if limits.shopping_list_enabled %}
+                    <span style="color: #10b981;">Enabled</span>
+                  {% else %}
+                    <span style="color: #ef4444;">Disabled</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-orange"></span>
+              <div>
+                <h2>Monthly Usage</h2>
+                <p>Track your usage for the current month.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            {% if usage %}
+              <div class="usage-stats">
+                <div class="usage-item">
+                  <div class="usage-header">
+                    <span class="usage-label">Tasks Created</span>
+                    <span class="usage-count">{{ usage.tasks_created }} / {{ limits.max_tasks_per_month }}</span>
+                  </div>
+                  <div class="usage-bar">
+                    <div class="usage-bar-fill" style="width: {% widthratio usage.tasks_created limits.max_tasks_per_month 100 %}%;"></div>
+                  </div>
+                  <span class="usage-remaining">{{ tasks_remaining }} remaining</span>
+                </div>
+                <div class="usage-item">
+                  <div class="usage-header">
+                    <span class="usage-label">Rewards Created</span>
+                    <span class="usage-count">{{ usage.rewards_created }} / {{ limits.max_rewards_per_month }}</span>
+                  </div>
+                  <div class="usage-bar">
+                    <div class="usage-bar-fill" style="width: {% widthratio usage.rewards_created limits.max_rewards_per_month 100 %}%;"></div>
+                  </div>
+                  <span class="usage-remaining">{{ rewards_remaining }} remaining</span>
+                </div>
+              </div>
+            {% else %}
+              <p class="empty-state">No usage data for this month yet.</p>
+            {% endif %}
+          </div>
+        </section>
+
+        {% if tier == 'FREE' %}
+          <section class="settings-card">
+            <header class="settings-card-header card-header">
+              <div class="card-title-wrap">
+                <span class="card-icon icon-teal"></span>
+                <div>
+                  <h2>Upgrade Your Plan</h2>
+                  <p>Unlock more features and higher limits.</p>
+                </div>
+              </div>
+            </header>
+            <div class="settings-card-body">
+              <p>Upgrade to Starter or Pro to get more features:</p>
+              <ul style="margin: 1rem 0; padding-left: 1.5rem;">
+                <li>More family members</li>
+                <li>Higher task and reward limits</li>
+                <li>Shopping list access</li>
+              </ul>
+              <a href="{% url 'a_subscription:upgrade' %}" class="btn btn-primary">View Plans</a>
+            </div>
+          </section>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <style>
+    .subscription-plan {
+      padding: 1.5rem 0;
+    }
+    .plan-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .plan-badge-free {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .plan-badge-starter {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .plan-badge-pro {
+      background: #fce7f3;
+      color: #9f1239;
+    }
+    .plan-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0.5rem 0;
+    }
+    .plan-details {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    .plan-details p {
+      margin: 0.5rem 0;
+      color: #6b7280;
+    }
+    .limits-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .limit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: #f9fafb;
+      border-radius: 0.5rem;
+    }
+    .limit-label {
+      font-weight: 500;
+      color: #374151;
+    }
+    .limit-value {
+      font-weight: 600;
+      color: #111827;
+    }
+    .usage-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .usage-item {
+      padding: 1rem;
+      background: #f9fafb;
+      border-radius: 0.5rem;
+    }
+    .usage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .usage-label {
+      font-weight: 500;
+      color: #374151;
+    }
+    .usage-count {
+      font-weight: 600;
+      color: #111827;
+    }
+    .usage-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+    .usage-bar-fill {
+      height: 100%;
+      background: #3b82f6;
+      transition: width 0.3s ease;
+    }
+    .usage-remaining {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+    .messages {
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .message-success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .message-error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+    .message-warning {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #f59e0b;
+    }
+  </style>
+{% endblock %}
+
