@@ -267,8 +267,8 @@
               {% for member in family_members %}
                 <option value="{{ member.id }}">
                   {{ member.get_full_name|default:member.username }}
-                  {% if member.family_profile %}
-                    ({{ member.family_profile.get_role_display }})
+                  {% if member.role %}
+                    ({{ member.get_role_display }})
                   {% endif %}
                 </option>
               {% endfor %}

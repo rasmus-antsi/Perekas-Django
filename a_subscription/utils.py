@@ -1,4 +1,6 @@
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.utils import timezone
 from datetime import date
 from .models import Subscription, SubscriptionUsage
@@ -148,7 +150,7 @@ def can_add_member(family, role):
     
     Args:
         family: Family instance
-        role: 'parent' or 'child' (from UserProfile.ROLE_CHOICES)
+        role: 'parent' or 'child' (from User.ROLE_CHOICES)
     
     Returns:
         tuple: (can_add: bool, current_count: int, limit: int, tier: str)
@@ -159,30 +161,19 @@ def can_add_member(family, role):
     tier = get_family_subscription(family)
     limits = get_tier_limits(tier)
 
-    from a_family.models import UserProfile
+    from a_family.models import User
 
-    if role == UserProfile.ROLE_PARENT:
+    if role == User.ROLE_PARENT:
         limit = limits['max_parents']
         # Count owner + members with parent role
         current_count = 1  # Owner is always a parent
-        current_count += UserProfile.objects.filter(
-            user__families=family,
-            role=UserProfile.ROLE_PARENT
-        ).count()
+        current_count += family.members.filter(role=User.ROLE_PARENT).count()
         # Don't double count owner if they're also in members
-        if family.owner in family.members.all():
-            parent_profiles = UserProfile.objects.filter(
-                user=family.owner,
-                role=UserProfile.ROLE_PARENT
-            )
-            if parent_profiles.exists():
-                current_count -= 1
-    elif role == UserProfile.ROLE_CHILD:
+        if family.owner in family.members.all() and family.owner.role == User.ROLE_PARENT:
+            current_count -= 1
+    elif role == User.ROLE_CHILD:
         limit = limits['max_children']
-        current_count = UserProfile.objects.filter(
-            user__families=family,
-            role=UserProfile.ROLE_CHILD
-        ).count()
+        current_count = family.members.filter(role=User.ROLE_CHILD).count()
     else:
         return False, 0, 0, tier
 

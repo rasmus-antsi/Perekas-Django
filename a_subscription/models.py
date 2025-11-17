@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from datetime import date
@@ -32,21 +31,30 @@ class Subscription(models.Model):
     ]
 
     owner = models.ForeignKey(
-        User,
+        'a_family.User',
         on_delete=models.CASCADE,
-        related_name='subscriptions'
+        related_name='subscriptions',
+        db_index=True,
     )
-    tier = models.CharField(max_length=10, choices=TIER_CHOICES, default=TIER_FREE)
-    stripe_subscription_id = models.CharField(max_length=255, null=True, blank=True)
-    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    tier = models.CharField(max_length=10, choices=TIER_CHOICES, default=TIER_FREE, db_index=True)
+    stripe_subscription_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE, db_index=True)
     current_period_start = models.DateTimeField(null=True, blank=True)
     current_period_end = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'subscription_subscription'
+        verbose_name = 'subscription'
+        verbose_name_plural = 'subscriptions'
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['owner', 'status']),
+            models.Index(fields=['owner', 'tier']),
+            models.Index(fields=['status', 'tier']),
+        ]
 
     def __str__(self):
         return f'{self.owner.username} - {self.get_tier_display()} ({self.get_status_display()})'
@@ -63,16 +71,23 @@ class SubscriptionUsage(models.Model):
     family = models.ForeignKey(
         'a_family.Family',
         on_delete=models.CASCADE,
-        related_name='subscription_usage'
+        related_name='subscription_usage',
+        db_index=True,
     )
-    month = models.DateField()  # First day of the month
+    month = models.DateField(db_index=True)  # First day of the month
     tasks_created = models.PositiveIntegerField(default=0)
     rewards_created = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = 'subscription_subscriptionusage'
+        verbose_name = 'subscription usage'
+        verbose_name_plural = 'subscription usages'
         unique_together = ['family', 'month']
         ordering = ['-month']
+        indexes = [
+            models.Index(fields=['family', 'month']),
+        ]
 
     def __str__(self):
         return f'{self.family.name} - {self.month.strftime("%B %Y")}'

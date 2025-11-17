@@ -1,21 +1,19 @@
 from django import forms
 from allauth.account.forms import SignupForm
 
-from .models import UserProfile
+from .models import User
 
 
 class FamilySignupForm(SignupForm):
     role = forms.ChoiceField(
-        choices=UserProfile.ROLE_CHOICES,
+        choices=User.ROLE_CHOICES,
         label="Role",
     )
 
     def save(self, request):
         user = super().save(request)
-        role = self.cleaned_data.get("role", UserProfile.ROLE_PARENT)
-        UserProfile.objects.update_or_create(
-            user=user,
-            defaults={"role": role},
-        )
+        role = self.cleaned_data.get("role", User.ROLE_PARENT)
+        user.role = role
+        user.save()
         return user
 
