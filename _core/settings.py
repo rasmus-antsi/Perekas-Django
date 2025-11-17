@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+DEBUG = True
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,12 +28,15 @@ AUTH_USER_MODEL = 'a_family.User'
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0'
+if not DEBUG:
+    SECRET_KEY = os.getenv('SECRET_KEY')
+else:
+    SECRET_KEY = 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+if not DEBUG:
+    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
+else:
+    ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -177,10 +182,20 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STRIPE_PUBLIC_KEY = 'pk_test_51SUGYoBzIQ6d8qpuy5GlUZkVVWs4sW4AyWREra4wuQIpegKeJr3ebxFsar5J5IMKkxmlT3DoDNLcGbrC0lhrGn8M00au1YfZc3'
-STRIPE_SECRET_KEY = 'sk_test_51SUGYoBzIQ6d8qpucZ7a2s0J03k7VR9D7p2CnYrrWD7t9gQBgA5ENDPeMs28WPtspAEepqRbUineqSQwFZHs34bd00xkLcYDr4'
+if not DEBUG:
+    STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+else:
+    STRIPE_PUBLIC_KEY = 'pk_test_51SUGYoBzIQ6d8qpuy5GlUZkVVWs4sW4AyWREra4wuQIpegKeJr3ebxFsar5J5IMKkxmlT3DoDNLcGbrC0lhrGn8M00au1YfZc3'
+    STRIPE_SECRET_KEY = 'sk_test_51SUGYoBzIQ6d8qpucZ7a2s0J03k7VR9D7p2CnYrrWD7t9gQBgA5ENDPeMs28WPtspAEepqRbUineqSQwFZHs34bd00xkLcYDr4'
 
-STARTER_MONTHLY_PRICE_ID = 'price_1SUGe6BzIQ6d8qpukWcYlrNE'
-STARTER_YEARLY_PRICE_ID = 'price_1SUGe7BzIQ6d8qpuSGxJjuAD'
-PRO_MONTHLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuSWLYAOtF'
-PRO_YEARLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuYZaZjTRN'
+if not DEBUG:
+    STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID')
+    STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID')
+    PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID')
+    PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID')
+else:
+    STARTER_MONTHLY_PRICE_ID = 'price_1SUGe6BzIQ6d8qpukWcYlrNE'
+    STARTER_YEARLY_PRICE_ID = 'price_1SUGe7BzIQ6d8qpuSGxJjuAD'
+    PRO_MONTHLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuSWLYAOtF'
+    PRO_YEARLY_PRICE_ID = 'price_1SUGg5BzIQ6d8qpuYZaZjTRN'
