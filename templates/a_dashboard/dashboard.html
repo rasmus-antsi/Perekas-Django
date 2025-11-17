@@ -8,7 +8,7 @@
   <div class="page-container dashboard-page">
     <section class="dashboard-header">
       <div>
-        <h1 class="page-title">Welcome back, {{ family.name|default:"Family" }}</h1>
+        <h1 class="page-title">Welcome back, {{ request.user.username }}</h1>
         <p class="page-subtitle">Here&apos;s your household overview for today</p>
       </div>
     </section>
