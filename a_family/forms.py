@@ -8,7 +8,6 @@ class FamilySignupForm(SignupForm):
     role = forms.ChoiceField(
         choices=UserProfile.ROLE_CHOICES,
         label="Role",
-        widget=forms.Select(attrs={"class": "auth-select"}),
     )
 
     def save(self, request):

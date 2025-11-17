@@ -96,9 +96,14 @@ SITE_ID = 1
 
 LOGIN_REDIRECT_URL = 'a_dashboard:dashboard'
 LOGIN_URL = 'account_login'
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'a_dashboard:dashboard'
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'account_login'
 
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/5m',
@@ -106,8 +111,11 @@ ACCOUNT_RATE_LIMITS = {
 ACCOUNT_FORMS = {
     'signup': 'a_family.forms.FamilySignupForm',
 }
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[FamilyHub] '
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@familyhub.app')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 
 # Database
