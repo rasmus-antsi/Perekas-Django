@@ -1,20 +1,25 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Family, UserProfile
+from .models import Family, User
 
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "points", "created_at", "updated_at")
-    list_filter = ("role",)
-    search_fields = ("user__username", "user__email", "user__first_name", "user__last_name")
-    ordering = ("user__username",)
-    readonly_fields = ("created_at", "updated_at")
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'points', 'is_staff', 'date_joined')
+    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active', 'date_joined')
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('FamilyHub Profile', {'fields': ('role', 'points')}),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ('FamilyHub Profile', {'fields': ('role', 'points')}),
+    )
 
 
 @admin.register(Family)
 class FamilyAdmin(admin.ModelAdmin):
-    list_display = ("name", "owner", "id", "created_at", "updated_at")
-    search_fields = ("name", "owner__username", "owner__email")
-    filter_horizontal = ("members",)
-    readonly_fields = ("created_at", "updated_at")
+    list_display = ('name', 'owner', 'id', 'created_at', 'updated_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'owner__username', 'owner__email')
+    filter_horizontal = ('members',)
+    readonly_fields = ('id', 'created_at', 'updated_at')
