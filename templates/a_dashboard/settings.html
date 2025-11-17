@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | FamilyHub{% endblock %}
+
+{% block nav_settings_active %} active{% endblock %}
+
+{% block content %}
+  <div class="page-container settings-page">
+    <section class="settings-header">
+      <div>
+        <h1 class="page-title">Family Settings</h1>
+        <p class="page-subtitle">Manage your household preferences and member access</p>
+      </div>
+      {% if family %}
+        <div class="settings-family-chip">
+          <span class="chip-label">Current Family</span>
+          <span class="chip-value">{{ family.name }}</span>
+        </div>
+      {% endif %}
+    </section>
+
+    {% if not family %}
+      <section class="empty-state full-row">
+        <p>No family profile found. Create or join a family to customize settings.</p>
+      </section>
+    {% else %}
+      <div class="settings-grid">
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-purple"></span>
+              <div>
+                <h2>Profile &amp; Account</h2>
+                <p>Update your personal information and security preferences.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <form method="post" class="settings-form">
+              {% csrf_token %}
+              <div class="form-grid">
+                <label class="form-field">
+                  <span class="field-label">Display Name</span>
+                  <input type="text" name="display_name" value="{{ settings_user.get_full_name|default:settings_user.username }}" placeholder="Enter your name">
+                </label>
+                <label class="form-field">
+                  <span class="field-label">Email Address</span>
+                  <input type="email" name="email" value="{{ settings_user.email }}" placeholder="name@email.com">
+                </label>
+              </div>
+              <label class="form-field">
+                <span class="field-label">Role</span>
+                <div class="field-select">
+                  <select name="role" {% if not is_parent %}disabled{% endif %}>
+                    <option value="{{ role_parent }}" {% if current_role == role_parent %}selected{% endif %}>Parent</option>
+                    <option value="{{ role_child }}" {% if current_role == role_child %}selected{% endif %}>Child</option>
+                  </select>
+                </div>
+                {% if not is_parent %}
+                  <span class="field-hint">Only parents can change roles.</span>
+                {% endif %}
+              </label>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" disabled>Save changes</button>
+                <button type="button" class="btn btn-ghost">Change password</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-orange"></span>
+              <div>
+                <h2>Household Preferences</h2>
+                <p>Configure how your family collaborates and earns points.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <form method="post" class="settings-form settings-form-columns">
+              {% csrf_token %}
+              <div class="form-grid form-grid-single">
+                <label class="form-field">
+                  <span class="field-label">Weekly Points Goal</span>
+                  <input type="number" name="points_goal" value="{{ family.points_goal|default:500 }}" min="0" step="25" disabled>
+                </label>
+              </div>
+              <div class="settings-toggle-stack">
+                <label class="toggle-row">
+                  <input type="checkbox" name="approval_required" checked disabled>
+                  <span class="toggle-slider"></span>
+                  <div>
+                    <span class="toggle-title">Task approval required</span>
+                    <span class="toggle-description">Parents must approve completed tasks before awarding points.</span>
+                  </div>
+                </label>
+                <label class="toggle-row">
+                  <input type="checkbox" name="auto_assign" disabled>
+                  <span class="toggle-slider"></span>
+                  <div>
+                    <span class="toggle-title">Auto-assign new tasks</span>
+                    <span class="toggle-description">Rotate new assignments evenly among family members.</span>
+                  </div>
+                </label>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" disabled>Save preferences</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <header class="settings-card-header card-header">
+            <div class="card-title-wrap">
+              <span class="card-icon icon-teal"></span>
+              <div>
+                <h2>Notifications</h2>
+                <p>Choose how and when we notify your family.</p>
+              </div>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <form method="post" class="settings-form">
+              {% csrf_token %}
+              <fieldset class="settings-toggle-list">
+                <label class="settings-checkbox">
+                  <input type="checkbox" name="notify_tasks" {% if notification_preferences.task_updates %}checked{% endif %} disabled>
+                  <span class="settings-checkbox-indicator"></span>
+                  <div>
+                    <span class="toggle-title">Task activity</span>
+                    <span class="toggle-description">Alerts for completed tasks and pending approvals.</span>
+                  </div>
+                </label>
+                <label class="settings-checkbox">
+                  <input type="checkbox" name="notify_rewards" {% if notification_preferences.reward_updates %}checked{% endif %} disabled>
+                  <span class="settings-checkbox-indicator"></span>
+                  <div>
+                    <span class="toggle-title">Reward updates</span>
+                    <span class="toggle-description">Get updates when rewards are added or redeemed.</span>
+                  </div>
+                </label>
+                <label class="settings-checkbox">
+                  <input type="checkbox" name="notify_shopping" {% if notification_preferences.shopping_updates %}checked{% endif %} disabled>
+                  <span class="settings-checkbox-indicator"></span>
+                  <div>
+                    <span class="toggle-title">Shopping list changes</span>
+                    <span class="toggle-description">Stay informed about new items and cart status.</span>
+                  </div>
+                </label>
+                <label class="settings-checkbox">
+                  <input type="checkbox" name="notify_summary" {% if notification_preferences.weekly_summary %}checked{% endif %} disabled>
+                  <span class="settings-checkbox-indicator"></span>
+                  <div>
+                    <span class="toggle-title">Weekly digest</span>
+                    <span class="toggle-description">Receive a weekly summary of your household activity.</span>
+                  </div>
+                </label>
+              </fieldset>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" disabled>Update notifications</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+

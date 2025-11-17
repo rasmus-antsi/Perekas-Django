@@ -134,3 +134,38 @@ def dashboard(request):
         "quick_actions": quick_actions,
     }
     return render(request, 'a_dashboard/dashboard.html', context)
+
+
+@login_required
+def settings(request):
+    user = request.user
+    family = _get_family_for_user(user)
+
+    profile = getattr(user, "family_profile", None)
+    if profile is None and family and family.owner_id == user.id:
+        profile, _ = UserProfile.objects.get_or_create(user=user, defaults={"role": UserProfile.ROLE_PARENT})
+
+    is_parent = profile and profile.role == UserProfile.ROLE_PARENT
+    is_child = profile and profile.role == UserProfile.ROLE_CHILD
+    settings_user = profile.user if profile else user
+    current_role = profile.role if profile else None
+
+    notification_preferences = {
+        "task_updates": True,
+        "reward_updates": True,
+        "shopping_updates": False,
+        "weekly_summary": True,
+    }
+
+    context = {
+        "family": family,
+        "profile": profile,
+        "is_parent": is_parent,
+        "is_child": is_child,
+        "settings_user": settings_user,
+        "role_parent": UserProfile.ROLE_PARENT,
+        "role_child": UserProfile.ROLE_CHILD,
+        "current_role": current_role,
+        "notification_preferences": notification_preferences,
+    }
+    return render(request, 'a_dashboard/settings.html', context)
