@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 from django.utils import timezone
-from datetime import date
+from datetime import date, timedelta
 from django.conf import settings
 from .models import Subscription, SubscriptionUsage
 
@@ -66,20 +66,64 @@ def get_tier_limits(tier):
     return TIER_LIMITS.get(tier, TIER_LIMITS[Subscription.TIER_FREE])
 
 
+def get_current_period_start(family):
+    """
+    Get the start date of the current subscription period for a family.
+    For paid subscriptions, uses current_period_start.
+    For FREE tier, uses family creation date and calculates 30-day periods from there.
+    
+    Returns:
+        datetime: The start of the current subscription period
+    """
+    if not family:
+        return None
+    
+    # Get the family's subscription
+    subscription = Subscription.objects.filter(
+        owner=family.owner,
+        tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+    ).first()
+    
+    if subscription and subscription.is_active() and subscription.current_period_start:
+        # Paid subscription - use the subscription period start
+        return subscription.current_period_start
+    
+    # FREE tier - use family creation date as the base period start
+    # Calculate which 30-day period we're in based on family creation
+    family_created = family.created_at
+    if not family_created:
+        # Fallback to current time if created_at is somehow missing
+        family_created = timezone.now()
+    
+    now = timezone.now()
+    
+    # Calculate how many 30-day periods have passed since family creation
+    time_diff = now - family_created
+    days_passed = time_diff.total_seconds() / 86400  # Convert to days
+    periods_passed = int(days_passed / 30)
+    
+    # Calculate the start of the current period
+    period_start = family_created + timedelta(days=periods_passed * 30)
+    
+    return period_start
+
+
 def get_current_month_usage(family):
     """
-    Get or create usage record for the current month.
-    Returns the SubscriptionUsage object for the current month.
+    Get or create usage record for the current subscription period.
+    Returns the SubscriptionUsage object for the current period.
+    Uses subscription period start dates instead of calendar months.
     """
     if not family:
         return None
 
-    today = date.today()
-    month_start = date(today.year, today.month, 1)
+    period_start = get_current_period_start(family)
+    if not period_start:
+        return None
 
     usage, created = SubscriptionUsage.objects.get_or_create(
         family=family,
-        month=month_start,
+        period_start=period_start,
         defaults={
             'tasks_created': 0,
             'rewards_created': 0,
