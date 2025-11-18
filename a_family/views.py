@@ -53,27 +53,33 @@ def onboarding(request):
             if join_form.is_valid():
                 join_code = join_form.cleaned_data['join_code']
                 try:
-                    family = Family.objects.get(join_code=join_code)
+                    from django.db import transaction
                     
-                    # Check if user is already a member
-                    if family.owner == user or user in family.members.all():
-                        messages.info(request, 'Sa oled selle pere liige juba.')
-                        return redirect('a_dashboard:dashboard')
-                    
-                    # Check subscription limits
-                    can_add, current_count, limit, tier = family.can_add_member(user.role)
-                    if not can_add:
-                        messages.error(
-                            request,
-                            f'Selle pere {user.get_role_display()}-limiit on täis ({current_count}/{limit}). '
-                            f'Palun uuenda tellimust.'
-                        )
-                    else:
-                        family.members.add(user)
-                        messages.success(request, f'Liitusid perega "{family.name}"!')
-                        return redirect('a_dashboard:dashboard')
+                    with transaction.atomic():
+                        # Use select_for_update to prevent race conditions
+                        family = Family.objects.select_for_update().get(join_code=join_code)
+                        
+                        # Check if user is already a member
+                        if family.owner == user or user in family.members.all():
+                            messages.info(request, 'Sa oled selle pere liige juba.')
+                            return redirect('a_dashboard:dashboard')
+                        
+                        # Check subscription limits (re-check after locking to prevent race conditions)
+                        can_add, current_count, limit, tier = family.can_add_member(user.role)
+                        if not can_add:
+                            messages.error(
+                                request,
+                                f'Selle pere {user.get_role_display()}-limiit on täis ({current_count}/{limit}). '
+                                f'Palun uuenda tellimust.'
+                            )
+                        else:
+                            family.members.add(user)
+                            messages.success(request, f'Liitusid perega "{family.name}"!')
+                            return redirect('a_dashboard:dashboard')
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
+                except Exception as e:
+                    messages.error(request, f'Perega liitumisel tekkis viga: {str(e)}')
         
         else:
             if action == 'create' and not is_parent:

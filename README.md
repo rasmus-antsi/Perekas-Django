@@ -109,19 +109,36 @@ Family v1/
 
 ## Environment Variables
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file in the project root with the following variables. See `.env.example` for a complete template.
+
+### Required for Development
 
 ```env
 # Django Secret Key (generate a new one for production)
 SECRET_KEY=your-secret-key-here
 
-# Stripe Configuration
+# Stripe Configuration (Test Keys)
 STRIPE_PUBLIC_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...  # Optional for local development
+
+# Stripe Price IDs (Test)
+STARTER_MONTHLY_PRICE_ID=price_...
+STARTER_YEARLY_PRICE_ID=price_...
+PRO_MONTHLY_PRICE_ID=price_...
+PRO_YEARLY_PRICE_ID=price_...
 
 # Database (optional, defaults to SQLite)
 # DATABASE_URL=postgresql://user:password@localhost/dbname
 ```
+
+### Required for Production
+
+See `DEPLOYMENT.md` for a complete list of production environment variables including:
+- Production Stripe keys
+- Email SMTP configuration
+- Security settings
+- Domain configuration
 
 **Important**: Never commit the `.env` file to version control. It should be in `.gitignore`.
 

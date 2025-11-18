@@ -24,7 +24,7 @@
 - [x] **Set DEBUG = False for production** - ✅ Done: Uses os.getenv('DEBUG'), defaults to True for local
 - [x] **Configure ALLOWED_HOSTS** - ✅ Done: Configured via environment variable, supports Railway domains
 - [x] **Configure production email backend** - ✅ Done: SMTP configured with environment variables (port 465, SSL)
-- [ ] **Set up proper SECURE_SSL_REDIRECT, SECURE_HSTS_SECONDS, etc.** for HTTPS
+- [x] **Set up proper SECURE_SSL_REDIRECT, SECURE_HSTS_SECONDS, etc.** for HTTPS - ✅ Done: All security headers and HTTPS settings configured for production
 - [x] **Move Stripe keys to environment variables** - ✅ Done: All Stripe keys use os.getenv()
 
 ### 2. Stripe Webhook Security
@@ -50,10 +50,10 @@
 ## 🟡 Important Features (Should Have for MVP)
 
 ### 5. Settings Page Functionality
-- [ ] **Implement settings save functionality** - Currently only displays, doesn't save
-- [ ] **Add user profile update (name, email)**
-- [ ] **Add role change functionality (if needed)**
-- [ ] **Add notification preferences saving** - Currently hardcoded
+- [x] **Implement settings save functionality** - ✅ Done: Profile, notifications, and subscription management all save properly
+- [x] **Add user profile update (name, email)** - ✅ Done: Users can update display name, email, and role
+- [x] **Add role change functionality (if needed)** - ✅ Done: Parents can change their role
+- [x] **Add notification preferences saving** - ✅ Done: Notification preferences saved to User model as JSONField
 
 ### 6. Subscription Management
 - [x] **Add subscription downgrade handling** - ✅ Done: When subscription expires, reverts to FREE tier via webhook
@@ -63,12 +63,12 @@
 - [x] **Add subscription upgrade/downgrade between tiers** - ✅ Done: Prorated upgrades/downgrades implemented
 
 ### 7. Error Handling & Edge Cases
-- [ ] **Add proper 404/500 error pages**
-- [ ] **Handle edge cases in task approval** (what if task is deleted while pending?)
-- [ ] **Handle edge cases in reward claiming** (what if user points change between page load and claim?)
-- [ ] **Add validation for family member limits before joining**
-- [ ] **Handle concurrent task completion/approval**
-- [ ] **Add transaction handling for points updates** (prevent race conditions)
+- [x] **Add proper 404/500 error pages** - ✅ Done: Custom error pages with user-friendly messages
+- [x] **Handle edge cases in task approval** - ✅ Done: Handles deleted tasks, invalid states, with proper error messages
+- [x] **Handle edge cases in reward claiming** - ✅ Done: Race condition prevention with select_for_update and transaction handling
+- [x] **Add validation for family member limits before joining** - ✅ Done: Validates limits with transaction safety
+- [x] **Handle concurrent task completion/approval** - ✅ Done: Transaction handling with row-level locking
+- [x] **Add transaction handling for points updates** - ✅ Done: All points updates use transactions with select_for_update
 
 ### 8. Email Functionality
 - [x] **Set up production email backend** - ✅ Done: SMTP configured with veebimajutus.ee (port 465, SSL)
@@ -85,12 +85,12 @@
 ### 9. Static Files & Media
 - [x] **Configure STATIC_ROOT and STATIC_URL properly** - ✅ Done: STATIC_ROOT and STATIC_URL configured
 - [x] **Set up static file collection for production** - ✅ Done: collectstatic in Procfile, WhiteNoise middleware configured
-- [ ] **Configure MEDIA_ROOT and MEDIA_URL if needed**
+- [x] **Configure MEDIA_ROOT and MEDIA_URL if needed** - ✅ Done: Configured for future use
 - [ ] **Test static file serving in production**
 
 ### 10. Logging & Monitoring
-- [ ] **Set up logging configuration**
-- [ ] **Add error logging for critical operations**
+- [x] **Set up logging configuration** - ✅ Done: Comprehensive logging setup with console and file handlers
+- [x] **Add error logging for critical operations** - ✅ Done: Error logging in webhooks, transactions, and critical views
 - [ ] **Set up monitoring/alerting (optional but recommended)**
 
 ---
@@ -174,7 +174,7 @@
 3. ~~**Settings.py**: ALLOWED_HOSTS = [] (needs production hosts)~~ ✅ Fixed: Configured via environment variable
 4. ~~**a_subscription/views.py**: Webhook signature verification incomplete~~ ✅ Fixed: Webhook verification implemented
 5. ~~**Admin panels**: Missing registrations for Task, Reward, ShoppingListItem~~ ✅ Fixed
-6. **a_dashboard/views.py**: Settings view doesn't save changes
+6. ~~**a_dashboard/views.py**: Settings view doesn't save changes~~ ✅ Fixed: All settings forms now save properly
 7. ~~**No automated monthly usage reset** - relies on get_current_month_usage creating new records~~ ✅ Fixed: Usage now resets based on subscription period start dates
 8. ~~**No subscription downgrade handling** when subscription expires~~ ✅ Fixed: Webhook handles expiration and reverts to FREE
 9. ~~**Email backend**: Using console backend (needs production SMTP)~~ ✅ Fixed: SMTP configured
