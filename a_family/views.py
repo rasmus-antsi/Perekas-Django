@@ -8,12 +8,19 @@ from .models import Family, User
 
 def _get_family_for_user(user):
     """Get the first family for a user (as owner or member)"""
-    family = None
-    if hasattr(user, "families"):
-        family = user.families.first()
-    if family is None:
-        family = Family.objects.filter(owner=user).first()
-    return family
+    try:
+        # Try to get family where user is a member first (more common)
+        family = Family.objects.filter(members=user).first()
+        if family is None:
+            # If not a member, check if user is owner
+            family = Family.objects.filter(owner=user).first()
+        return family
+    except Exception as e:
+        # Log error but don't crash - return None so user can still access onboarding
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting family for user {user.id}: {str(e)}", exc_info=True)
+        return None
 
 
 @login_required
@@ -21,10 +28,17 @@ def onboarding(request):
     """Family onboarding page - create or join a family"""
     user = request.user
     
-    # If user already has a family, redirect to dashboard
-    family = _get_family_for_user(user)
-    if family:
-        return redirect('a_dashboard:dashboard')
+    try:
+        # If user already has a family, redirect to dashboard
+        family = _get_family_for_user(user)
+        if family:
+            return redirect('a_dashboard:dashboard')
+    except Exception as e:
+        # Log error but allow user to continue to onboarding page
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in onboarding view for user {user.id if user.is_authenticated else 'anonymous'}: {str(e)}", exc_info=True)
+        # Continue to show onboarding page even if there's an error
     
     is_parent = user.role == User.ROLE_PARENT
     is_child = user.role == User.ROLE_CHILD
