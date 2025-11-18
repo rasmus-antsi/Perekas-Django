@@ -67,14 +67,14 @@ class Subscription(models.Model):
 
 
 class SubscriptionUsage(models.Model):
-    """Track monthly usage of tasks and rewards per family"""
+    """Track usage of tasks and rewards per family per subscription period"""
     family = models.ForeignKey(
         'a_family.Family',
         on_delete=models.CASCADE,
         related_name='subscription_usage',
         db_index=True,
     )
-    month = models.DateField(db_index=True)  # First day of the month
+    period_start = models.DateTimeField(db_index=True)  # Start of the subscription period
     tasks_created = models.PositiveIntegerField(default=0)
     rewards_created = models.PositiveIntegerField(default=0)
     updated_at = models.DateTimeField(auto_now=True)
@@ -83,11 +83,11 @@ class SubscriptionUsage(models.Model):
         db_table = 'subscription_subscriptionusage'
         verbose_name = 'subscription usage'
         verbose_name_plural = 'subscription usages'
-        unique_together = ['family', 'month']
-        ordering = ['-month']
+        unique_together = ['family', 'period_start']
+        ordering = ['-period_start']
         indexes = [
-            models.Index(fields=['family', 'month']),
+            models.Index(fields=['family', 'period_start']),
         ]
 
     def __str__(self):
-        return f'{self.family.name} - {self.month.strftime("%B %Y")}'
+        return f'{self.family.name} - {self.period_start.strftime("%Y-%m-%d %H:%M")}'
