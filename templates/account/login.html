@@ -9,30 +9,116 @@
     </div>
 
     <form method="post" action="{% url 'account_login' %}" class="auth-form-minimal">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
+      {% csrf_token %}
+      {% if form.non_field_errors %}
         <div class="auth-error-minimal">{{ form.non_field_errors|join:", " }}</div>
-    {% endif %}
-    {% for field in form %}
-        <div class="auth-field-minimal{% if field.errors %} has-error{% endif %}">
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% for error in field.errors %}
-            <span class="auth-field-error-minimal">{{ error }}</span>
+      {% endif %}
+
+      <!-- Email field -->
+      <div class="auth-field-minimal{% if form.login.errors %} has-error{% endif %}">
+        <label for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
+        {{ form.login }}
+        {% for error in form.login.errors %}
+          <span class="auth-field-error-minimal">{{ error }}</span>
         {% endfor %}
       </div>
-    {% endfor %}
+
+      <!-- Password field -->
+      <div class="auth-field-minimal{% if form.password.errors %} has-error{% endif %}">
+        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+        {{ form.password }}
+        {% for error in form.password.errors %}
+          <span class="auth-field-error-minimal">{{ error }}</span>
+        {% endfor %}
+        <a class="auth-link-minimal forgot-password-link" href="{% url 'account_reset_password' %}">Unustasid salasõna?</a>
+      </div>
 
       <div class="auth-actions-minimal">
         <button type="submit" class="landing-button primary">Logi sisse</button>
-        <a class="auth-link-minimal" href="{% url 'account_reset_password' %}">Unustasid salasõna?</a>
-    </div>
-  </form>
+      </div>
+    </form>
 
     <p class="auth-switch-minimal">
-    {% url 'account_signup' as signup_url %}
+      {% url 'account_signup' as signup_url %}
       Pole veel kontot? <a href="{{ signup_url }}">Loo see siin</a>.
-  </p>
+    </p>
   </div>
-{% endblock %}
 
+  <style>
+    .auth-form-minimal {
+      gap: 0;
+    }
+
+    .forgot-password-link {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      text-align: right;
+      display: block;
+    }
+
+    /* Ensure input fields have dark background */
+    .auth-field-minimal input {
+      background: rgba(3, 8, 22, 0.6) !important;
+      color: #f8fafc !important;
+      -webkit-autofill,
+      -webkit-autofill:hover,
+      -webkit-autofill:focus,
+      -webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px rgba(3, 8, 22, 0.6) inset !important;
+        -webkit-text-fill-color: #f8fafc !important;
+        background: rgba(3, 8, 22, 0.6) !important;
+      }
+    }
+  </style>
+
+  <script>
+    // Real-time field validation for login form
+    function validateLoginField(field) {
+      const fieldContainer = field.closest('.auth-field-minimal');
+      const errorSpan = fieldContainer.querySelector('.auth-field-error-minimal');
+      
+      // Remove existing error state
+      fieldContainer.classList.remove('has-error');
+      if (errorSpan) {
+        errorSpan.remove();
+      }
+
+      let isValid = true;
+      let errorMessage = '';
+
+      // Validate based on field type
+      if (field.hasAttribute('required') && !field.value.trim()) {
+        isValid = false;
+        errorMessage = 'See väli on kohustuslik.';
+      } else if (field.type === 'email' && field.value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(field.value)) {
+          isValid = false;
+          errorMessage = 'Palun sisesta kehtiv e-posti aadress.';
+        }
+      }
+
+      // Show error if invalid
+      if (!isValid) {
+        fieldContainer.classList.add('has-error');
+        if (errorMessage) {
+          const errorEl = document.createElement('span');
+          errorEl.className = 'auth-field-error-minimal';
+          errorEl.textContent = errorMessage;
+          fieldContainer.appendChild(errorEl);
+        }
+      }
+
+      return isValid;
+    }
+
+    // Add validation listeners to all input fields in login form
+    document.querySelectorAll('.auth-form-minimal input').forEach(field => {
+      if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
+        field.addEventListener('blur', function() {
+          validateLoginField(this);
+        });
+      }
+    });
+  </script>
+{% endblock %}

@@ -2,36 +2,636 @@
 {% load i18n %}
 {% block title %}Loo konto | Perekas{% endblock %}
 {% block content %}
-  <div class="auth-card-minimal">
-    <div class="auth-header-minimal">
-      <h1>Loo oma Perekas konto</h1>
-      <p>Alusta pere ülesannete, preemiate ja ostude korraldamist ühes kohas.</p>
-    </div>
-
-    <form method="post" action="{% url 'account_signup' %}" class="auth-form-minimal">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-        <div class="auth-error-minimal">{{ form.non_field_errors|join:", " }}</div>
-    {% endif %}
-    {% for field in form %}
-        <div class="auth-field-minimal{% if field.errors %} has-error{% endif %}">
-        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% for error in field.errors %}
-            <span class="auth-field-error-minimal">{{ error }}</span>
-        {% endfor %}
+  <div class="auth-card-minimal signup-journey">
+    <div class="signup-progress">
+      <div class="progress-steps">
+        <div class="progress-step active" data-step="1">
+          <div class="step-number">1</div>
+          <div class="step-label">Põhiinfo</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="2">
+          <div class="step-number">2</div>
+          <div class="step-label">Profiil</div>
+        </div>
+        <div class="progress-line"></div>
+        <div class="progress-step" data-step="3">
+          <div class="step-number">3</div>
+          <div class="step-label">Turvalisus</div>
+        </div>
       </div>
-    {% endfor %}
-
-      <div class="auth-actions-minimal">
-        <button type="submit" class="landing-button primary">Alusta</button>
     </div>
-  </form>
+
+    <div class="signup-header">
+      <h1 id="signup-title">Tere tulemast Perekas!</h1>
+      <p id="signup-subtitle">Alustame sinu põhiandmetega</p>
+    </div>
+
+    <form method="post" action="{% url 'account_signup' %}" class="auth-form-minimal signup-form" id="signupForm">
+      {% csrf_token %}
+      
+      {% if form.non_field_errors %}
+        <div class="auth-error-minimal" id="nonFieldErrors">{{ form.non_field_errors|join:", " }}</div>
+      {% endif %}
+
+      <!-- Step 1: Basic Info -->
+      <div class="signup-step active" data-step="1">
+        <div class="auth-field-minimal{% if form.first_name.errors %} has-error{% endif %}">
+          <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+          {{ form.first_name }}
+          {% for error in form.first_name.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="auth-field-minimal{% if form.last_name.errors %} has-error{% endif %}">
+          <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+          {{ form.last_name }}
+          {% for error in form.last_name.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="auth-field-minimal{% if form.email.errors %} has-error{% endif %}">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% for error in form.email.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Step 2: Profile -->
+      <div class="signup-step" data-step="2">
+        <div class="auth-field-minimal{% if form.birthdate.errors %} has-error{% endif %}">
+          <label for="{{ form.birthdate.id_for_label }}">{{ form.birthdate.label }}</label>
+          {{ form.birthdate }}
+          {% for error in form.birthdate.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="auth-field-minimal{% if form.role.errors %} has-error{% endif %}">
+          <label>{{ form.role.label }}</label>
+          <div class="role-selection">
+            {% for choice in form.role %}
+              <label class="role-option">
+                {{ choice.tag }}
+                <span class="role-label">
+                  {% if choice.choice_value == 'parent' %}
+                    <strong>Lapsevanem</strong>
+                    <span>Saad peret luua ja hallata</span>
+                  {% elif choice.choice_value == 'child' %}
+                    <strong>Laps</strong>
+                    <span>Saad liituda perega ja täita ülesandeid</span>
+                  {% else %}
+                    <strong>{{ choice.choice_label }}</strong>
+                  {% endif %}
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+          {% for error in form.role.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Step 3: Security -->
+      <div class="signup-step" data-step="3">
+        <div class="auth-field-minimal{% if form.password1.errors %} has-error{% endif %}">
+          <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+          {{ form.password1 }}
+          {% for error in form.password1.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="auth-field-minimal{% if form.password2.errors %} has-error{% endif %}">
+          <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+          {{ form.password2 }}
+          {% for error in form.password2.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        {% if form.username %}
+          {{ form.username }}
+        {% endif %}
+      </div>
+
+      <div class="signup-actions">
+        <button type="button" class="landing-button ghost" id="prevBtn" style="display: none;">Tagasi</button>
+        <button type="button" class="landing-button primary" id="nextBtn">Järgmine</button>
+        <button type="submit" class="landing-button primary" id="submitBtn" style="display: none;">Loo konto</button>
+      </div>
+    </form>
 
     <p class="auth-switch-minimal">
-    {% url 'account_login' as login_url %}
+      {% url 'account_login' as login_url %}
       Juba konto olemas? <a href="{{ login_url }}">Logi sisse</a>.
-  </p>
+    </p>
   </div>
-{% endblock %}
 
+  <style>
+    .signup-journey {
+      max-width: 520px;
+    }
+
+    .signup-progress {
+      margin-bottom: 2.5rem;
+    }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      opacity: 0.4;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-step.active {
+      opacity: 1;
+    }
+
+    .progress-step.completed .step-number {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(148, 163, 184, 0.15);
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: rgba(148, 163, 184, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .progress-step.active .step-number {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8b5cf6;
+      color: #8b5cf6;
+      transform: scale(1.1);
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: rgba(148, 163, 184, 0.7);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .progress-step.active .step-label {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    .progress-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(148, 163, 184, 0.2);
+      margin: 0 0.5rem;
+      margin-top: -1.5rem;
+      transition: background 0.3s ease;
+    }
+
+    .progress-line.completed {
+      background: #22c55e;
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .signup-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .signup-header p {
+      margin: 0;
+      color: rgba(148, 163, 184, 0.8);
+      font-size: 0.9375rem;
+    }
+
+    .signup-step {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .signup-step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .role-selection {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .role-option {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 1.25rem 1.5rem;
+      background: rgba(7, 12, 28, 0.4);
+      border: 2px solid rgba(148, 163, 184, 0.15);
+      border-radius: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .role-option:hover {
+      border-color: rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.1);
+    }
+
+    .role-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+      margin: 0;
+      padding: 0;
+      pointer-events: none;
+    }
+
+    .role-option input[type="radio"]:checked + .role-label {
+      color: #f8fafc;
+    }
+
+    .role-option:has(input[type="radio"]:checked) {
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.2);
+      box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+    }
+
+    .role-label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex: 1;
+      color: rgba(148, 163, 184, 0.8);
+      transition: color 0.2s ease;
+    }
+
+    .role-label strong {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #f8fafc;
+    }
+
+    .role-label span {
+      font-size: 0.8125rem;
+      color: rgba(148, 163, 184, 0.7);
+    }
+
+    .signup-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      justify-content: space-between;
+    }
+
+    .signup-actions button {
+      flex: 1;
+    }
+
+
+    @media (max-width: 640px) {
+      .step-label {
+        display: none;
+      }
+
+      .progress-steps {
+        gap: 0.25rem;
+      }
+
+      .progress-line {
+        margin: 0 0.25rem;
+      }
+    }
+  </style>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    const stepTitles = {
+      1: { title: 'Tere tulemast Perekas!', subtitle: 'Alustame sinu põhiandmetega' },
+      2: { title: 'Sinu profiil', subtitle: 'Räägi meile endast' },
+      3: { title: 'Turvalisus', subtitle: 'Loo turvaline parool' }
+    };
+
+    function updateStep(step) {
+      // Hide all steps
+      document.querySelectorAll('.signup-step').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.progress-step').forEach(s => {
+        s.classList.remove('active');
+        s.classList.remove('completed');
+      });
+
+      // Show current step
+      const currentStepEl = document.querySelector(`.signup-step[data-step="${step}"]`);
+      if (currentStepEl) {
+        currentStepEl.classList.add('active');
+      }
+
+      // Update progress indicators
+      for (let i = 1; i < step; i++) {
+        const stepEl = document.querySelector(`.progress-step[data-step="${i}"]`);
+        if (stepEl) {
+          stepEl.classList.add('completed');
+        }
+        const lineEl = stepEl?.nextElementSibling;
+        if (lineEl && lineEl.classList.contains('progress-line')) {
+          lineEl.classList.add('completed');
+        }
+      }
+
+      const activeStepEl = document.querySelector(`.progress-step[data-step="${step}"]`);
+      if (activeStepEl) {
+        activeStepEl.classList.add('active');
+      }
+
+      // Update buttons
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (step === 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'block';
+        submitBtn.style.display = 'none';
+      } else if (step === totalSteps) {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'block';
+      } else {
+        prevBtn.style.display = 'block';
+        nextBtn.style.display = 'block';
+        submitBtn.style.display = 'none';
+      }
+
+      // Update title and subtitle
+      const titleEl = document.getElementById('signup-title');
+      const subtitleEl = document.getElementById('signup-subtitle');
+      if (stepTitles[step]) {
+        titleEl.textContent = stepTitles[step].title;
+        subtitleEl.textContent = stepTitles[step].subtitle;
+      }
+
+      // Focus first input in step
+      setTimeout(() => {
+        const firstInput = currentStepEl?.querySelector('input, select');
+        if (firstInput && firstInput.type !== 'hidden') {
+          firstInput.focus();
+        }
+      }, 100);
+    }
+
+    function validateStep(step) {
+      const stepEl = document.querySelector(`.signup-step[data-step="${step}"]`);
+      if (!stepEl) return true;
+
+      const inputs = stepEl.querySelectorAll('input[required], select[required]');
+      let isValid = true;
+
+      inputs.forEach(input => {
+        if (input.type === 'radio') {
+          const radioGroup = stepEl.querySelectorAll(`input[name="${input.name}"]`);
+          const isChecked = Array.from(radioGroup).some(r => r.checked);
+          if (!isChecked) {
+            isValid = false;
+          }
+        } else if (!input.value.trim()) {
+          isValid = false;
+        }
+      });
+
+      return isValid;
+    }
+
+    document.getElementById('nextBtn').addEventListener('click', function() {
+      if (validateStep(currentStep)) {
+        if (currentStep < totalSteps) {
+          currentStep++;
+          updateStep(currentStep);
+        }
+      } else {
+        alert('Palun täida kõik väljad enne jätkamist.');
+      }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', function() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateStep(currentStep);
+      }
+    });
+
+    // Initialize - check for errors and show appropriate step
+    let initialStep = 1;
+    if (document.querySelector('.signup-step[data-step="1"] .has-error')) {
+      initialStep = 1;
+    } else if (document.querySelector('.signup-step[data-step="2"] .has-error')) {
+      initialStep = 2;
+    } else if (document.querySelector('.signup-step[data-step="3"] .has-error')) {
+      initialStep = 3;
+    }
+    updateStep(initialStep);
+
+    // Handle form errors on page load - map non-field errors to specific fields
+    function mapErrorsToFields() {
+      const nonFieldErrors = document.getElementById('nonFieldErrors');
+      if (nonFieldErrors && nonFieldErrors.textContent.trim()) {
+        const errorText = nonFieldErrors.textContent.toLowerCase();
+        
+        // Map common errors to specific fields
+        if (errorText.includes('email') || errorText.includes('e-posti') || errorText.includes('kasutuses')) {
+          const emailField = document.querySelector('input[type="email"]');
+          if (emailField) {
+            const emailContainer = emailField.closest('.auth-field-minimal');
+            emailContainer.classList.add('has-error');
+            // Check if error already exists
+            if (!emailContainer.querySelector('.auth-field-error-minimal')) {
+              const errorEl = document.createElement('span');
+              errorEl.className = 'auth-field-error-minimal';
+              errorEl.textContent = nonFieldErrors.textContent;
+              emailContainer.appendChild(errorEl);
+            }
+            nonFieldErrors.style.display = 'none';
+            
+            // Show step 1 if we're not on it
+            if (currentStep !== 1) {
+              currentStep = 1;
+              updateStep(1);
+            }
+          }
+        } else if (errorText.includes('username') || errorText.includes('kasutajanimi')) {
+          const emailField = document.querySelector('input[type="email"]');
+          if (emailField) {
+            const emailContainer = emailField.closest('.auth-field-minimal');
+            emailContainer.classList.add('has-error');
+            if (!emailContainer.querySelector('.auth-field-error-minimal')) {
+              const errorEl = document.createElement('span');
+              errorEl.className = 'auth-field-error-minimal';
+              errorEl.textContent = nonFieldErrors.textContent;
+              emailContainer.appendChild(errorEl);
+            }
+            nonFieldErrors.style.display = 'none';
+            
+            if (currentStep !== 1) {
+              currentStep = 1;
+              updateStep(1);
+            }
+          }
+        } else if (errorText.includes('password') || errorText.includes('parool')) {
+          const passwordField = document.querySelector('input[id*="password1"]');
+          if (passwordField) {
+            const passwordContainer = passwordField.closest('.auth-field-minimal');
+            passwordContainer.classList.add('has-error');
+            if (!passwordContainer.querySelector('.auth-field-error-minimal')) {
+              const errorEl = document.createElement('span');
+              errorEl.className = 'auth-field-error-minimal';
+              errorEl.textContent = nonFieldErrors.textContent;
+              passwordContainer.appendChild(errorEl);
+            }
+            nonFieldErrors.style.display = 'none';
+            
+            if (currentStep !== 3) {
+              currentStep = 3;
+              updateStep(3);
+            }
+          }
+        }
+      }
+    }
+
+    // Run error mapping on page load
+    mapErrorsToFields();
+
+    // Real-time field validation
+    function validateField(field) {
+      const fieldContainer = field.closest('.auth-field-minimal');
+      const errorSpan = fieldContainer.querySelector('.auth-field-error-minimal');
+      
+      // Remove existing error state
+      fieldContainer.classList.remove('has-error');
+      if (errorSpan) {
+        errorSpan.remove();
+      }
+
+      let isValid = true;
+      let errorMessage = '';
+
+      // Validate based on field type
+      if (field.hasAttribute('required') && !field.value.trim()) {
+        isValid = false;
+        errorMessage = 'See väli on kohustuslik.';
+      } else if (field.type === 'email' && field.value) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(field.value)) {
+          isValid = false;
+          errorMessage = 'Palun sisesta kehtiv e-posti aadress.';
+        }
+      } else if (field.type === 'date' && field.value) {
+        const selectedDate = new Date(field.value);
+        const today = new Date();
+        if (selectedDate > today) {
+          isValid = false;
+          errorMessage = 'Sünniaeg ei saa olla tulevikus.';
+        }
+      } else if (field.id && field.id.includes('password1') && field.value) {
+        if (field.value.length < 8) {
+          isValid = false;
+          errorMessage = 'Parool peab olema vähemalt 8 tähemärki pikk.';
+        }
+      } else if (field.id && field.id.includes('password2') && field.value) {
+        const password1 = document.getElementById(field.id.replace('password2', 'password1'));
+        if (password1 && field.value !== password1.value) {
+          isValid = false;
+          errorMessage = 'Paroolid ei kattu.';
+        }
+      }
+
+      // Show error if invalid
+      if (!isValid) {
+        fieldContainer.classList.add('has-error');
+        if (errorMessage) {
+          const errorEl = document.createElement('span');
+          errorEl.className = 'auth-field-error-minimal';
+          errorEl.textContent = errorMessage;
+          fieldContainer.appendChild(errorEl);
+        }
+      }
+
+      return isValid;
+    }
+
+    // Add validation listeners to all input fields
+    document.querySelectorAll('#signupForm input, #signupForm select').forEach(field => {
+      if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
+        field.addEventListener('blur', function() {
+          validateField(this);
+        });
+        
+        // For password confirmation, also validate on password1 change
+        if (field.id && field.id.includes('password2')) {
+          const password1 = document.getElementById(field.id.replace('password2', 'password1'));
+          if (password1) {
+            password1.addEventListener('input', function() {
+              if (field.value) {
+                validateField(field);
+              }
+            });
+          }
+        }
+      }
+    });
+
+    // Validate role selection
+    document.querySelectorAll('.role-option input[type="radio"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const roleField = this.closest('.auth-field-minimal');
+        roleField.classList.remove('has-error');
+        const errorSpan = roleField.querySelector('.auth-field-error-minimal');
+        if (errorSpan) {
+          errorSpan.remove();
+        }
+      });
+    });
+
+  </script>
+{% endblock %}
