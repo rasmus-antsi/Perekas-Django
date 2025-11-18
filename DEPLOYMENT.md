@@ -241,11 +241,26 @@ railway run pg_dump $DATABASE_URL > backup.sql
 
 ### Common Issues
 
-#### 1. Static Files Not Loading
+#### 1. Static Files Not Loading (No Styling Applied)
 
-- Verify `collectstatic` ran successfully (check release logs)
-- Check WhiteNoise middleware is enabled
-- Verify `STATIC_ROOT` is set correctly
+If CSS/styles are not loading in production:
+
+- **Check Railway deployment logs** for `collectstatic` errors
+- **Verify WhiteNoise middleware** is enabled (should be in `MIDDLEWARE` after `SecurityMiddleware`)
+- **Check STATIC_URL** is set to `/static/` (with leading slash)
+- **Verify STATIC_ROOT** directory exists and contains files after `collectstatic`
+- **Common issues**:
+  1. `collectstatic` failed during deployment - check release command logs
+  2. WhiteNoise storage backend issue - try switching to `CompressedStaticFilesStorage` temporarily
+  3. STATIC_URL missing leading slash - should be `/static/` not `static/`
+  4. Browser cache - try hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+
+**Quick fix**: If static files still don't load, you can temporarily add this to `urls.py` for debugging:
+```python
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+```
+(Note: This is only for debugging - WhiteNoise should handle this in production)
 
 #### 2. Database Connection Errors
 
@@ -269,7 +284,21 @@ railway run pg_dump $DATABASE_URL > backup.sql
   railway run python manage.py sendtestemail
   ```
 
-#### 5. CSRF Errors
+#### 5. Bad Request (400) Errors
+
+If you see "Bad Request (400)" errors:
+
+- **Most Common Cause**: `ALLOWED_HOSTS` is not configured correctly
+- **Solution**: 
+  1. Check your Railway app's domain (e.g., `your-app-name.railway.app`)
+  2. Set `ALLOWED_HOSTS` environment variable to include:
+     - Your Railway subdomain: `your-app-name.railway.app`
+     - Your custom domain (if configured): `www.perekas.ee,perekas.ee`
+  3. **Important**: Django doesn't support wildcards like `*.railway.app` - you must specify exact domains
+  4. After updating, redeploy the application
+- **Temporary Fix**: If you need to test quickly, you can temporarily set `ALLOWED_HOSTS=*` (not recommended for production)
+
+#### 6. CSRF Errors
 
 - Verify `CSRF_TRUSTED_ORIGINS` includes your domain
 - Check `SECURE_SSL_REDIRECT` is set correctly
