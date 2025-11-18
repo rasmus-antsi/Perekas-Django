@@ -12,6 +12,56 @@
       rel="stylesheet"
     >
     <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <style>
+      /* Fallback styles for messages - ensure they always work */
+      .messages-container {
+        position: fixed !important;
+        top: 1.5rem !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 10000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.75rem !important;
+        max-width: 600px !important;
+        width: calc(100% - 3rem) !important;
+        pointer-events: none !important;
+      }
+      .message-toast {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 1rem !important;
+        padding: 1rem 1.25rem !important;
+        border-radius: 1rem !important;
+        backdrop-filter: blur(12px) !important;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid !important;
+        pointer-events: auto !important;
+        min-width: 300px !important;
+      }
+      .message-toast-success {
+        background: rgba(34, 197, 94, 0.15) !important;
+        border-color: rgba(34, 197, 94, 0.4) !important;
+        color: #22c55e !important;
+      }
+      .message-toast-error {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border-color: rgba(239, 68, 68, 0.4) !important;
+        color: #ef4444 !important;
+      }
+      .message-toast-warning {
+        background: rgba(245, 158, 11, 0.15) !important;
+        border-color: rgba(245, 158, 11, 0.4) !important;
+        color: #f59e0b !important;
+      }
+      .message-toast-info {
+        background: rgba(59, 130, 246, 0.15) !important;
+        border-color: rgba(59, 130, 246, 0.4) !important;
+        color: #3b82f6 !important;
+      }
+    </style>
   </head>
   <body>
     <div class="background-glow"></div>
@@ -88,10 +138,58 @@
         </div>
       </aside>
 
+      {% if messages %}
+        <div class="messages-container" id="messagesContainer">
+          {% for message in messages %}
+            {% with tag=message.tags|default:'info' %}
+            <div class="message-toast message-toast-{{ tag }}" role="alert" data-message-tag="{{ tag }}">
+              <div class="message-toast-content">
+                <span class="message-toast-text">{{ message }}</span>
+              </div>
+              <button type="button" class="message-toast-dismiss" aria-label="Sulge" onclick="dismissMessage(this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            {% endwith %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
       <main class="main-content">
         {% block content %}{% endblock %}
       </main>
     </div>
+    <script>
+      function dismissMessage(button) {
+        const message = button.closest('.message-toast');
+        message.style.opacity = '0';
+        message.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          message.remove();
+          // If no messages left, hide container
+          const container = document.getElementById('messagesContainer');
+          if (container && container.children.length === 0) {
+            container.remove();
+          }
+        }, 200);
+      }
+      
+      // Auto-dismiss messages after 5 seconds
+      document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('.message-toast');
+        messages.forEach((message, index) => {
+          setTimeout(() => {
+            const dismissBtn = message.querySelector('.message-toast-dismiss');
+            if (dismissBtn) {
+              dismissBtn.click();
+            }
+          }, 5000 + (index * 200)); // Stagger dismissals slightly
+        });
+      });
+    </script>
   </body>
 </html>
 
