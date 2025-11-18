@@ -215,6 +215,11 @@
                       <button type="submit" class="btn btn-ghost">Halda tellimust</button>
                     </form>
                     <button type="button" class="btn btn-primary" onclick="openUpgradeModal()">Muuda paketti</button>
+                    <form method="post" style="display: inline;" onsubmit="return confirm('Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.');">
+                      {% csrf_token %}
+                      <input type="hidden" name="subscription_action" value="downgrade">
+                      <button type="submit" class="btn btn-ghost" style="color: #dc3545;">Tühista tellimus</button>
+                    </form>
                   {% endif %}
                 </div>
               </div>
