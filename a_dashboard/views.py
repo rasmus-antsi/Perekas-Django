@@ -1,12 +1,21 @@
+import stripe
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.conf import settings as django_settings
 
 from a_family.models import Family, User
 from a_rewards.models import Reward
 from a_shopping.models import ShoppingListItem
 from a_tasks.models import Task
+from a_subscription.models import Subscription
+from a_subscription.utils import (
+    get_family_subscription,
+    get_current_month_usage,
+    get_tier_limits,
+)
 
 
 def _get_family_for_user(user):
@@ -152,6 +161,119 @@ def settings(request):
     is_parent = user.role == User.ROLE_PARENT
     is_child = user.role == User.ROLE_CHILD
 
+    # Only family owner can manage subscription
+    can_manage_subscription = family and family.owner == user
+
+    # Check if we should show upgrade modal (from shopping redirect)
+    show_upgrade_modal = request.GET.get('upgrade') == '1'
+
+    # Handle subscription actions
+    if request.method == 'POST' and can_manage_subscription:
+        action = request.POST.get('subscription_action')
+        
+        if action == 'edit_portal':
+            subscription = Subscription.objects.filter(
+                owner=user,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).first()
+            
+            if not subscription or not subscription.stripe_customer_id:
+                messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
+                return redirect('a_dashboard:settings')
+            
+            if not django_settings.STRIPE_SECRET_KEY:
+                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                return redirect('a_dashboard:settings')
+            
+            stripe.api_key = django_settings.STRIPE_SECRET_KEY
+            
+            try:
+                # Create customer portal session
+                portal_session = stripe.billing_portal.Session.create(
+                    customer=subscription.stripe_customer_id,
+                    return_url=request.build_absolute_uri('/dashboard/settings/'),
+                )
+                
+                return redirect(portal_session.url)
+                
+            except stripe.error.StripeError as e:
+                messages.error(request, f"Stripe'i viga: {str(e)}")
+                return redirect('a_dashboard:settings')
+        
+        elif action == 'upgrade':
+            tier = request.POST.get('tier')
+            billing_period = request.POST.get('billing_period', 'monthly')
+            
+            if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+                messages.error(request, "Vigane paketivalik.")
+                return redirect('a_dashboard:settings')
+            
+            # Get appropriate price ID
+            if tier == Subscription.TIER_STARTER:
+                price_id = django_settings.STARTER_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.STARTER_YEARLY_PRICE_ID
+            else:  # PRO
+                price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
+            
+            if not django_settings.STRIPE_SECRET_KEY:
+                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                return redirect('a_dashboard:settings')
+            
+            stripe.api_key = django_settings.STRIPE_SECRET_KEY
+            
+            try:
+                # Get or create Stripe customer
+                subscription = Subscription.objects.filter(owner=user).first()
+                customer_id = subscription.stripe_customer_id if subscription else None
+                
+                if not customer_id:
+                    customer = stripe.Customer.create(
+                        email=user.email,
+                        metadata={'user_id': user.id, 'family_id': family.id}
+                    )
+                    customer_id = customer.id
+                else:
+                    customer = stripe.Customer.retrieve(customer_id)
+                
+                # Create checkout session
+                checkout_session = stripe.checkout.Session.create(
+                    customer=customer_id,
+                    payment_method_types=['card'],
+                    line_items=[{
+                        'price': price_id,
+                        'quantity': 1,
+                    }],
+                    mode='subscription',
+                    success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=request.build_absolute_uri('/dashboard/settings/'),
+                    metadata={
+                        'user_id': user.id,
+                        'family_id': family.id,
+                        'tier': tier,
+                    }
+                )
+                
+                return redirect(checkout_session.url)
+                
+            except stripe.error.StripeError as e:
+                messages.error(request, f"Stripe'i viga: {str(e)}")
+                return redirect('a_dashboard:settings')
+
+    # Get subscription data if user can manage it
+    subscription_data = None
+    if can_manage_subscription:
+        tier = get_family_subscription(family)
+        
+        subscription = Subscription.objects.filter(
+            owner=user,
+            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+        ).first()
+        
+        subscription_data = {
+            'tier': tier,
+            'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier),
+            'subscription': subscription,
+        }
+
     notification_preferences = {
         "task_updates": True,
         "reward_updates": True,
@@ -168,5 +290,8 @@ def settings(request):
         "role_child": User.ROLE_CHILD,
         "current_role": user.role,
         "notification_preferences": notification_preferences,
+        "subscription_data": subscription_data,
+        "can_manage_subscription": can_manage_subscription,
+        "show_upgrade_modal": show_upgrade_modal,
     }
     return render(request, 'a_dashboard/settings.html', context)
