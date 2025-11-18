@@ -8,6 +8,7 @@ This guide covers deploying the Perekas Django application to production on Rail
 - Stripe account with production API keys
 - Domain name (optional, Railway provides free subdomain)
 - Email SMTP credentials
+- **Note**: This project uses Python 3.12 for production stability and package compatibility
 
 ## Pre-Deployment Checklist
 
@@ -267,6 +268,14 @@ railway run pg_dump $DATABASE_URL > backup.sql
 - Verify `CSRF_TRUSTED_ORIGINS` includes your domain
 - Check `SECURE_SSL_REDIRECT` is set correctly
 - Verify HTTPS is working
+
+#### 6. psycopg2 Import Errors
+
+If you see errors like `Error loading psycopg2 or psycopg module` or `undefined symbol: _PyInterpreterState_Get`:
+
+- **Cause**: `psycopg2-binary` doesn't have pre-built wheels for Python 3.14+
+- **Solution**: This project uses Python 3.12 (specified in `runtime.txt`) for better package compatibility
+- If you need to use Python 3.14, consider switching to `psycopg` (psycopg3) instead of `psycopg2-binary`
 
 ## Performance Optimization
 
