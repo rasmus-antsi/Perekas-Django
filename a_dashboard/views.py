@@ -171,204 +171,260 @@ def settings(request):
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
 
-    # Handle subscription actions
-    if request.method == 'POST' and can_manage_subscription:
-        action = request.POST.get('subscription_action')
+    # Handle form submissions
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
         
-        if action == 'downgrade':
-            # Downgrade to FREE tier
-            subscription = Subscription.objects.filter(
-                owner=user,
-                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
-            ).first()
+        # Handle profile update
+        if form_type == 'profile':
+            display_name = request.POST.get('display_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            role = request.POST.get('role')
             
-            if not subscription or not subscription.stripe_subscription_id:
-                messages.error(request, "Aktiivset tellimust ei leitud.")
-                return redirect('a_dashboard:settings')
+            # Update display name (first_name and last_name)
+            if display_name:
+                name_parts = display_name.split(' ', 1)
+                user.first_name = name_parts[0]
+                user.last_name = name_parts[1] if len(name_parts) > 1 else ''
+                user.save(update_fields=['first_name', 'last_name'])
             
-            if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_dashboard:settings')
+            # Update email
+            if email and email != user.email:
+                # Check if email is already in use
+                if User.objects.filter(email=email).exclude(id=user.id).exists():
+                    messages.error(request, "See e-posti aadress on juba kasutusel.")
+                else:
+                    user.email = email
+                    user.save(update_fields=['email'])
+                    messages.success(request, "E-posti aadress uuendatud.")
             
-            stripe.api_key = django_settings.STRIPE_SECRET_KEY
+            # Update role (only if user is parent and changing their own role)
+            if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
+                user.role = role
+                user.save(update_fields=['role'])
+                messages.success(request, "Profiil uuendatud.")
             
-            try:
-                # Cancel the Stripe subscription (at period end to keep access until then)
-                stripe.Subscription.modify(
-                    subscription.stripe_subscription_id,
-                    cancel_at_period_end=True,
-                )
-                
-                # Update local subscription - keep tier until period_end, then it will revert to FREE via webhook
-                subscription.status = Subscription.STATUS_CANCELLED
-                subscription.save()
-                
-                messages.success(request, "Tellimus tühistati. Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.")
-                logger.info(f"Subscription {subscription.id} cancelled for user {user.id}")
-                return redirect('a_dashboard:settings')
-                
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Tellimuse tühistamisel tekkis viga: {str(e)}")
-                logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
-                return redirect('a_dashboard:settings')
+            if not email or email == user.email:
+                messages.success(request, "Profiil uuendatud.")
+            return redirect('a_dashboard:settings')
         
-        elif action == 'edit_portal':
-            subscription = Subscription.objects.filter(
-                owner=user,
-                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
-            ).first()
+        # Handle notification preferences
+        elif form_type == 'notifications':
+            notify_tasks = request.POST.get('notify_tasks') == 'on'
+            notify_rewards = request.POST.get('notify_rewards') == 'on'
+            notify_shopping = request.POST.get('notify_shopping') == 'on'
+            notify_summary = request.POST.get('notify_summary') == 'on'
             
-            if not subscription or not subscription.stripe_customer_id:
-                messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
-                return redirect('a_dashboard:settings')
-            
-            if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_dashboard:settings')
-            
-            stripe.api_key = django_settings.STRIPE_SECRET_KEY
-            
-            try:
-                # Create customer portal session
-                portal_session = stripe.billing_portal.Session.create(
-                    customer=subscription.stripe_customer_id,
-                    return_url=request.build_absolute_uri('/dashboard/settings/'),
-                )
-                
-                return redirect(portal_session.url)
-                
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Stripe'i viga: {str(e)}")
-                return redirect('a_dashboard:settings')
+            # Store notification preferences
+            prefs = {
+                'task_updates': notify_tasks,
+                'reward_updates': notify_rewards,
+                'shopping_updates': notify_shopping,
+                'weekly_summary': notify_summary,
+            }
+            user.notification_preferences = prefs
+            user.save(update_fields=['notification_preferences'])
+            messages.success(request, "Teavituste eelistused salvestatud.")
+            return redirect('a_dashboard:settings')
         
-        elif action == 'upgrade':
-            tier = request.POST.get('tier')
-            billing_period = request.POST.get('billing_period', 'monthly')
+        # Handle subscription actions (only for family owners)
+        elif form_type == 'subscription' and can_manage_subscription:
+            action = request.POST.get('subscription_action')
             
-            if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
-                messages.error(request, "Vigane paketivalik.")
-                return redirect('a_dashboard:settings')
-            
-            # Get appropriate price ID
-            if tier == Subscription.TIER_STARTER:
-                price_id = django_settings.STARTER_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.STARTER_YEARLY_PRICE_ID
-            else:  # PRO
-                price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
-            
-            if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_dashboard:settings')
-            
-            stripe.api_key = django_settings.STRIPE_SECRET_KEY
-            
-            try:
-                # Get existing subscription
-                existing_subscription = Subscription.objects.filter(
+            if action == 'downgrade':
+                # Downgrade to FREE tier
+                subscription = Subscription.objects.filter(
                     owner=user,
                     tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
                 ).first()
                 
-                # Get or create Stripe customer - check by email first to avoid duplicates
-                customer_id = existing_subscription.stripe_customer_id if existing_subscription else None
+                if not subscription or not subscription.stripe_subscription_id:
+                    messages.error(request, "Aktiivset tellimust ei leitud.")
+                    return redirect('a_dashboard:settings')
                 
-                if not customer_id:
-                    # Try to find existing customer by email
-                    try:
-                        customers = stripe.Customer.list(email=user.email, limit=1)
-                        if customers.data:
-                            customer_id = customers.data[0].id
-                            logger.info(f"Found existing Stripe customer {customer_id} for email {user.email}")
-                        else:
-                            # Create new customer
+                if not django_settings.STRIPE_SECRET_KEY:
+                    messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                    return redirect('a_dashboard:settings')
+                
+                stripe.api_key = django_settings.STRIPE_SECRET_KEY
+                
+                try:
+                    # Cancel the Stripe subscription (at period end to keep access until then)
+                    stripe.Subscription.modify(
+                        subscription.stripe_subscription_id,
+                        cancel_at_period_end=True,
+                    )
+                    
+                    # Update local subscription - keep tier until period_end, then it will revert to FREE via webhook
+                    subscription.status = Subscription.STATUS_CANCELLED
+                    subscription.save()
+                    
+                    messages.success(request, "Tellimus tühistati. Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.")
+                    logger.info(f"Subscription {subscription.id} cancelled for user {user.id}")
+                    return redirect('a_dashboard:settings')
+                    
+                except stripe.error.StripeError as e:
+                    messages.error(request, f"Tellimuse tühistamisel tekkis viga: {str(e)}")
+                    logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
+                    return redirect('a_dashboard:settings')
+            
+            elif action == 'edit_portal':
+                subscription = Subscription.objects.filter(
+                    owner=user,
+                    tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+                ).first()
+                
+                if not subscription or not subscription.stripe_customer_id:
+                    messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
+                    return redirect('a_dashboard:settings')
+                
+                if not django_settings.STRIPE_SECRET_KEY:
+                    messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                    return redirect('a_dashboard:settings')
+                
+                stripe.api_key = django_settings.STRIPE_SECRET_KEY
+                
+                try:
+                    # Create customer portal session
+                    portal_session = stripe.billing_portal.Session.create(
+                        customer=subscription.stripe_customer_id,
+                        return_url=request.build_absolute_uri('/dashboard/settings/'),
+                    )
+                    
+                    return redirect(portal_session.url)
+                    
+                except stripe.error.StripeError as e:
+                    messages.error(request, f"Stripe'i viga: {str(e)}")
+                    return redirect('a_dashboard:settings')
+            
+            elif action == 'upgrade':
+                tier = request.POST.get('tier')
+                billing_period = request.POST.get('billing_period', 'monthly')
+                
+                if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+                    messages.error(request, "Vigane paketivalik.")
+                    return redirect('a_dashboard:settings')
+                
+                # Get appropriate price ID
+                if tier == Subscription.TIER_STARTER:
+                    price_id = django_settings.STARTER_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.STARTER_YEARLY_PRICE_ID
+                else:  # PRO
+                    price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
+                
+                if not django_settings.STRIPE_SECRET_KEY:
+                    messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                    return redirect('a_dashboard:settings')
+                
+                stripe.api_key = django_settings.STRIPE_SECRET_KEY
+                
+                try:
+                    # Get existing subscription
+                    existing_subscription = Subscription.objects.filter(
+                        owner=user,
+                        tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+                    ).first()
+                    
+                    # Get or create Stripe customer - check by email first to avoid duplicates
+                    customer_id = existing_subscription.stripe_customer_id if existing_subscription else None
+                    
+                    if not customer_id:
+                        # Try to find existing customer by email
+                        try:
+                            customers = stripe.Customer.list(email=user.email, limit=1)
+                            if customers.data:
+                                customer_id = customers.data[0].id
+                                logger.info(f"Found existing Stripe customer {customer_id} for email {user.email}")
+                            else:
+                                # Create new customer
+                                customer = stripe.Customer.create(
+                                    email=user.email,
+                                    metadata={'user_id': str(user.id), 'family_id': str(family.id)}
+                                )
+                                customer_id = customer.id
+                                logger.info(f"Created new Stripe customer {customer_id} for user {user.id}")
+                        except stripe.error.StripeError as e:
+                            logger.error(f"Error finding/creating customer: {str(e)}")
+                            messages.error(request, f"Kliendi loomisel tekkis viga: {str(e)}")
+                            return redirect('a_dashboard:settings')
+                    else:
+                        try:
+                            customer = stripe.Customer.retrieve(customer_id)
+                        except stripe.error.StripeError:
+                            # Customer doesn't exist, create new one
                             customer = stripe.Customer.create(
                                 email=user.email,
                                 metadata={'user_id': str(user.id), 'family_id': str(family.id)}
                             )
                             customer_id = customer.id
-                            logger.info(f"Created new Stripe customer {customer_id} for user {user.id}")
-                    except stripe.error.StripeError as e:
-                        logger.error(f"Error finding/creating customer: {str(e)}")
-                        messages.error(request, f"Kliendi loomisel tekkis viga: {str(e)}")
-                        return redirect('a_dashboard:settings')
-                else:
-                    try:
-                        customer = stripe.Customer.retrieve(customer_id)
-                    except stripe.error.StripeError:
-                        # Customer doesn't exist, create new one
-                        customer = stripe.Customer.create(
-                            email=user.email,
-                            metadata={'user_id': str(user.id), 'family_id': str(family.id)}
-                        )
-                        customer_id = customer.id
-                        logger.info(f"Recreated Stripe customer {customer_id} for user {user.id}")
-                
-                # If user has an active subscription, update it directly with proration
-                if existing_subscription and existing_subscription.stripe_subscription_id and existing_subscription.is_active():
-                    try:
-                        # Retrieve the Stripe subscription
-                        stripe_subscription = stripe.Subscription.retrieve(existing_subscription.stripe_subscription_id)
-                        
-                        # Get the current subscription item ID
-                        subscription_item_id = stripe_subscription['items']['data'][0]['id']
-                        
-                        # Update subscription with new price (prorated)
-                        updated_subscription = stripe.Subscription.modify(
-                            existing_subscription.stripe_subscription_id,
-                            items=[{
-                                'id': subscription_item_id,
-                                'price': price_id,
-                            }],
-                            proration_behavior='always',  # Always prorate when changing plans
-                            metadata={
-                                'user_id': str(user.id),
-                                'family_id': str(family.id),
-                                'tier': tier,
-                            }
-                        )
-                        
-                        # Update local subscription record
-                        existing_subscription.tier = tier
-                        existing_subscription.status = updated_subscription.status
-                        if updated_subscription.current_period_start:
-                            existing_subscription.current_period_start = timezone.make_aware(
-                                datetime.fromtimestamp(updated_subscription.current_period_start)
+                            logger.info(f"Recreated Stripe customer {customer_id} for user {user.id}")
+                    
+                    # If user has an active subscription, update it directly with proration
+                    if existing_subscription and existing_subscription.stripe_subscription_id and existing_subscription.is_active():
+                        try:
+                            # Retrieve the Stripe subscription
+                            stripe_subscription = stripe.Subscription.retrieve(existing_subscription.stripe_subscription_id)
+                            
+                            # Get the current subscription item ID
+                            subscription_item_id = stripe_subscription['items']['data'][0]['id']
+                            
+                            # Update subscription with new price (prorated)
+                            updated_subscription = stripe.Subscription.modify(
+                                existing_subscription.stripe_subscription_id,
+                                items=[{
+                                    'id': subscription_item_id,
+                                    'price': price_id,
+                                }],
+                                proration_behavior='always',  # Always prorate when changing plans
+                                metadata={
+                                    'user_id': str(user.id),
+                                    'family_id': str(family.id),
+                                    'tier': tier,
+                                }
                             )
-                        if updated_subscription.current_period_end:
-                            existing_subscription.current_period_end = timezone.make_aware(
-                                datetime.fromtimestamp(updated_subscription.current_period_end)
-                            )
-                        existing_subscription.save()
-                        
-                        messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
-                        return redirect('a_dashboard:settings')
-                        
-                    except stripe.error.StripeError as e:
-                        messages.error(request, f"Tellimuse uuendamisel tekkis viga: {str(e)}")
-                        return redirect('a_dashboard:settings')
-                
-                # No active subscription - create new one via checkout
-                checkout_session = stripe.checkout.Session.create(
-                    customer=customer_id,
-                    payment_method_types=['card'],
-                    line_items=[{
-                        'price': price_id,
-                        'quantity': 1,
-                    }],
-                    mode='subscription',
-                    success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
-                    cancel_url=request.build_absolute_uri('/dashboard/settings/'),
-                    metadata={
-                        'user_id': str(user.id),
-                        'family_id': str(family.id),
-                        'tier': tier,
-                    }
-                )
-                
-                return redirect(checkout_session.url)
-                
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Stripe'i viga: {str(e)}")
-                return redirect('a_dashboard:settings')
+                            
+                            # Update local subscription record
+                            existing_subscription.tier = tier
+                            existing_subscription.status = updated_subscription.status
+                            if updated_subscription.current_period_start:
+                                existing_subscription.current_period_start = timezone.make_aware(
+                                    datetime.fromtimestamp(updated_subscription.current_period_start)
+                                )
+                            if updated_subscription.current_period_end:
+                                existing_subscription.current_period_end = timezone.make_aware(
+                                    datetime.fromtimestamp(updated_subscription.current_period_end)
+                                )
+                            existing_subscription.save()
+                            
+                            messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
+                            return redirect('a_dashboard:settings')
+                            
+                        except stripe.error.StripeError as e:
+                            messages.error(request, f"Tellimuse uuendamisel tekkis viga: {str(e)}")
+                            return redirect('a_dashboard:settings')
+                    
+                    # No active subscription - create new one via checkout
+                    checkout_session = stripe.checkout.Session.create(
+                        customer=customer_id,
+                        payment_method_types=['card'],
+                        line_items=[{
+                            'price': price_id,
+                            'quantity': 1,
+                        }],
+                        mode='subscription',
+                        success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
+                        cancel_url=request.build_absolute_uri('/dashboard/settings/'),
+                        metadata={
+                            'user_id': str(user.id),
+                            'family_id': str(family.id),
+                            'tier': tier,
+                        }
+                    )
+                    
+                    return redirect(checkout_session.url)
+                    
+                except stripe.error.StripeError as e:
+                    messages.error(request, f"Stripe'i viga: {str(e)}")
+                    return redirect('a_dashboard:settings')
 
     # Get subscription data if user can manage it
     subscription_data = None
@@ -386,7 +442,8 @@ def settings(request):
             'subscription': subscription,
         }
 
-    notification_preferences = {
+    # Load notification preferences from user model, with defaults
+    notification_preferences = user.notification_preferences or {
         "task_updates": True,
         "reward_updates": True,
         "shopping_updates": False,

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Lehte ei leitud | Perekas{% endblock %}
+
+{% block content %}
+  <div class="page-container" style="display: flex; align-items: center; justify-content: center; min-height: 60vh; text-align: center;">
+    <div style="max-width: 600px; padding: 2rem;">
+      <h1 style="font-size: 6rem; font-weight: 700; margin: 0; color: var(--color-text-primary);">404</h1>
+      <h2 style="font-size: 2rem; font-weight: 600; margin: 1rem 0; color: var(--color-text-primary);">Lehte ei leitud</h1>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); margin: 1rem 0 2rem;">
+        Vabandame, kuid soovitud lehte ei leitud. See võib olla kustutatud või URL on vale.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'a_dashboard:dashboard' %}" class="btn btn-primary">Tagasi avalehele</a>
+        <a href="javascript:history.back()" class="btn btn-ghost">Tagasi</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

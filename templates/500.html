@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Serveri viga | Perekas{% endblock %}
+
+{% block content %}
+  <div class="page-container" style="display: flex; align-items: center; justify-content: center; min-height: 60vh; text-align: center;">
+    <div style="max-width: 600px; padding: 2rem;">
+      <h1 style="font-size: 6rem; font-weight: 700; margin: 0; color: var(--color-text-primary);">500</h1>
+      <h2 style="font-size: 2rem; font-weight: 600; margin: 1rem 0; color: var(--color-text-primary);">Serveri viga</h1>
+      <p style="font-size: 1.125rem; color: var(--color-text-secondary); margin: 1rem 0 2rem;">
+        Tekkis ootamatu viga. Oleme sellest teavitatud ja lahendame selle võimalikult kiiresti.
+        Palun proovi mõne hetke pärast uuesti.
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'a_dashboard:dashboard' %}" class="btn btn-primary">Tagasi avalehele</a>
+        <a href="javascript:location.reload()" class="btn btn-ghost">Proovi uuesti</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
