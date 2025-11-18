@@ -1,18 +1,96 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import date
 from allauth.account.forms import SignupForm
 
 from .models import User, Family
 
 
 class FamilySignupForm(SignupForm):
+    first_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Eesnimi",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Sinu eesnimi',
+            'autofocus': True,
+        })
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=True,
+        label="Perekonnanimi",
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Sinu perekonnanimi',
+        })
+    )
+    birthdate = forms.DateField(
+        required=True,
+        label="Sünniaeg",
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'max': date.today().isoformat(),
+        })
+    )
     role = forms.ChoiceField(
         choices=User.ROLE_CHOICES,
         label="Roll",
+        widget=forms.RadioSelect(attrs={
+            'class': 'role-radio',
+        })
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make email required and set placeholder
+        if 'email' in self.fields:
+            self.fields['email'].widget.attrs.update({
+                'placeholder': 'sinu@email.ee',
+            })
+        # Hide username field - we'll auto-generate it
+        if 'username' in self.fields:
+            self.fields['username'].required = False
+            self.fields['username'].widget = forms.HiddenInput()
+        # Update password field placeholders
+        if 'password1' in self.fields:
+            self.fields['password1'].widget.attrs.update({
+                'placeholder': 'Vähemalt 8 tähemärki',
+            })
+        if 'password2' in self.fields:
+            self.fields['password2'].widget.attrs.update({
+                'placeholder': 'Korda parooli',
+            })
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                raise ValidationError('See e-posti aadress on juba kasutuses.')
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        # Auto-generate username from email if not provided
+        if not cleaned_data.get('username'):
+            email = cleaned_data.get('email', '')
+            if email:
+                # Use email prefix as username, make it unique
+                base_username = email.split('@')[0].lower()
+                username = base_username
+                counter = 1
+                while User.objects.filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                cleaned_data['username'] = username
+        return cleaned_data
 
     def save(self, request):
         user = super().save(request)
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
+        user.birthdate = self.cleaned_data.get('birthdate')
         role = self.cleaned_data.get("role", User.ROLE_PARENT)
         user.role = role
         user.save()

@@ -6,13 +6,13 @@ from .models import Family, User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'points', 'is_staff', 'date_joined')
-    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active', 'date_joined')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role', 'birthdate', 'points', 'is_staff', 'date_joined')
+    list_filter = ('role', 'is_staff', 'is_superuser', 'is_active', 'date_joined', 'birthdate')
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Luminara Profile', {'fields': ('role', 'points')}),
+        ('Perekas Profile', {'fields': ('role', 'birthdate', 'points')}),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Luminara Profile', {'fields': ('role', 'points')}),
+        ('Perekas Profile', {'fields': ('role', 'birthdate', 'points')}),
     )
 
 

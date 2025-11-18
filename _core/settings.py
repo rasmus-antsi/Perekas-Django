@@ -119,10 +119,10 @@ ACCOUNT_RATE_LIMITS = {
 ACCOUNT_FORMS = {
     'signup': 'a_family.forms.FamilySignupForm',
 }
-ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Luminara] '
+ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Perekas] '
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@luminara.app')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@perekas.ee')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 

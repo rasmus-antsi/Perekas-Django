@@ -1,11 +1,35 @@
 {% extends "account/base.html" %}
 {% load static %}
-{% block title %}Liitu või loo pere | Luminara{% endblock %}
+{% block title %}Liitu või loo pere | Perekas{% endblock %}
 {% block content %}
-  <div class="auth-card-minimal">
-    <div class="auth-header-minimal">
-      <h1>Tere tulemast Luminara perre!</h1>
-      <p>Alustamiseks loo uus pere või liitu olemasolevaga.</p>
+  <div class="auth-card-minimal onboarding-journey">
+    <div class="signup-progress">
+      <div class="progress-steps">
+        <div class="progress-step completed" data-step="1">
+          <div class="step-number">1</div>
+          <div class="step-label">Põhiinfo</div>
+        </div>
+        <div class="progress-line completed"></div>
+        <div class="progress-step completed" data-step="2">
+          <div class="step-number">2</div>
+          <div class="step-label">Profiil</div>
+        </div>
+        <div class="progress-line completed"></div>
+        <div class="progress-step completed" data-step="3">
+          <div class="step-number">3</div>
+          <div class="step-label">Turvalisus</div>
+        </div>
+        <div class="progress-line completed"></div>
+        <div class="progress-step active" data-step="4">
+          <div class="step-number">4</div>
+          <div class="step-label">Pere</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="signup-header">
+      <h1>Viimane samm!</h1>
+      <p>Loo või liitu perega, et alustada</p>
     </div>
 
     {% if messages %}
@@ -115,6 +139,119 @@
     /* Override container width for onboarding */
     .auth-container {
       max-width: 900px !important;
+    }
+
+    .onboarding-journey {
+      max-width: 900px;
+    }
+
+    .signup-progress {
+      margin-bottom: 2.5rem;
+    }
+
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      opacity: 0.4;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-step.active {
+      opacity: 1;
+    }
+
+    .progress-step.completed .step-number {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(148, 163, 184, 0.15);
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: 0.9375rem;
+      color: rgba(148, 163, 184, 0.8);
+      transition: all 0.3s ease;
+    }
+
+    .progress-step.active .step-number {
+      background: rgba(139, 92, 246, 0.2);
+      border-color: #8b5cf6;
+      color: #8b5cf6;
+      transform: scale(1.1);
+    }
+
+    .step-label {
+      font-size: 0.75rem;
+      color: rgba(148, 163, 184, 0.7);
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .progress-step.active .step-label {
+      color: rgba(148, 163, 184, 0.9);
+    }
+
+    .progress-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(148, 163, 184, 0.2);
+      margin: 0 0.5rem;
+      margin-top: -1.5rem;
+      transition: background 0.3s ease;
+    }
+
+    .progress-line.completed {
+      background: #22c55e;
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .signup-header h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .signup-header p {
+      margin: 0;
+      color: rgba(148, 163, 184, 0.8);
+      font-size: 0.9375rem;
+    }
+
+    @media (max-width: 640px) {
+      .step-label {
+        display: none;
+      }
+
+      .progress-steps {
+        gap: 0.25rem;
+      }
+
+      .progress-line {
+        margin: 0 0.25rem;
+      }
     }
 
     .onboarding-options {

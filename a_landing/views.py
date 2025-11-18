@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from time import time
 
 # Create your views here.
@@ -7,12 +7,15 @@ def index(request):
 
 
 def features(request):
-    return render(request, 'a_landing/features.html')
+    # Redirect to main page - JavaScript will handle anchor scrolling
+    return redirect('a_landing:landing_index')
 
 
 def about(request):
-    return render(request, 'a_landing/about.html')
+    # Redirect to main page - JavaScript will handle anchor scrolling
+    return redirect('a_landing:landing_index')
 
 
 def plans(request):
-    return render(request, 'a_landing/plans.html')
+    # Redirect to main page - JavaScript will handle anchor scrolling
+    return redirect('a_landing:landing_index')
