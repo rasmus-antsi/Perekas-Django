@@ -150,11 +150,11 @@ def upgrade_success(request):
     session_id = request.GET.get('session_id')
     if not session_id:
         messages.error(request, "Vigane seanss.")
-        return redirect('a_subscription:status')
+        return redirect('a_dashboard:settings')
 
     if not settings.STRIPE_SECRET_KEY:
         messages.error(request, "Stripe pole seadistatud.")
-        return redirect('a_subscription:status')
+        return redirect('a_dashboard:settings')
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -166,7 +166,7 @@ def upgrade_success(request):
 
         if str(request.user.id) != str(user_id):
             messages.error(request, "See seanss ei kuulu sinu kontole.")
-            return redirect('a_subscription:status')
+            return redirect('a_dashboard:settings')
 
         # Get or create subscription
         subscription, created = Subscription.objects.get_or_create(
@@ -198,11 +198,11 @@ def upgrade_success(request):
         subscription.save()
 
         messages.success(request, f"Pakett uuendati tasemele {subscription.get_tier_display()}!")
-        return redirect('a_subscription:status')
+        return redirect('a_dashboard:settings')
 
     except stripe.error.StripeError as e:
         messages.error(request, f"Tekkis viga tellimuse töötlemisel: {str(e)}")
-        return redirect('a_subscription:status')
+        return redirect('a_dashboard:settings')
 
 
 @login_required

@@ -19,12 +19,22 @@
       {% endif %}
     </section>
 
+    {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     {% if not family %}
       <section class="empty-state full-row">
         <p>Pereprofiili ei leitud. Loo või liitu perega, et seadeid kohandada.</p>
       </section>
     {% else %}
-      <div class="settings-grid">
+      <div class="settings-grid settings-grid-single">
         <section class="settings-card">
           <header class="settings-card-header card-header">
             <div class="card-title-wrap">
@@ -38,7 +48,7 @@
           <div class="settings-card-body">
             <form method="post" class="settings-form">
               {% csrf_token %}
-              <div class="form-grid">
+              <div class="form-grid form-grid-single">
                 <label class="form-field">
                   <span class="field-label">Kuvatav nimi</span>
                   <input type="text" name="display_name" value="{{ settings_user.get_full_name|default:settings_user.username }}" placeholder="Sisesta oma nimi">
@@ -166,8 +176,160 @@
             </form>
           </div>
         </section>
+
+        {% if can_manage_subscription and subscription_data %}
+          <section class="settings-card">
+            <header class="settings-card-header card-header">
+              <div class="card-title-wrap">
+                <span class="card-icon icon-purple"></span>
+                <div>
+                  <h2>Tellimus</h2>
+                  <p>Sinu kehtiv tellimus ja arveldusinfo.</p>
+                </div>
+              </div>
+            </header>
+            <div class="settings-card-body">
+              <div class="subscription-simple">
+                <div class="subscription-plan-info">
+                  <div class="plan-badge plan-badge-{{ subscription_data.tier|lower }}">
+                    <span>{{ subscription_data.display_tier }}</span>
+                  </div>
+                  <div class="subscription-details">
+                    <h3 class="plan-name">{{ subscription_data.display_tier }} pakett</h3>
+                    {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
+                      <p class="renewal-date">
+                        <strong>Uueneb:</strong> {{ subscription_data.subscription.current_period_end|date:"j. F Y" }}
+                      </p>
+                    {% elif subscription_data.tier == 'FREE' %}
+                      <p class="renewal-date">Tasuta pakett</p>
+                    {% endif %}
+                  </div>
+                </div>
+                {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
+                  <form method="post" class="subscription-edit-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="subscription_action" value="edit_portal">
+                    <button type="submit" class="btn btn-primary">Halda tellimust</button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+          </section>
+        {% endif %}
       </div>
     {% endif %}
   </div>
+
+  <style>
+    .settings-grid-single {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .form-grid-single {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .subscription-simple {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1rem 0;
+    }
+    
+    .subscription-plan-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+    
+    .plan-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .plan-badge-free {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .plan-badge-starter {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .plan-badge-pro {
+      background: #fce7f3;
+      color: #9f1239;
+    }
+    
+    .subscription-details {
+      flex: 1;
+    }
+    
+    .plan-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem 0;
+      color: var(--color-text-primary);
+    }
+    
+    .renewal-date {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+    
+    .subscription-edit-form {
+      flex-shrink: 0;
+    }
+    
+    @media (max-width: 640px) {
+      .subscription-simple {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .subscription-plan-info {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .subscription-edit-form {
+        width: 100%;
+      }
+      
+      .subscription-edit-form .btn {
+        width: 100%;
+      }
+    }
+    
+    .messages {
+      margin-bottom: 1.5rem;
+    }
+    .message {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .message-success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .message-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .message-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+  </style>
 {% endblock %}
 
