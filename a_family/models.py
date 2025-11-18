@@ -16,6 +16,7 @@ class User(AbstractUser):
 
     role = models.CharField(max_length=12, choices=ROLE_CHOICES, default=ROLE_PARENT, db_index=True)
     points = models.PositiveIntegerField(default=0)
+    birthdate = models.DateField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
