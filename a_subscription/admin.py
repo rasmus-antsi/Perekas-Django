@@ -26,8 +26,8 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(SubscriptionUsage)
 class SubscriptionUsageAdmin(admin.ModelAdmin):
-    list_display = ['family', 'month', 'tasks_created', 'rewards_created', 'updated_at']
-    list_filter = ['month', 'updated_at']
+    list_display = ['family', 'period_start', 'tasks_created', 'rewards_created', 'updated_at']
+    list_filter = ['period_start', 'updated_at']
     search_fields = ['family__name', 'family__owner__username']
     readonly_fields = ['updated_at']
-    date_hierarchy = 'month'
+    date_hierarchy = 'period_start'
