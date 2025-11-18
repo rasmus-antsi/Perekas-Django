@@ -65,7 +65,7 @@ Family v1/
 
 ### Prerequisites
 
-- Python 3.14+
+- Python 3.12+ (3.12 recommended for production)
 - pip
 - Virtual environment (recommended)
 
