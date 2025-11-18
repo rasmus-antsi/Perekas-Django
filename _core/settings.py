@@ -241,14 +241,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise configuration for static file serving
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Use CompressedManifestStaticFilesStorage for production (adds cache busting)
+# Falls back to CompressedStaticFilesStorage if manifest files are missing
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# WhiteNoise settings
+WHITENOISE_USE_FINDERS = True  # Allow WhiteNoise to find static files during development
+WHITENOISE_AUTOREFRESH = DEBUG  # Auto-refresh in development
 
 # Media files (User uploads)
 # https://docs.djangoproject.com/en/5.2/topics/files/
