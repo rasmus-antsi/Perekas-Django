@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import redirect, render
+from django.urls import reverse
 
 from a_family.models import Family
 from a_subscription.utils import has_shopping_list_access
@@ -24,7 +25,7 @@ def index(request):
             request,
             "Ostunimekiri on saadaval Starter või Pro paketiga. Palun uuenda tellimust, et seda kasutada."
         )
-        return redirect('a_dashboard:settings?upgrade=1')
+        return redirect(f"{reverse('a_dashboard:settings')}?upgrade=1")
 
     if request.method == "POST":
         action = request.POST.get("action")

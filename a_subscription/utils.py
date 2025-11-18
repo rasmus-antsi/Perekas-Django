@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 from django.utils import timezone
 from datetime import date
+from django.conf import settings
 from .models import Subscription, SubscriptionUsage
 
 
@@ -194,4 +195,33 @@ def has_shopping_list_access(family):
     tier = get_family_subscription(family)
     limits = get_tier_limits(tier)
     return limits['shopping_list_enabled']
+
+
+def get_tier_from_price_id(price_id):
+    """
+    Map Stripe price ID to subscription tier.
+    This is a scalable approach - easy to add new tiers in the future.
+    
+    Args:
+        price_id: Stripe price ID string
+    
+    Returns:
+        str: Subscription tier (FREE, STARTER, PRO) or None if not found
+    """
+    if not price_id:
+        return None
+    
+    # Get price IDs from settings
+    starter_monthly = getattr(settings, 'STARTER_MONTHLY_PRICE_ID', None)
+    starter_yearly = getattr(settings, 'STARTER_YEARLY_PRICE_ID', None)
+    pro_monthly = getattr(settings, 'PRO_MONTHLY_PRICE_ID', None)
+    pro_yearly = getattr(settings, 'PRO_YEARLY_PRICE_ID', None)
+    
+    # Map price ID to tier
+    if price_id == starter_monthly or price_id == starter_yearly:
+        return Subscription.TIER_STARTER
+    elif price_id == pro_monthly or price_id == pro_yearly:
+        return Subscription.TIER_PRO
+    
+    return None
 
