@@ -2,6 +2,7 @@ import itertools
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -178,45 +179,87 @@ def index(request):
 
         elif action == "reopen" and is_parent:
             task = _get_task()
-            if task and task.completed:
-                if task.approved:
-                    assignee = task.assigned_to or task.completed_by
-                    if assignee:
-                        assignee.points = max(0, assignee.points - task.points)
-                        assignee.save(update_fields=["points"])
-                task.completed = False
-                task.completed_by = None
-                task.completed_at = None
-                task.approved = False
-                task.approved_by = None
-                task.approved_at = None
-                task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
+            if not task:
+                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+            elif not task.completed:
+                messages.warning(request, "See ülesanne pole täidetud.")
+            else:
+                # Use transaction to ensure atomicity
+                try:
+                    with transaction.atomic():
+                        if task.approved:
+                            assignee = task.assigned_to or task.completed_by
+                            if assignee:
+                                # Refresh assignee from DB to avoid race conditions
+                                assignee = User.objects.select_for_update().get(id=assignee.id)
+                                assignee.points = max(0, assignee.points - task.points)
+                                assignee.save(update_fields=["points"])
+                        
+                        task.completed = False
+                        task.completed_by = None
+                        task.completed_at = None
+                        task.approved = False
+                        task.approved_by = None
+                        task.approved_at = None
+                        task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
+                        messages.success(request, f"Ülesanne '{task.name}' avatud uuesti.")
+                except Exception as e:
+                    messages.error(request, f"Ülesande avamisel tekkis viga: {str(e)}")
 
         elif action == "approve" and is_parent:
             task = _get_task()
-            if task and task.completed and not task.approved:
-                task.approved = True
-                task.approved_by = user
-                task.approved_at = timezone.now()
-                task.save(update_fields=["approved", "approved_by", "approved_at"])
+            if not task:
+                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+            elif not task.completed:
+                messages.error(request, "Saab kinnitada ainult täidetud ülesandeid.")
+            elif task.approved:
+                messages.warning(request, "See ülesanne on juba kinnitatud.")
+            else:
+                # Use transaction to ensure atomicity
+                try:
+                    with transaction.atomic():
+                        assignee = task.assigned_to or task.completed_by
+                        if not assignee:
+                            messages.error(request, "Ülesandel pole määratud täitjat.")
+                        else:
+                            # Refresh assignee from DB to avoid race conditions
+                            assignee = User.objects.select_for_update().get(id=assignee.id)
+                            
+                            task.approved = True
+                            task.approved_by = user
+                            task.approved_at = timezone.now()
+                            task.save(update_fields=["approved", "approved_by", "approved_at"])
 
-                assignee = task.assigned_to or task.completed_by
-                if assignee:
-                    assignee.points += task.points
-                    assignee.save(update_fields=["points"])
+                            assignee.points += task.points
+                            assignee.save(update_fields=["points"])
+                            messages.success(request, f"Ülesanne '{task.name}' kinnitatud. {task.points} punkti lisatud.")
+                except Exception as e:
+                    messages.error(request, f"Ülesande kinnitamisel tekkis viga: {str(e)}")
 
         elif action == "unapprove" and is_parent:
             task = _get_task()
-            if task and task.approved:
-                assignee = task.assigned_to or task.completed_by
-                if assignee:
-                    assignee.points = max(0, assignee.points - task.points)
-                    assignee.save(update_fields=["points"])
+            if not task:
+                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+            elif not task.approved:
+                messages.warning(request, "See ülesanne pole kinnitatud.")
+            else:
+                # Use transaction to ensure atomicity
+                try:
+                    with transaction.atomic():
+                        assignee = task.assigned_to or task.completed_by
+                        if assignee:
+                            # Refresh assignee from DB to avoid race conditions
+                            assignee = User.objects.select_for_update().get(id=assignee.id)
+                            assignee.points = max(0, assignee.points - task.points)
+                            assignee.save(update_fields=["points"])
 
-                task.approved = False
-                task.approved_by = None
-                task.approved_at = None
-                task.save(update_fields=["approved", "approved_by", "approved_at"])
+                        task.approved = False
+                        task.approved_by = None
+                        task.approved_at = None
+                        task.save(update_fields=["approved", "approved_by", "approved_at"])
+                        messages.success(request, f"Ülesande '{task.name}' kinnitamine tühistatud.")
+                except Exception as e:
+                    messages.error(request, f"Ülesande kinnituse tühistamisel tekkis viga: {str(e)}")
 
         return redirect("a_tasks:index")
 

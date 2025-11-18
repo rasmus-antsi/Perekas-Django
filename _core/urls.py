@@ -16,6 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import render
+from django.conf import settings
+from django.conf.urls.static import static
+
+def handler404(request, exception):
+    """Custom 404 error handler"""
+    return render(request, '404.html', status=404)
+
+def handler500(request):
+    """Custom 500 error handler"""
+    return render(request, '500.html', status=500)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,3 +39,7 @@ urlpatterns = [
     path('tasks/', include('a_tasks.urls')),
     path('', include('a_landing.urls')),
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

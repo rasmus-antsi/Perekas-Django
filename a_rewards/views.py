@@ -2,6 +2,7 @@ import itertools
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -105,24 +106,71 @@ def index(request):
 
         elif action == "unclaim" and is_parent:
             reward = _get_reward()
-            if reward and reward.claimed and reward.claimed_by:
-                reward.claimed_by.points += reward.points
-                reward.claimed_by.save(update_fields=["points"])
-                reward.claimed = False
-                reward.claimed_by = None
-                reward.claimed_at = None
-                reward.save(update_fields=["claimed", "claimed_by", "claimed_at"])
+            if not reward:
+                messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+            elif not reward.claimed:
+                messages.warning(request, "See preemia pole lunastatud.")
+            elif not reward.claimed_by:
+                messages.error(request, "Preemial pole määratud lunastajat.")
+            else:
+                # Use transaction to ensure atomicity
+                try:
+                    with transaction.atomic():
+                        # Refresh from DB with row-level locking
+                        reward_refreshed = Reward.objects.select_for_update().get(id=reward.id)
+                        if reward_refreshed.claimed_by:
+                            claimed_by = User.objects.select_for_update().get(id=reward_refreshed.claimed_by.id)
+                            claimed_by.points += reward_refreshed.points
+                            claimed_by.save(update_fields=["points"])
+                        
+                        reward_refreshed.claimed = False
+                        reward_refreshed.claimed_by = None
+                        reward_refreshed.claimed_at = None
+                        reward_refreshed.save(update_fields=["claimed", "claimed_by", "claimed_at"])
+                        messages.success(request, f"Preemia '{reward_refreshed.name}' lunastamine tühistatud.")
+                except Exception as e:
+                    messages.error(request, f"Preemia lunastuse tühistamisel tekkis viga: {str(e)}")
 
         elif action == "claim" and is_child:
             reward = _get_reward()
-            if reward and not reward.claimed and user.points >= reward.points:
-                reward.claimed = True
-                reward.claimed_by = user
-                reward.claimed_at = timezone.now()
-                reward.save(update_fields=["claimed", "claimed_by", "claimed_at"])
+            if not reward:
+                messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+            elif reward.claimed:
+                messages.warning(request, "See preemia on juba lunastatud.")
+            else:
+                # Use transaction to prevent race conditions
+                try:
+                    with transaction.atomic():
+                        # Refresh user and reward from DB with row-level locking
+                        user_refreshed = User.objects.select_for_update().get(id=user.id)
+                        reward_refreshed = Reward.objects.select_for_update().get(id=reward.id)
+                        
+                        # Double-check conditions after locking
+                        if reward_refreshed.claimed:
+                            messages.warning(request, "See preemia on juba lunastatud.")
+                        elif user_refreshed.points < reward_refreshed.points:
+                            messages.error(
+                                request,
+                                f"Sul pole piisavalt punkte. Vajad {reward_refreshed.points} punkti, "
+                                f"aga sul on ainult {user_refreshed.points} punkti."
+                            )
+                        else:
+                            # Claim the reward
+                            reward_refreshed.claimed = True
+                            reward_refreshed.claimed_by = user_refreshed
+                            reward_refreshed.claimed_at = timezone.now()
+                            reward_refreshed.save(update_fields=["claimed", "claimed_by", "claimed_at"])
 
-                user.points = max(0, user.points - reward.points)
-                user.save(update_fields=["points"])
+                            # Deduct points
+                            user_refreshed.points = max(0, user_refreshed.points - reward_refreshed.points)
+                            user_refreshed.save(update_fields=["points"])
+                            messages.success(request, f"Preemia '{reward_refreshed.name}' lunastatud!")
+                except User.DoesNotExist:
+                    messages.error(request, "Kasutajat ei leitud.")
+                except Reward.DoesNotExist:
+                    messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+                except Exception as e:
+                    messages.error(request, f"Preemia lunastamisel tekkis viga: {str(e)}")
 
         return redirect("a_rewards:index")
 
