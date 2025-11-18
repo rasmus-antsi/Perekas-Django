@@ -189,29 +189,34 @@
               </div>
             </header>
             <div class="settings-card-body">
-              <div class="subscription-simple">
-                <div class="subscription-plan-info">
-                  <div class="plan-badge plan-badge-{{ subscription_data.tier|lower }}">
+              <div class="subscription-modern">
+                <div class="subscription-info-modern">
+                  <div class="plan-badge-modern plan-badge-{{ subscription_data.tier|lower }}">
                     <span>{{ subscription_data.display_tier }}</span>
                   </div>
-                  <div class="subscription-details">
-                    <h3 class="plan-name">{{ subscription_data.display_tier }} pakett</h3>
+                  <div class="subscription-details-modern">
+                    <h3 class="plan-name-modern">{{ subscription_data.display_tier }} pakett</h3>
                     {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
-                      <p class="renewal-date">
-                        <strong>Uueneb:</strong> {{ subscription_data.subscription.current_period_end|date:"j. F Y" }}
+                      <p class="renewal-date-modern">
+                        Uueneb: {{ subscription_data.subscription.current_period_end|date:"j. F Y" }}
                       </p>
                     {% elif subscription_data.tier == 'FREE' %}
-                      <p class="renewal-date">Tasuta pakett</p>
+                      <p class="renewal-date-modern">Tasuta pakett</p>
                     {% endif %}
                   </div>
                 </div>
-                {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
-                  <form method="post" class="subscription-edit-form">
-                    {% csrf_token %}
-                    <input type="hidden" name="subscription_action" value="edit_portal">
-                    <button type="submit" class="btn btn-primary">Halda tellimust</button>
-                  </form>
-                {% endif %}
+                <div class="subscription-actions-modern">
+                  {% if subscription_data.tier == 'FREE' %}
+                    <button type="button" class="btn btn-primary" onclick="openUpgradeModal()">Uuenda paketti</button>
+                  {% elif subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
+                    <form method="post" style="display: inline;">
+                      {% csrf_token %}
+                      <input type="hidden" name="subscription_action" value="edit_portal">
+                      <button type="submit" class="btn btn-ghost">Halda tellimust</button>
+                    </form>
+                    <button type="button" class="btn btn-primary" onclick="openUpgradeModal()">Muuda paketti</button>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </section>
@@ -219,6 +224,91 @@
       </div>
     {% endif %}
   </div>
+
+  <!-- Upgrade Modal -->
+  {% if can_manage_subscription and subscription_data %}
+    <div id="upgradeModal" class="modal-overlay" {% if show_upgrade_modal %}style="display: flex;"{% endif %}>
+      <div class="modal-content upgrade-modal">
+        <div class="modal-header">
+          <h2>Vali pakett</h2>
+          <button type="button" class="modal-close" onclick="closeUpgradeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="plans-grid-modal">
+            <div class="plan-card-modal {% if subscription_data.tier == 'FREE' %}plan-current{% endif %}">
+              <div class="plan-header-modal">
+                <h3>Tasuta</h3>
+                <div class="plan-price-modal">€0<span>/kuu</span></div>
+              </div>
+              <ul class="plan-features-modal">
+                <li>1 lapsevanem</li>
+                <li>1 laps</li>
+                <li>5 ülesannet kuus</li>
+                <li>3 preemiat kuus</li>
+                <li class="feature-disabled">Ostunimekirja pole</li>
+              </ul>
+              {% if subscription_data.tier == 'FREE' %}
+                <div class="plan-badge-current">Praegune</div>
+              {% else %}
+                <div class="plan-disabled-text">Alandamine pole võimalik</div>
+              {% endif %}
+            </div>
+
+            <div class="plan-card-modal plan-featured-modal {% if subscription_data.tier == 'STARTER' %}plan-current{% endif %}">
+              <div class="plan-badge-popular">Populaarne</div>
+              <div class="plan-header-modal">
+                <h3>Algtase</h3>
+                <div class="plan-price-modal">€9.99<span>/kuu</span></div>
+              </div>
+              <ul class="plan-features-modal">
+                <li>2 lapsevanemat</li>
+                <li>2 last</li>
+                <li>20 ülesannet kuus</li>
+                <li>15 preemiat kuus</li>
+                <li class="feature-enabled">Ostunimekiri ✓</li>
+              </ul>
+              {% if subscription_data.tier == 'STARTER' %}
+                <div class="plan-badge-current">Praegune</div>
+              {% else %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="STARTER">
+                  <input type="hidden" name="billing_period" value="monthly">
+                  <button type="submit" class="btn btn-primary btn-full">Vali Algtase</button>
+                </form>
+              {% endif %}
+            </div>
+
+            <div class="plan-card-modal {% if subscription_data.tier == 'PRO' %}plan-current{% endif %}">
+              <div class="plan-header-modal">
+                <h3>Pro</h3>
+                <div class="plan-price-modal">€19.99<span>/kuu</span></div>
+              </div>
+              <ul class="plan-features-modal">
+                <li>4 lapsevanemat</li>
+                <li>10 last</li>
+                <li>100 ülesannet kuus</li>
+                <li>50 preemiat kuus</li>
+                <li class="feature-enabled">Ostunimekiri ✓</li>
+              </ul>
+              {% if subscription_data.tier == 'PRO' %}
+                <div class="plan-badge-current">Praegune</div>
+              {% else %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="PRO">
+                  <input type="hidden" name="billing_period" value="monthly">
+                  <button type="submit" class="btn btn-primary btn-full">Vali Pro</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
   <style>
     .settings-grid-single {
@@ -229,81 +319,298 @@
       grid-template-columns: 1fr !important;
     }
     
-    .subscription-simple {
+    .subscription-modern {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1.5rem;
-      padding: 1rem 0;
+      padding: 1.25rem 0;
     }
     
-    .subscription-plan-info {
+    .subscription-info-modern {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 1.25rem;
       flex: 1;
     }
     
-    .plan-badge {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
+    .plan-badge-modern {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.75rem;
       font-weight: 600;
       font-size: 0.875rem;
       text-transform: uppercase;
+      letter-spacing: 0.05em;
       flex-shrink: 0;
     }
     .plan-badge-free {
-      background: #e5e7eb;
-      color: #374151;
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--color-text-secondary);
+      border: 1px solid rgba(148, 163, 184, 0.2);
     }
     .plan-badge-starter {
-      background: #dbeafe;
-      color: #1e40af;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
     }
     .plan-badge-pro {
-      background: #fce7f3;
-      color: #9f1239;
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.3);
     }
     
-    .subscription-details {
+    .subscription-details-modern {
       flex: 1;
     }
     
-    .plan-name {
-      font-size: 1.25rem;
+    .plan-name-modern {
+      font-size: 1.375rem;
       font-weight: 700;
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 0.375rem 0;
       color: var(--color-text-primary);
+      letter-spacing: -0.01em;
     }
     
-    .renewal-date {
+    .renewal-date-modern {
       font-size: 0.875rem;
       color: var(--color-text-secondary);
       margin: 0;
     }
     
-    .subscription-edit-form {
+    .subscription-actions-modern {
+      display: flex;
+      gap: 0.75rem;
       flex-shrink: 0;
     }
     
-    @media (max-width: 640px) {
-      .subscription-simple {
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 8, 24, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    
+    .modal-content {
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(59, 72, 99, 0.4);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    .upgrade-modal {
+      padding: 0;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid rgba(59, 72, 99, 0.4);
+    }
+    
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+      background: rgba(59, 72, 99, 0.3);
+      color: var(--color-text-primary);
+    }
+    
+    .modal-body {
+      padding: 2rem;
+    }
+    
+    .plans-grid-modal {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .plan-card-modal {
+      position: relative;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(59, 72, 99, 0.4);
+      border-radius: var(--radius-md);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s;
+    }
+    
+    .plan-card-modal:hover {
+      border-color: rgba(59, 72, 99, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    .plan-featured-modal {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+    }
+    
+    .plan-badge-popular {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(236, 72, 153, 0.9));
+      color: white;
+      padding: 0.375rem 1rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .plan-header-modal {
+      margin-bottom: 1.5rem;
+    }
+    
+    .plan-header-modal h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .plan-price-modal {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .plan-price-modal span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      margin-left: 0.25rem;
+    }
+    
+    .plan-features-modal {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .plan-features-modal li {
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    
+    .plan-features-modal li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--color-text-muted);
+    }
+    
+    .plan-features-modal .feature-enabled {
+      color: var(--color-success);
+    }
+    
+    .plan-features-modal .feature-enabled::before {
+      content: "✓";
+      color: var(--color-success);
+    }
+    
+    .plan-features-modal .feature-disabled {
+      color: var(--color-text-muted);
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    
+    .plan-badge-current {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--color-success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .plan-disabled-text {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(59, 72, 99, 0.2);
+      color: var(--color-text-muted);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .plan-current {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+      .subscription-modern {
         flex-direction: column;
         align-items: stretch;
       }
       
-      .subscription-plan-info {
+      .subscription-info-modern {
         flex-direction: column;
         align-items: flex-start;
       }
       
-      .subscription-edit-form {
+      .subscription-actions-modern {
         width: 100%;
       }
       
-      .subscription-edit-form .btn {
-        width: 100%;
+      .subscription-actions-modern .btn {
+        flex: 1;
+      }
+      
+      .plans-grid-modal {
+        grid-template-columns: 1fr;
       }
     }
     
@@ -331,5 +638,47 @@
       border: 1px solid rgba(245, 158, 11, 0.3);
     }
   </style>
+
+  <script>
+    function openUpgradeModal() {
+      document.getElementById('upgradeModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeUpgradeModal() {
+      document.getElementById('upgradeModal').style.display = 'none';
+      document.body.style.overflow = '';
+      // Remove upgrade param from URL
+      if (window.location.search.includes('upgrade=1')) {
+        const url = new URL(window.location);
+        url.searchParams.delete('upgrade');
+        window.history.replaceState({}, '', url);
+      }
+    }
+    
+    // Close modal on overlay click
+    document.addEventListener('DOMContentLoaded', function() {
+      const modal = document.getElementById('upgradeModal');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            closeUpgradeModal();
+          }
+        });
+        
+        // Close on Escape key
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && modal.style.display === 'flex') {
+            closeUpgradeModal();
+          }
+        });
+      }
+      
+      // Auto-open if show_upgrade_modal is true
+      {% if show_upgrade_modal %}
+      openUpgradeModal();
+      {% endif %}
+    });
+  </script>
 {% endblock %}
 
