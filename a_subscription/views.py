@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 import stripe
 from django.contrib import messages
@@ -10,6 +11,9 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from .models import Subscription
+from .utils import get_tier_from_price_id
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -32,49 +36,243 @@ def upgrade_success(request):
         session = stripe.checkout.Session.retrieve(session_id)
         user_id = session.metadata.get('user_id')
         family_id = session.metadata.get('family_id')
-        tier = session.metadata.get('tier')
+        tier_from_metadata = session.metadata.get('tier')
 
         if str(request.user.id) != str(user_id):
             messages.error(request, "See seanss ei kuulu sinu kontole.")
             return redirect('a_dashboard:settings')
 
-        # Get or create subscription
-        subscription, created = Subscription.objects.get_or_create(
-            owner=request.user,
-            defaults={
-                'tier': tier,
-                'stripe_customer_id': session.customer,
-                'status': Subscription.STATUS_ACTIVE,
-            }
-        )
+        # Extract tier from price ID (primary method, scalable)
+        tier = None
+        # Retrieve line items to get price ID
+        try:
+            line_items = stripe.checkout.Session.list_line_items(session_id, limit=1)
+            if line_items.data and len(line_items.data) > 0:
+                line_item = line_items.data[0]
+                # Price can be a string ID (default) or an object if expanded
+                price_obj = getattr(line_item, 'price', None)
+                if price_obj:
+                    if isinstance(price_obj, str):
+                        price_id = price_obj
+                    elif hasattr(price_obj, 'id'):
+                        price_id = price_obj.id
+                    else:
+                        price_id = None
+                    
+                    if price_id:
+                        tier = get_tier_from_price_id(price_id)
+                        logger.info(f"Extracted tier {tier} from price ID {price_id} for session {session_id}")
+        except Exception as e:
+            logger.warning(f"Could not retrieve line items for session {session_id}: {str(e)}", exc_info=True)
+        
+        # Fallback to metadata if price ID lookup failed
+        if not tier and tier_from_metadata:
+            tier = tier_from_metadata
+            logger.info(f"Using tier {tier} from metadata for session {session_id}")
+        
+        if not tier:
+            messages.error(request, "Ei õnnestunud määrata paketi taset.")
+            logger.error(f"Could not determine tier for session {session_id}")
+            return redirect('a_dashboard:settings')
 
-        if not created:
-            subscription.tier = tier
-            subscription.stripe_customer_id = session.customer
-            subscription.status = Subscription.STATUS_ACTIVE
-
+        # Get customer ID from session
+        customer_id = getattr(session, 'customer', None)
+        if not customer_id:
+            logger.error(f"No customer ID found in session {session_id}")
+            messages.error(request, "Tellimuses puudub kliendi ID.")
+            return redirect('a_dashboard:settings')
+        
         # Get subscription details from Stripe
-        if session.subscription:
-            stripe_subscription = stripe.Subscription.retrieve(session.subscription)
-            subscription.stripe_subscription_id = stripe_subscription.id
-            subscription.status = stripe_subscription.status
-            subscription.current_period_start = timezone.make_aware(
-                datetime.fromtimestamp(stripe_subscription.current_period_start)
+        subscription_id = getattr(session, 'subscription', None)
+        
+        # Find existing subscription by stripe_subscription_id first, then by customer_id
+        subscription = None
+        if subscription_id:
+            subscription = Subscription.objects.filter(
+                stripe_subscription_id=subscription_id
+            ).first()
+        
+        # If not found by subscription ID, try to find by customer and active status
+        if not subscription:
+            subscription = Subscription.objects.filter(
+                owner=request.user,
+                stripe_customer_id=customer_id,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).order_by('-created_at').first()
+        
+        # If still not found, create new subscription
+        if not subscription:
+            subscription = Subscription.objects.create(
+                owner=request.user,
+                tier=tier,
+                stripe_customer_id=customer_id,
+                status=Subscription.STATUS_ACTIVE,
             )
-            subscription.current_period_end = timezone.make_aware(
-                datetime.fromtimestamp(stripe_subscription.current_period_end)
-            )
+            logger.info(f"Created new subscription {subscription.id} for user {request.user.id}")
+        else:
+            # Update existing subscription
+            subscription.tier = tier
+            subscription.stripe_customer_id = customer_id
+            subscription.status = Subscription.STATUS_ACTIVE
+            logger.info(f"Updating existing subscription {subscription.id} for user {request.user.id}")
+
+        # Update subscription details from Stripe if available
+        if subscription_id:
+            try:
+                stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+                subscription.stripe_subscription_id = stripe_subscription.id
+                subscription.status = stripe_subscription.status
+                if hasattr(stripe_subscription, 'current_period_start') and stripe_subscription.current_period_start:
+                    subscription.current_period_start = timezone.make_aware(
+                        datetime.fromtimestamp(stripe_subscription.current_period_start)
+                    )
+                if hasattr(stripe_subscription, 'current_period_end') and stripe_subscription.current_period_end:
+                    subscription.current_period_end = timezone.make_aware(
+                        datetime.fromtimestamp(stripe_subscription.current_period_end)
+                    )
+                
+                # Update tier from subscription if available (more reliable)
+                tier_from_subscription = _extract_tier_from_subscription(stripe_subscription)
+                if tier_from_subscription:
+                    subscription.tier = tier_from_subscription
+                    logger.info(f"Updated tier to {tier_from_subscription} from subscription object")
+            except stripe.error.StripeError as e:
+                logger.error(f"Error retrieving subscription {subscription_id}: {str(e)}", exc_info=True)
 
         subscription.save()
+        
+        # Cancel any other active subscriptions for this user to prevent duplicates
+        other_subscriptions = Subscription.objects.filter(
+            owner=request.user,
+            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+        ).exclude(id=subscription.id)
+        
+        for other_sub in other_subscriptions:
+            if other_sub.stripe_subscription_id:
+                try:
+                    # Cancel the Stripe subscription
+                    stripe.Subscription.delete(other_sub.stripe_subscription_id)
+                    logger.info(f"Cancelled duplicate Stripe subscription {other_sub.stripe_subscription_id}")
+                except stripe.error.StripeError as e:
+                    logger.warning(f"Could not cancel duplicate subscription {other_sub.stripe_subscription_id}: {str(e)}")
+            
+            # Mark as cancelled locally
+            other_sub.status = Subscription.STATUS_CANCELLED
+            other_sub.tier = Subscription.TIER_FREE
+            other_sub.stripe_subscription_id = None
+            other_sub.save()
+            logger.info(f"Marked duplicate subscription {other_sub.id} as cancelled")
 
         messages.success(request, f"Pakett uuendati tasemele {subscription.get_tier_display()}!")
+        logger.info(f"Subscription successfully created/updated for user {request.user.id}, tier: {subscription.tier}")
         return redirect('a_dashboard:settings')
 
     except stripe.error.StripeError as e:
+        logger.error(f"Stripe error in upgrade_success: {str(e)}", exc_info=True)
         messages.error(request, f"Tekkis viga tellimuse töötlemisel: {str(e)}")
+        return redirect('a_dashboard:settings')
+    except Exception as e:
+        logger.error(f"Unexpected error in upgrade_success: {str(e)}", exc_info=True)
+        messages.error(request, "Tekkis ootamatu viga. Palun proovi uuesti või võta ühendust toega.")
         return redirect('a_dashboard:settings')
 
 
+
+
+def _extract_tier_from_subscription(subscription_obj):
+    """
+    Extract tier from Stripe subscription object.
+    Tries to get tier from price ID first, then falls back to metadata.
+    
+    Args:
+        subscription_obj: Stripe subscription object (dict)
+    
+    Returns:
+        str: Subscription tier or None
+    """
+    # Try to get tier from price ID (primary method, scalable)
+    items = subscription_obj.get('items', {}).get('data', [])
+    if items and len(items) > 0:
+        price_id = items[0].get('price', {}).get('id')
+        if price_id:
+            tier = get_tier_from_price_id(price_id)
+            if tier:
+                return tier
+    
+    # Fallback to metadata
+    metadata = subscription_obj.get('metadata', {})
+    tier = metadata.get('tier')
+    if tier in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+        return tier
+    
+    return None
+
+
+def _update_subscription_from_stripe(subscription, subscription_obj):
+    """
+    Update subscription object from Stripe subscription data.
+    Handles tier extraction, status updates, and period dates.
+    
+    Args:
+        subscription: Django Subscription model instance
+        subscription_obj: Stripe subscription object (dict or Stripe object)
+    """
+    # Convert to dict if it's a Stripe object
+    if hasattr(subscription_obj, 'to_dict'):
+        subscription_obj = subscription_obj.to_dict()
+    elif not isinstance(subscription_obj, dict):
+        # Try to access as object attributes
+        subscription_obj = {
+            'status': getattr(subscription_obj, 'status', None),
+            'current_period_start': getattr(subscription_obj, 'current_period_start', None),
+            'current_period_end': getattr(subscription_obj, 'current_period_end', None),
+            'items': getattr(subscription_obj, 'items', {}),
+            'metadata': getattr(subscription_obj, 'metadata', {}),
+        }
+    
+    # Extract tier from price ID or metadata
+    tier = _extract_tier_from_subscription(subscription_obj)
+    if tier:
+        subscription.tier = tier
+    
+    # Update status
+    status = subscription_obj.get('status')
+    if status:
+        subscription.status = status
+    
+    # Update period dates
+    if subscription_obj.get('current_period_start'):
+        period_start = subscription_obj['current_period_start']
+        if isinstance(period_start, (int, float)):
+            subscription.current_period_start = timezone.make_aware(
+                datetime.fromtimestamp(period_start)
+            )
+    if subscription_obj.get('current_period_end'):
+        period_end = subscription_obj['current_period_end']
+        if isinstance(period_end, (int, float)):
+            subscription.current_period_end = timezone.make_aware(
+                datetime.fromtimestamp(period_end)
+            )
+    
+    # Handle cancellation vs expiration
+    # Cancelled: Keep tier until period_end (user keeps access)
+    # Expired/unpaid: Revert to FREE immediately
+    if status in [Subscription.STATUS_INCOMPLETE_EXPIRED, Subscription.STATUS_UNPAID]:
+        # Payment failed permanently - revert to FREE
+        subscription.tier = Subscription.TIER_FREE
+        logger.info(f"Subscription {subscription.stripe_subscription_id} expired/unpaid, reverting to FREE tier")
+    elif status == Subscription.STATUS_CANCELLED:
+        # Cancelled but may still have access until period_end
+        # Check if period has ended
+        if subscription.current_period_end and subscription.current_period_end < timezone.now():
+            # Period ended, revert to FREE
+            subscription.tier = Subscription.TIER_FREE
+            logger.info(f"Subscription {subscription.stripe_subscription_id} cancelled and period ended, reverting to FREE tier")
+        else:
+            # Keep tier until period_end
+            logger.info(f"Subscription {subscription.stripe_subscription_id} cancelled, keeping tier until period_end")
+    
+    subscription.save()
 
 
 @csrf_exempt
@@ -87,8 +285,7 @@ def webhook(request):
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
 
-    # In production, you should verify the webhook signature
-    # For now, we'll process the events
+    # Verify webhook signature
     try:
         webhook_secret = getattr(settings, 'STRIPE_WEBHOOK_SECRET', None)
         if webhook_secret and sig_header:
@@ -104,25 +301,185 @@ def webhook(request):
         return HttpResponse(status=400)
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
+    except Exception as e:
+        logger.error(f"Error parsing webhook: {str(e)}", exc_info=True)
+        return HttpResponse(status=200)  # Return 200 to acknowledge
 
-    # Handle the event
-    if event['type'] == 'customer.subscription.updated' or event['type'] == 'customer.subscription.deleted':
-        subscription_obj = event['data']['object']
-        try:
-            subscription = Subscription.objects.get(
-                stripe_subscription_id=subscription_obj['id']
-            )
-            subscription.status = subscription_obj['status']
-            if subscription_obj.get('current_period_start'):
-                subscription.current_period_start = timezone.make_aware(
-                    datetime.fromtimestamp(subscription_obj['current_period_start'])
-                )
-            if subscription_obj.get('current_period_end'):
-                subscription.current_period_end = timezone.make_aware(
-                    datetime.fromtimestamp(subscription_obj['current_period_end'])
-                )
-            subscription.save()
-        except Subscription.DoesNotExist:
-            pass
+    # Get event type - handle both dict and object formats
+    event_type = ''
+    event_data = {}
+    try:
+        if isinstance(event, dict):
+            event_type = event.get('type', '')
+            event_data = event.get('data', {})
+        else:
+            event_type = getattr(event, 'type', '')
+            data_obj = getattr(event, 'data', None)
+            if data_obj:
+                if isinstance(data_obj, dict):
+                    event_data = data_obj
+                elif hasattr(data_obj, 'to_dict'):
+                    event_data = data_obj.to_dict()
+                elif hasattr(data_obj, 'object'):
+                    # Access the object attribute directly
+                    obj = getattr(data_obj, 'object', None)
+                    if obj:
+                        if hasattr(obj, 'to_dict'):
+                            event_data = {'object': obj.to_dict()}
+                        else:
+                            event_data = {'object': obj}
+                    else:
+                        event_data = {'object': {}}
+                else:
+                    event_data = {'object': {}}
+    except Exception as e:
+        logger.error(f"Error accessing event data: {str(e)}", exc_info=True)
+        return HttpResponse(status=200)
+    
+    logger.info(f"Received Stripe webhook event: {event_type}")
 
+    # Handle subscription events
+    try:
+        if event_type == 'customer.subscription.created':
+            subscription_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = subscription_obj.get('id') if isinstance(subscription_obj, dict) else None
+            customer_id = subscription_obj.get('customer') if isinstance(subscription_obj, dict) else None
+            
+            logger.info(f"Processing subscription.created for {subscription_id}, customer: {customer_id}")
+            
+            try:
+                # Try to find existing subscription by customer ID first
+                subscription = None
+                if customer_id:
+                    subscription = Subscription.objects.filter(
+                        stripe_customer_id=customer_id
+                    ).order_by('-created_at').first()
+                
+                # If not found, try by subscription ID
+                if not subscription and subscription_id:
+                    subscription = Subscription.objects.filter(
+                        stripe_subscription_id=subscription_id
+                    ).first()
+                
+                # If still not found, try to find by customer email via Stripe
+                if not subscription and customer_id:
+                    try:
+                        customer = stripe.Customer.retrieve(customer_id)
+                        user_id = customer.metadata.get('user_id')
+                        if user_id:
+                            from a_family.models import User
+                            try:
+                                user = User.objects.get(id=user_id)
+                                subscription = Subscription.objects.filter(
+                                    owner=user,
+                                    tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+                                ).order_by('-created_at').first()
+                                if subscription:
+                                    logger.info(f"Found subscription {subscription.id} by user_id from customer metadata")
+                            except User.DoesNotExist:
+                                pass
+                    except Exception as e:
+                        logger.warning(f"Could not retrieve customer to find user: {str(e)}")
+                
+                if subscription:
+                    # Update existing subscription
+                    subscription.stripe_subscription_id = subscription_id
+                    subscription.stripe_customer_id = customer_id  # Ensure customer ID is set
+                    _update_subscription_from_stripe(subscription, subscription_obj)
+                    logger.info(f"Updated existing subscription {subscription.id} for customer {customer_id}")
+                else:
+                    logger.warning(f"Subscription created event received but no matching subscription found: {subscription_id}, customer: {customer_id}")
+            except Exception as e:
+                logger.error(f"Error processing subscription.created: {str(e)}", exc_info=True)
+
+        elif event_type == 'customer.subscription.updated':
+            subscription_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = subscription_obj.get('id') if isinstance(subscription_obj, dict) else None
+            
+            logger.info(f"Processing subscription.updated for {subscription_id}")
+            
+            try:
+                subscription = Subscription.objects.get(
+                    stripe_subscription_id=subscription_id
+                )
+                _update_subscription_from_stripe(subscription, subscription_obj)
+                logger.info(f"Updated subscription {subscription.id}")
+            except Subscription.DoesNotExist:
+                logger.warning(f"Subscription updated event received but subscription not found: {subscription_id}")
+            except Exception as e:
+                logger.error(f"Error processing subscription.updated: {str(e)}", exc_info=True)
+
+        elif event_type == 'customer.subscription.deleted':
+            subscription_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = subscription_obj.get('id') if isinstance(subscription_obj, dict) else None
+            
+            logger.info(f"Processing subscription.deleted for {subscription_id}")
+            
+            try:
+                subscription = Subscription.objects.get(
+                    stripe_subscription_id=subscription_id
+                )
+                # When deleted, revert to FREE tier
+                subscription.status = Subscription.STATUS_CANCELLED
+                subscription.tier = Subscription.TIER_FREE
+                subscription.stripe_subscription_id = None  # Clear subscription ID
+                subscription.save()
+                logger.info(f"Subscription {subscription.id} deleted, reverted to FREE tier")
+            except Subscription.DoesNotExist:
+                logger.warning(f"Subscription deleted event received but subscription not found: {subscription_id}")
+            except Exception as e:
+                logger.error(f"Error processing subscription.deleted: {str(e)}", exc_info=True)
+
+        elif event_type == 'invoice.payment_failed':
+            invoice_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = invoice_obj.get('subscription') if isinstance(invoice_obj, dict) else None
+            
+            logger.info(f"Processing invoice.payment_failed for subscription {subscription_id}")
+            
+            if subscription_id:
+                try:
+                    subscription = Subscription.objects.get(
+                        stripe_subscription_id=subscription_id
+                    )
+                    # Update status to past_due
+                    subscription.status = Subscription.STATUS_PAST_DUE
+                    
+                    # If this is a final failure (after retries), revert to FREE
+                    # Stripe will send multiple payment_failed events during retry period
+                    # We'll let the subscription.updated event handle the final status change
+                    subscription.save()
+                    logger.info(f"Subscription {subscription.id} payment failed, status set to past_due")
+                except Subscription.DoesNotExist:
+                    logger.warning(f"Payment failed event received but subscription not found: {subscription_id}")
+                except Exception as e:
+                    logger.error(f"Error processing invoice.payment_failed: {str(e)}", exc_info=True)
+
+        elif event_type == 'invoice.payment_succeeded':
+            invoice_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = invoice_obj.get('subscription') if isinstance(invoice_obj, dict) else None
+            
+            logger.info(f"Processing invoice.payment_succeeded for subscription {subscription_id}")
+            
+            if subscription_id:
+                try:
+                    subscription = Subscription.objects.get(
+                        stripe_subscription_id=subscription_id
+                    )
+                    # Payment succeeded - ensure status is active
+                    if subscription.status == Subscription.STATUS_PAST_DUE:
+                        subscription.status = Subscription.STATUS_ACTIVE
+                        subscription.save()
+                        logger.info(f"Subscription {subscription.id} payment succeeded, status set to active")
+                except Subscription.DoesNotExist:
+                    logger.warning(f"Payment succeeded event received but subscription not found: {subscription_id}")
+                except Exception as e:
+                    logger.error(f"Error processing invoice.payment_succeeded: {str(e)}", exc_info=True)
+
+        else:
+            logger.debug(f"Unhandled webhook event type: {event_type}")
+    except Exception as e:
+        # Log any unexpected errors but still return 200 to acknowledge receipt
+        logger.error(f"Unexpected error processing webhook event {event_type}: {str(e)}", exc_info=True)
+
+    # Always return 200 to acknowledge receipt, even if processing had errors
     return HttpResponse(status=200)
