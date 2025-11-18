@@ -33,7 +33,7 @@ A private SaaS application for family task management, rewards, and organization
 - **Payments**: Stripe 13.2.0
 - **Environment**: python-dotenv 1.2.1
 - **Database**: SQLite (development)
-- **Python**: 3.14+
+- **Python**: 3.12+ (3.12 recommended for production)
 
 ## Project Structure
 

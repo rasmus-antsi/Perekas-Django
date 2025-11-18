@@ -35,12 +35,21 @@ AUTH_USER_MODEL = 'a_family.User'
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0')
 
 # ALLOWED_HOSTS - in production/staging, set this via environment variable
-# For Railway: Set ALLOWED_HOSTS=yourdomain.com,*.railway.app
+# For Railway: Set ALLOWED_HOSTS=yourdomain.com,your-app.railway.app
+# Note: Django doesn't support wildcards in ALLOWED_HOSTS, so you must specify exact domains
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
-    allowed_hosts = os.getenv('ALLOWED_HOSTS', '*.railway.app')
-    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()]
+    allowed_hosts = os.getenv('ALLOWED_HOSTS', '')
+    if allowed_hosts:
+        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()]
+    else:
+        # If no ALLOWED_HOSTS is set in production, allow all (not recommended but prevents 400 errors)
+        # This should be overridden with proper domain names
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning('ALLOWED_HOSTS not set in production! Allowing all hosts. This is insecure - set ALLOWED_HOSTS environment variable.')
+        ALLOWED_HOSTS = ['*']
 
 # Security Settings for Production
 if not DEBUG:
