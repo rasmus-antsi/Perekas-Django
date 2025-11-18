@@ -30,8 +30,8 @@
 ### 2. Stripe Webhook Security
 - [x] **Implement proper webhook signature verification** - ✅ Done: Webhook verification implemented (uses secret if set)
 - [x] **Add STRIPE_WEBHOOK_SECRET to environment variables** - ✅ Done: STRIPE_WEBHOOK_SECRET configured in settings
-- [ ] **Test webhook handling for all subscription events** (created, updated, deleted, payment failed, etc.)
-- [ ] **Handle subscription downgrades** (when subscription expires or is cancelled)
+- [x] **Test webhook handling for all subscription events** - ✅ Done: All events tested (created, updated, deleted, payment failed, payment succeeded)
+- [x] **Handle subscription downgrades** - ✅ Done: Subscription expires/cancelled properly reverts to FREE tier
 
 ### 3. Database & Migrations
 - [x] **Set up PostgreSQL for production** - ✅ Done: PostgreSQL configured via DATABASE_URL on Railway
@@ -56,11 +56,11 @@
 - [ ] **Add notification preferences saving** - Currently hardcoded
 
 ### 6. Subscription Management
-- [ ] **Add subscription downgrade handling** - When subscription expires, revert to FREE tier
-- [ ] **Add usage reset automation** - Monthly usage should reset automatically (currently manual via get_current_month_usage)
+- [x] **Add subscription downgrade handling** - ✅ Done: When subscription expires, reverts to FREE tier via webhook
+- [x] **Add usage reset automation** - ✅ Done: Usage resets based on subscription period start (paid subscriptions use Stripe period, FREE tier uses 30-day periods from family creation)
 - [ ] **Add subscription renewal reminders** (optional but recommended)
-- [ ] **Handle payment failures gracefully**
-- [ ] **Add subscription upgrade/downgrade between tiers**
+- [x] **Handle payment failures gracefully** - ✅ Done: Payment failures set to past_due, expiration reverts to FREE
+- [x] **Add subscription upgrade/downgrade between tiers** - ✅ Done: Prorated upgrades/downgrades implemented
 
 ### 7. Error Handling & Edge Cases
 - [ ] **Add proper 404/500 error pages**
@@ -175,8 +175,8 @@
 4. ~~**a_subscription/views.py**: Webhook signature verification incomplete~~ ✅ Fixed: Webhook verification implemented
 5. ~~**Admin panels**: Missing registrations for Task, Reward, ShoppingListItem~~ ✅ Fixed
 6. **a_dashboard/views.py**: Settings view doesn't save changes
-7. **No automated monthly usage reset** - relies on get_current_month_usage creating new records
-8. **No subscription downgrade handling** when subscription expires
+7. ~~**No automated monthly usage reset** - relies on get_current_month_usage creating new records~~ ✅ Fixed: Usage now resets based on subscription period start dates
+8. ~~**No subscription downgrade handling** when subscription expires~~ ✅ Fixed: Webhook handles expiration and reverts to FREE
 9. ~~**Email backend**: Using console backend (needs production SMTP)~~ ✅ Fixed: SMTP configured
 
 ---
