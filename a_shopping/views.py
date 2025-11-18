@@ -24,7 +24,7 @@ def index(request):
             request,
             "Ostunimekiri on saadaval Starter või Pro paketiga. Palun uuenda tellimust, et seda kasutada."
         )
-        return redirect('a_subscription:status')
+        return redirect('a_dashboard:settings?upgrade=1')
 
     if request.method == "POST":
         action = request.POST.get("action")

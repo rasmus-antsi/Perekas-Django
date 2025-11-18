@@ -164,7 +164,10 @@ def settings(request):
     # Only family owner can manage subscription
     can_manage_subscription = family and family.owner == user
 
-    # Handle Stripe customer portal session creation
+    # Check if we should show upgrade modal (from shopping redirect)
+    show_upgrade_modal = request.GET.get('upgrade') == '1'
+
+    # Handle subscription actions
     if request.method == 'POST' and can_manage_subscription:
         action = request.POST.get('subscription_action')
         
@@ -192,6 +195,64 @@ def settings(request):
                 )
                 
                 return redirect(portal_session.url)
+                
+            except stripe.error.StripeError as e:
+                messages.error(request, f"Stripe'i viga: {str(e)}")
+                return redirect('a_dashboard:settings')
+        
+        elif action == 'upgrade':
+            tier = request.POST.get('tier')
+            billing_period = request.POST.get('billing_period', 'monthly')
+            
+            if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+                messages.error(request, "Vigane paketivalik.")
+                return redirect('a_dashboard:settings')
+            
+            # Get appropriate price ID
+            if tier == Subscription.TIER_STARTER:
+                price_id = django_settings.STARTER_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.STARTER_YEARLY_PRICE_ID
+            else:  # PRO
+                price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
+            
+            if not django_settings.STRIPE_SECRET_KEY:
+                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                return redirect('a_dashboard:settings')
+            
+            stripe.api_key = django_settings.STRIPE_SECRET_KEY
+            
+            try:
+                # Get or create Stripe customer
+                subscription = Subscription.objects.filter(owner=user).first()
+                customer_id = subscription.stripe_customer_id if subscription else None
+                
+                if not customer_id:
+                    customer = stripe.Customer.create(
+                        email=user.email,
+                        metadata={'user_id': user.id, 'family_id': family.id}
+                    )
+                    customer_id = customer.id
+                else:
+                    customer = stripe.Customer.retrieve(customer_id)
+                
+                # Create checkout session
+                checkout_session = stripe.checkout.Session.create(
+                    customer=customer_id,
+                    payment_method_types=['card'],
+                    line_items=[{
+                        'price': price_id,
+                        'quantity': 1,
+                    }],
+                    mode='subscription',
+                    success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
+                    cancel_url=request.build_absolute_uri('/dashboard/settings/'),
+                    metadata={
+                        'user_id': user.id,
+                        'family_id': family.id,
+                        'tier': tier,
+                    }
+                )
+                
+                return redirect(checkout_session.url)
                 
             except stripe.error.StripeError as e:
                 messages.error(request, f"Stripe'i viga: {str(e)}")
@@ -231,5 +292,6 @@ def settings(request):
         "notification_preferences": notification_preferences,
         "subscription_data": subscription_data,
         "can_manage_subscription": can_manage_subscription,
+        "show_upgrade_modal": show_upgrade_modal,
     }
     return render(request, 'a_dashboard/settings.html', context)
