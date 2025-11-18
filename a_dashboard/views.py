@@ -1,12 +1,21 @@
+import stripe
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.conf import settings as django_settings
 
 from a_family.models import Family, User
 from a_rewards.models import Reward
 from a_shopping.models import ShoppingListItem
 from a_tasks.models import Task
+from a_subscription.models import Subscription
+from a_subscription.utils import (
+    get_family_subscription,
+    get_current_month_usage,
+    get_tier_limits,
+)
 
 
 def _get_family_for_user(user):
@@ -152,6 +161,58 @@ def settings(request):
     is_parent = user.role == User.ROLE_PARENT
     is_child = user.role == User.ROLE_CHILD
 
+    # Only family owner can manage subscription
+    can_manage_subscription = family and family.owner == user
+
+    # Handle Stripe customer portal session creation
+    if request.method == 'POST' and can_manage_subscription:
+        action = request.POST.get('subscription_action')
+        
+        if action == 'edit_portal':
+            subscription = Subscription.objects.filter(
+                owner=user,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).first()
+            
+            if not subscription or not subscription.stripe_customer_id:
+                messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
+                return redirect('a_dashboard:settings')
+            
+            if not django_settings.STRIPE_SECRET_KEY:
+                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                return redirect('a_dashboard:settings')
+            
+            stripe.api_key = django_settings.STRIPE_SECRET_KEY
+            
+            try:
+                # Create customer portal session
+                portal_session = stripe.billing_portal.Session.create(
+                    customer=subscription.stripe_customer_id,
+                    return_url=request.build_absolute_uri('/dashboard/settings/'),
+                )
+                
+                return redirect(portal_session.url)
+                
+            except stripe.error.StripeError as e:
+                messages.error(request, f"Stripe'i viga: {str(e)}")
+                return redirect('a_dashboard:settings')
+
+    # Get subscription data if user can manage it
+    subscription_data = None
+    if can_manage_subscription:
+        tier = get_family_subscription(family)
+        
+        subscription = Subscription.objects.filter(
+            owner=user,
+            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+        ).first()
+        
+        subscription_data = {
+            'tier': tier,
+            'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier),
+            'subscription': subscription,
+        }
+
     notification_preferences = {
         "task_updates": True,
         "reward_updates": True,
@@ -168,5 +229,7 @@ def settings(request):
         "role_child": User.ROLE_CHILD,
         "current_role": user.role,
         "notification_preferences": notification_preferences,
+        "subscription_data": subscription_data,
+        "can_manage_subscription": can_manage_subscription,
     }
     return render(request, 'a_dashboard/settings.html', context)
