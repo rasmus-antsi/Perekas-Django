@@ -22,7 +22,9 @@ Set the following environment variables in your Railway project (or platform):
 # Django
 SECRET_KEY=<generate-new-secret-key>
 DEBUG=False
-ALLOWED_HOSTS=www.perekas.ee,perekas.ee,*.railway.app
+# IMPORTANT: Replace 'your-app-name' with your actual Railway app name
+# Django doesn't support wildcards, so you must specify exact domains
+ALLOWED_HOSTS=www.perekas.ee,perekas.ee,your-app-name.railway.app
 
 # Database (automatically set by Railway when PostgreSQL is added)
 # DATABASE_URL is provided automatically by Railway
@@ -119,7 +121,11 @@ Railway will automatically:
 1. Go to Railway project → Settings → Domains
 2. Add your custom domain (e.g., `www.perekas.ee`)
 3. Railway automatically provisions SSL certificate
-4. Update `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` with your domain
+4. **Important**: Update `ALLOWED_HOSTS` environment variable with:
+   - Your Railway subdomain: `your-app-name.railway.app`
+   - Your custom domain: `www.perekas.ee,perekas.ee`
+   - Update `CSRF_TRUSTED_ORIGINS` with: `https://www.perekas.ee,https://perekas.ee`
+   - **Note**: Django doesn't support wildcards in ALLOWED_HOSTS, so you must specify exact domains
 
 ## Post-Deployment Verification
 
@@ -269,7 +275,7 @@ railway run pg_dump $DATABASE_URL > backup.sql
 - Check `SECURE_SSL_REDIRECT` is set correctly
 - Verify HTTPS is working
 
-#### 6. psycopg2 Import Errors
+#### 7. psycopg2 Import Errors
 
 If you see errors like `Error loading psycopg2 or psycopg module` or `undefined symbol: _PyInterpreterState_Get`:
 
