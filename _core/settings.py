@@ -13,10 +13,14 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
-DEBUG = True
+# Determine if we're in production based on environment variable
+# Set DEBUG=False in Railway environment variables for production
+# Defaults to True for local development
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,15 +32,15 @@ AUTH_USER_MODEL = 'a_family.User'
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-if not DEBUG:
-    SECRET_KEY = os.getenv('SECRET_KEY')
-else:
-    SECRET_KEY = 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0')
 
-if not DEBUG:
-    ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS').split(',')
-else:
+# ALLOWED_HOSTS - in production/staging, set this via environment variable
+# For Railway: Set ALLOWED_HOSTS=yourdomain.com,*.railway.app
+if DEBUG:
     ALLOWED_HOSTS = ['*']
+else:
+    allowed_hosts = os.getenv('ALLOWED_HOSTS', '*.railway.app')
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()]
 
 
 # Application definition
@@ -64,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For static file serving
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -121,20 +126,46 @@ ACCOUNT_FORMS = {
 }
 ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Perekas] '
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email Configuration
+# In production/staging: Set SMTP environment variables
+# In local development: Uses console backend (emails print to terminal)
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@perekas.ee')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+if os.getenv('EMAIL_HOST'):
+    # SMTP configuration for production/staging
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
+    EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+else:
+    # Console backend for local development
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# Railway provides DATABASE_URL automatically when PostgreSQL service is added
+# For local development, falls back to SQLite
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    # Use PostgreSQL from Railway or other providers
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    # SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -177,25 +208,22 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# WhiteNoise configuration for static file serving
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-if not DEBUG:
-    STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
-    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-else:
-    STRIPE_PUBLIC_KEY = 'pk_test_51SUVq28TJMYKOD9HDgvJAisHGUNAB2HWnKWIGIX1eBghmcTUuuHdF9HOXYKO3kqBiJpBRH39eeReXdgJt0krBuE700g12Z1sUs'
-    STRIPE_SECRET_KEY = 'sk_test_51SUVq28TJMYKOD9HorPp8q9vBlmCBnuDUasLvbmoVw4NK6gcGbEjdNjAUNRHl2kDdTEWlgkKQm64ZkrG0UgiHOQB00pEzmrc0e'
+# Stripe Configuration
+# Use environment variables if set, otherwise use test keys for development
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_51SUVq28TJMYKOD9HDgvJAisHGUNAB2HWnKWIGIX1eBghmcTUuuHdF9HOXYKO3kqBiJpBRH39eeReXdgJt0krBuE700g12Z1sUs')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'sk_test_51SUVq28TJMYKOD9HorPp8q9vBlmCBnuDUasLvbmoVw4NK6gcGbEjdNjAUNRHl2kDdTEWlgkKQm64ZkrG0UgiHOQB00pEzmrc0e')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', None)
 
-if not DEBUG:
-    STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID')
-    STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID')
-    PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID')
-    PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID')
-else:
-    STARTER_MONTHLY_PRICE_ID = 'price_1SUdLt8TJMYKOD9HkQsG0t55'
-    STARTER_YEARLY_PRICE_ID = 'price_1SUdLt8TJMYKOD9HFKxIhmjq'
-    PRO_MONTHLY_PRICE_ID = 'price_1SUdMm8TJMYKOD9HJwhR8zvK'
-    PRO_YEARLY_PRICE_ID = 'price_1SUdMm8TJMYKOD9HgHoCVqds'
+# Stripe Price IDs
+STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HkQsG0t55')
+STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HFKxIhmjq')
+PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HJwhR8zvK')
+PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HgHoCVqds')
