@@ -1,0 +1,23 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Uus liige liitus" %}{% endblock %}
+{% block email_heading %}{% blocktrans %}{{ member_name }} liitus perega{% endblocktrans %}{% endblock %}
+{% block email_subheading %}
+  <p class="email-subtitle">{% blocktrans %}Pere "{{ family.name }}" on nüüd suurem.{% endblocktrans %}</p>
+{% endblock %}
+
+{% block email_content %}
+  <p>{% blocktrans %}{{ member_name }} liitus perega {{ family.name }} rollis {{ member_role }}.{% endblocktrans %}</p>
+  <p>{% trans "Vaata üle pere ülevaade, kinnita ülesanded või jaga tervitust." %}</p>
+
+  <div style="text-align: center;">
+    <a href="{{ dashboard_url }}" class="email-button">{% trans "Ava ülevaade" %}</a>
+  </div>
+
+  <div class="email-panel">
+    <strong>{% trans "Kiire soovitus" %}</strong>
+    <p style="margin-top: 8px;">{% trans "Määra uuele liikmele vähemalt üks ülesanne või preemia, et anda selge start." %}</p>
+  </div>
+{% endblock %}
+
