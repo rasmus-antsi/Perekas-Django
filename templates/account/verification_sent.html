@@ -13,10 +13,16 @@
       <p>Palun klõpsa kirjas oleval lingil, et registreerimine lõpuni viia. Link aegub 3 päeva pärast.</p>
       
       <div class="auth-info-box">
-        <p style="margin: 0; font-size: 0.875rem; color: rgba(148, 163, 184, 0.85);">
-          Ei saanud kirja kätte? Vaata rämpsposti või 
-          <a href="{% url 'account_email' %}" style="color: rgba(148, 163, 184, 0.95); font-weight: 600; text-decoration: none;">küsi uus link</a>.
+        <p style="margin: 0 0 1rem; font-size: 0.875rem; color: rgba(148, 163, 184, 0.85);">
+          Ei saanud kirja kätte? Vaata rämpsposti või saada uus kiri alloleva nupuga.
         </p>
+        <form method="post" action="{% url 'a_family:resend_verification' %}" style="margin: 0;">
+          {% csrf_token %}
+          <input type="hidden" name="email" value="{{ email }}">
+          <button type="submit" class="landing-button primary" style="width: 100%; font-size: 0.875rem; padding: 0.75rem 1rem;">
+            Saada kinnituse kiri uuesti
+          </button>
+        </form>
       </div>
     </div>
 

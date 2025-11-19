@@ -7,6 +7,7 @@ app_name = 'a_family'
 urlpatterns = [
     path('onboarding/', views.onboarding, name='onboarding'),
     path('remove/<int:user_id>/', views.remove_member, name='remove_member'),
+    path('resend-verification/', views.resend_verification_email, name='resend_verification'),
     path('', views.index, name='index'),
 ]
 
