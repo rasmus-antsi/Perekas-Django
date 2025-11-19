@@ -1,0 +1,10 @@
+{% load i18n %}{% blocktrans %}Tere, {{ user.get_full_name|default:user.username }}!{% endblocktrans %}
+
+{% trans "Palun kinnita oma e-posti aadress, klõpsates allolevat linki:" %}
+
+{{ activate_url }}
+
+{% trans "Kui sa seda kirja ei oodanud, võid selle julgelt tähelepanuta jätta." %}
+
+{% trans "© Perekas" %}
+
