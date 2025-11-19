@@ -1,7 +1,8 @@
+from datetime import date
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils import timezone
-from datetime import date
 from allauth.account.forms import SignupForm
 
 from .models import User, Family
@@ -55,7 +56,7 @@ class FamilySignupForm(SignupForm):
         # Update password field placeholders
         if 'password1' in self.fields:
             self.fields['password1'].widget.attrs.update({
-                'placeholder': 'Vähemalt 8 tähemärki',
+                'placeholder': 'Vähemalt 8 märki, 1 number ja suurtäht',
             })
         if 'password2' in self.fields:
             self.fields['password2'].widget.attrs.update({
@@ -70,21 +71,21 @@ class FamilySignupForm(SignupForm):
                 raise ValidationError('See e-posti aadress on juba kasutuses.')
         return email
 
-    def clean(self):
-        cleaned_data = super().clean()
-        # Auto-generate username from email if not provided
-        if not cleaned_data.get('username'):
-            email = cleaned_data.get('email', '')
-            if email:
-                # Use email prefix as username, make it unique
-                base_username = email.split('@')[0].lower()
-                username = base_username
-                counter = 1
-                while User.objects.filter(username=username).exists():
-                    username = f"{base_username}{counter}"
-                    counter += 1
-                cleaned_data['username'] = username
-        return cleaned_data
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username:
+            return username
+
+        email = self.cleaned_data.get('email') or self.data.get('email', '')
+        base_username = email.split('@')[0] if email else 'perekas'
+        base_username = re.sub(r'[^\w.@+-]', '', base_username.lower()) or 'perekas'
+
+        username_candidate = base_username
+        counter = 1
+        while User.objects.filter(username=username_candidate).exists():
+            username_candidate = f"{base_username}{counter}"
+            counter += 1
+        return username_candidate
 
     def save(self, request):
         user = super().save(request)
