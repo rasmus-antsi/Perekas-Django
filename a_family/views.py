@@ -3,6 +3,7 @@ import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from allauth.account.adapter import get_adapter
 
 from .emails import send_family_created_email, send_family_member_joined_email
 from .forms import CreateFamilyForm, JoinFamilyForm
@@ -193,3 +194,32 @@ def remove_member(request, user_id):
         messages.error(request, 'Kasutajat ei leitud.')
     
     return redirect('a_family:index')
+
+
+def resend_verification_email(request):
+    """Resend email verification email - works for both authenticated and unauthenticated users"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email:
+            messages.error(request, 'Palun sisesta e-posti aadress.')
+            return redirect('account_email_verification_sent')
+        
+        try:
+            from allauth.account.models import EmailAddress
+            email_address = EmailAddress.objects.get(email=email)
+            if email_address.verified:
+                messages.info(request, 'See e-posti aadress on juba kinnitatud.')
+                return redirect('account_email_verification_sent')
+            
+            # Resend verification email using our async adapter
+            adapter = get_adapter(request)
+            adapter.send_confirmation_mail(request, email_address, signup=False)
+            messages.success(request, 'Kinnituse kiri saadeti uuesti. Palun kontrolli oma e-posti.')
+        except EmailAddress.DoesNotExist:
+            messages.error(request, 'See e-posti aadress ei ole meie süsteemis.')
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
+            messages.error(request, 'E-kirja saatmisel tekkis viga. Palun proovi hiljem uuesti.')
+    
+    return redirect('account_email_verification_sent')
