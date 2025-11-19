@@ -289,6 +289,8 @@ def settings(request):
                     portal_session = stripe.billing_portal.Session.create(
                         customer=subscription.stripe_customer_id,
                         return_url=request.build_absolute_uri('/dashboard/settings/'),
+                        configuration=django_settings.STRIPE_CUSTOMER_PORTAL_ID,
+                        locale='et',
                     )
                     
                     return redirect(portal_session.url)
@@ -413,6 +415,7 @@ def settings(request):
                         mode='subscription',
                         success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
                         cancel_url=request.build_absolute_uri('/dashboard/settings/'),
+                        locale='et',
                         metadata={
                             'user_id': str(user.id),
                             'family_id': str(family.id),
