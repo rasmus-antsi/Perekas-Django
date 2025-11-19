@@ -115,6 +115,15 @@
           {% endfor %}
         </div>
 
+        <div class="password-requirements">
+          <p>Parool peab:</p>
+          <ul>
+            <li data-requirement="length">Olema vähemalt 8 märki pikk</li>
+            <li data-requirement="uppercase">Sisaldama vähemalt ühe suurtähe</li>
+            <li data-requirement="number">Sisaldama vähemalt ühe numbri</li>
+          </ul>
+        </div>
+
         {% if form.username %}
           {{ form.username }}
         {% endif %}
@@ -326,6 +335,55 @@
 
     .signup-actions button {
       flex: 1;
+    }
+
+    .password-requirements {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      border-radius: 0.75rem;
+      background: rgba(7, 12, 28, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .password-requirements p {
+      margin: 0 0 0.5rem;
+      font-weight: 600;
+      color: rgba(248, 250, 252, 0.9);
+      font-size: 0.9rem;
+    }
+
+    .password-requirements ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      color: rgba(148, 163, 184, 0.8);
+    }
+
+    .password-requirements li {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .password-requirements li::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(148, 163, 184, 0.4);
+      display: inline-block;
+    }
+
+    .password-requirements li.requirement-met {
+      color: #22c55e;
+    }
+
+    .password-requirements li.requirement-met::before {
+      background: #22c55e;
     }
 
 
@@ -574,9 +632,19 @@
           errorMessage = 'Sünniaeg ei saa olla tulevikus.';
         }
       } else if (field.id && field.id.includes('password1') && field.value) {
-        if (field.value.length < 8) {
+        const hasUppercase = /[A-ZÕÄÖÜ]/.test(field.value);
+        const hasNumber = /\d/.test(field.value);
+        const validLength = field.value.length >= 8;
+
+        if (!validLength) {
           isValid = false;
           errorMessage = 'Parool peab olema vähemalt 8 tähemärki pikk.';
+        } else if (!hasUppercase) {
+          isValid = false;
+          errorMessage = 'Parool peab sisaldama vähemalt ühte suurtähte.';
+        } else if (!hasNumber) {
+          isValid = false;
+          errorMessage = 'Parool peab sisaldama vähemalt ühte numbrit.';
         }
       } else if (field.id && field.id.includes('password2') && field.value) {
         const password1 = document.getElementById(field.id.replace('password2', 'password1'));
@@ -601,6 +669,21 @@
     }
 
     // Add validation listeners to all input fields
+    function updatePasswordRequirements(value) {
+      const requirements = {
+        length: value.length >= 8,
+        uppercase: /[A-ZÕÄÖÜ]/.test(value),
+        number: /\d/.test(value),
+      };
+
+      Object.entries(requirements).forEach(([key, satisfied]) => {
+        const el = document.querySelector(`.password-requirements [data-requirement="${key}"]`);
+        if (el) {
+          el.classList.toggle('requirement-met', satisfied);
+        }
+      });
+    }
+
     document.querySelectorAll('#signupForm input, #signupForm select').forEach(field => {
       if (field.type !== 'hidden' && field.type !== 'submit' && field.type !== 'button') {
         field.addEventListener('blur', function() {
@@ -617,6 +700,13 @@
               }
             });
           }
+        }
+
+        if (field.id && field.id.includes('password1')) {
+          field.addEventListener('input', function() {
+            updatePasswordRequirements(this.value);
+          });
+          updatePasswordRequirements(field.value || '');
         }
       }
     });

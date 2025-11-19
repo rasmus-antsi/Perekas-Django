@@ -1,7 +1,10 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
+from .emails import send_family_created_email, send_family_member_joined_email
 from .forms import CreateFamilyForm, JoinFamilyForm
 from .models import Family, User
 
@@ -17,7 +20,6 @@ def _get_family_for_user(user):
         return family
     except Exception as e:
         # Log error but don't crash - return None so user can still access onboarding
-        import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error getting family for user {user.id}: {str(e)}", exc_info=True)
         return None
@@ -35,7 +37,6 @@ def onboarding(request):
             return redirect('a_dashboard:dashboard')
     except Exception as e:
         # Log error but allow user to continue to onboarding page
-        import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error in onboarding view for user {user.id if user.is_authenticated else 'anonymous'}: {str(e)}", exc_info=True)
         # Continue to show onboarding page even if there's an error
@@ -60,6 +61,12 @@ def onboarding(request):
                 )
                 family.members.add(user)
                 messages.success(request, f'Pere "{family_name}" loodud edukalt!')
+                try:
+                    send_family_created_email(request, user, family)
+                except Exception as email_error:
+                    logging.getLogger(__name__).warning(
+                        "Unable to send family created email: %s", email_error, exc_info=True
+                    )
                 return redirect('a_dashboard:dashboard')
         
         elif action == 'join':
@@ -89,6 +96,12 @@ def onboarding(request):
                         else:
                             family.members.add(user)
                             messages.success(request, f'Liitusid perega "{family.name}"!')
+                            try:
+                                send_family_member_joined_email(request, family, user)
+                            except Exception as email_error:
+                                logging.getLogger(__name__).warning(
+                                    "Unable to send member joined email: %s", email_error, exc_info=True
+                                )
                             return redirect('a_dashboard:dashboard')
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
