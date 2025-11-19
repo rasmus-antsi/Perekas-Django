@@ -1,0 +1,12 @@
+{% load i18n %}{% trans "Tere tulemast Perekas!" %}
+
+{% blocktrans %}Tere, {{ user.get_full_name|default:user.username }}!{% endblocktrans %}
+
+{% trans "Täname liitumise eest! Palun kinnita oma e-posti aadress, klõpsates allolevat linki:" %}
+
+{{ activate_url }}
+
+{% trans "Kui sa seda kontot ei loonud, võid kirja turvaliselt ignoreerida." %}
+
+{% trans "© Perekas" %}
+
