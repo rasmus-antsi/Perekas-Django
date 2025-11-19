@@ -280,6 +280,9 @@ STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID', 'price_1SUdLt8TJM
 PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HJwhR8zvK')
 PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HgHoCVqds')
 
+# Stripe Customer Portal
+STRIPE_CUSTOMER_PORTAL_ID = os.getenv('STRIPE_CUSTOMER_PORTAL_ID', 'bpc_1SVHy37Bxzw7NSMsZQonrHVo')
+
 # Logging Configuration
 LOGGING = {
     'version': 1,

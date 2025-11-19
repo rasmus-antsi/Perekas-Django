@@ -66,7 +66,17 @@
   <body>
     <div class="background-glow"></div>
     <div class="app-shell">
-      <aside class="sidebar">
+      <!-- Mobile Menu Toggle -->
+      <button class="mobile-nav-toggle" aria-label="Toggle menu" onclick="toggleMobileNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      
+      <!-- Mobile Menu Overlay -->
+      <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileNav()"></div>
+      
+      <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <div class="sidebar-logo">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -187,6 +197,39 @@
               dismissBtn.click();
             }
           }, 5000 + (index * 200)); // Stagger dismissals slightly
+        });
+      });
+      
+      // Mobile navigation toggle
+      function toggleMobileNav() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileMenuOverlay');
+        const toggle = document.querySelector('.mobile-nav-toggle');
+        
+        sidebar.classList.toggle('mobile-open');
+        overlay.classList.toggle('active');
+        toggle.classList.toggle('open');
+      }
+      
+      function closeMobileNav() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobileMenuOverlay');
+        const toggle = document.querySelector('.mobile-nav-toggle');
+        
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('active');
+        toggle.classList.remove('open');
+      }
+      
+      // Close mobile nav when clicking a nav link
+      document.addEventListener('DOMContentLoaded', function() {
+        const navLinks = document.querySelectorAll('.sidebar-nav .nav-link, .nav-link-settings');
+        navLinks.forEach(link => {
+          link.addEventListener('click', function() {
+            if (window.innerWidth <= 1024) {
+              closeMobileNav();
+            }
+          });
         });
       });
     </script>
