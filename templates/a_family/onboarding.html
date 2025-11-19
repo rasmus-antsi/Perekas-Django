@@ -32,16 +32,6 @@
       <p>Loo või liitu perega, et alustada</p>
     </div>
 
-    {% if messages %}
-      <div class="auth-messages">
-        {% for message in messages %}
-          <div class="auth-message auth-message-{{ message.tags }}">
-            {{ message }}
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-
     {% if error_message %}
       <div class="auth-error-minimal">{{ error_message }}</div>
     {% endif %}
