@@ -163,6 +163,7 @@ ACCOUNT_RATE_LIMITS = {
 ACCOUNT_FORMS = {
     'signup': 'a_family.forms.FamilySignupForm',
 }
+ACCOUNT_ADAPTER = 'a_family.adapter.AsyncAccountAdapter'
 ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Perekas] '
 
 # Email Configuration
