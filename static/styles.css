@@ -4693,6 +4693,110 @@ body.modal-open {
 
   .hero-dashboard-preview {
     max-width: 100%;
+    padding: 1.5rem;
+  }
+
+  .hero-dashboard-header {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .hero-dashboard-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .hero-dashboard-icon-wrapper svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .hero-dashboard-title strong {
+    font-size: 1rem;
+  }
+
+  .hero-dashboard-title span {
+    font-size: 0.8rem;
+  }
+
+  .hero-dashboard-content {
+    gap: 1.25rem;
+  }
+
+  .hero-dashboard-main-stats {
+    gap: 0.75rem;
+  }
+
+  .hero-stat-card {
+    padding: 0.875rem;
+  }
+
+  .hero-stat-number {
+    font-size: 1.75rem;
+  }
+
+  .hero-stat-label {
+    font-size: 0.7rem;
+  }
+
+  .hero-section-header {
+    margin-bottom: 0.875rem;
+  }
+
+  .hero-section-header svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .hero-section-header h4 {
+    font-size: 0.8rem;
+  }
+
+  .hero-task-list,
+  .hero-reward-list {
+    gap: 0.625rem;
+  }
+
+  .hero-task-item-new,
+  .hero-reward-item-new {
+    padding: 0.875rem;
+    gap: 0.75rem;
+  }
+
+  .hero-task-check-new {
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+  }
+
+  .hero-task-content strong,
+  .hero-reward-content strong {
+    font-size: 0.85rem;
+  }
+
+  .hero-task-content span,
+  .hero-reward-content span {
+    font-size: 0.75rem;
+  }
+
+  .hero-task-points-new {
+    font-size: 0.8rem;
+  }
+
+  .hero-task-status-new {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .hero-reward-icon-new {
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  .hero-reward-badge-new {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.65rem;
   }
 
   .testimonials-grid-minimal {
@@ -4986,35 +5090,135 @@ body.modal-open {
 
 .landing-footer {
   margin-top: clamp(4rem, 8vw, 6rem);
-  padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 6vw, 4rem);
   border-top: 1px solid rgba(148, 163, 184, 0.15);
+  background: rgba(7, 12, 28, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.landing-footer-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(3rem, 6vw, 4rem) clamp(1.5rem, 4vw, 3rem);
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: clamp(2rem, 4vw, 3rem);
+  align-items: start;
+}
+
+.landing-footer-brand {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
+}
+
+.landing-footer-logo {
+  display: flex;
   align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 0.5rem;
+}
+
+.landing-footer-logo:hover {
+  opacity: 0.9;
+}
+
+.landing-footer-description {
+  color: rgba(148, 163, 184, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 280px;
+}
+
+.landing-footer-social {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.landing-footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(59, 72, 99, 0.3);
+  border: 1px solid rgba(59, 72, 99, 0.4);
+  color: rgba(203, 213, 225, 0.9);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.landing-footer-social a:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: rgba(99, 102, 241, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.landing-footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.landing-footer-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #f8fafc;
+  margin: 0 0 0.5rem;
 }
 
 .landing-footer-links {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.25rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .landing-footer-links a {
-  color: rgba(203, 213, 225, 0.85);
+  color: rgba(203, 213, 225, 0.8);
   text-decoration: none;
+  font-size: 0.9rem;
   font-weight: 500;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
 }
 
 .landing-footer-links a:hover {
-  color: #f8fafc;
+  color: rgba(99, 102, 241, 0.9);
+  transform: translateX(4px);
 }
 
-.landing-footer p {
+.landing-footer-links a svg {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.landing-footer-links a:hover svg {
+  opacity: 1;
+}
+
+.landing-footer-bottom {
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding: clamp(1.5rem, 3vw, 2rem) clamp(1.5rem, 4vw, 3rem);
+  text-align: center;
+}
+
+.landing-footer-bottom p {
   margin: 0;
   color: rgba(148, 163, 184, 0.7);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 @media (max-width: 960px) {
@@ -5256,6 +5460,11 @@ body.modal-open {
     width: 100%;
     justify-content: space-between;
   }
+
+  .landing-footer-container {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: clamp(2rem, 3vw, 2.5rem);
+  }
 }
 
 @media (max-width: 640px) {
@@ -5270,10 +5479,32 @@ body.modal-open {
     justify-content: center;
   }
 
+  .landing-footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .landing-footer-brand {
+    grid-column: 1;
+  }
+
+  .landing-footer-description {
+    max-width: 100%;
+  }
+
+  .landing-footer-section {
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    padding-bottom: 1.5rem;
+  }
+
+  .landing-footer-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
   .landing-footer-links {
     flex-direction: column;
     gap: 0.75rem;
-    align-items: center;
   }
 }
 
@@ -5668,11 +5899,30 @@ body.modal-open {
     margin: 0 -1rem;
     padding-left: 1rem;
     padding-right: 1rem;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 1rem;
+    scroll-padding-right: 1rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .testimonials-scroll-wrapper::-webkit-scrollbar {
+    display: none;
   }
 
   .testimonials-grid-supabase {
-    grid-template-columns: repeat(3, minmax(280px, 1fr));
+    display: flex;
     gap: 1rem;
+    width: max-content;
+  }
+
+  .testimonial-card-supabase {
+    flex: 0 0 calc(100vw - 3rem);
+    max-width: calc(100vw - 3rem);
+    min-width: calc(100vw - 3rem);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    padding: 2rem 1.5rem;
   }
 
   .about-layout-modern {
