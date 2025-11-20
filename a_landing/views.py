@@ -19,3 +19,11 @@ def about(request):
 def plans(request):
     # Redirect to main page - JavaScript will handle anchor scrolling
     return redirect('a_landing:landing_index')
+
+
+def privacy_policy(request):
+    return render(request, 'a_landing/privacy_policy.html')
+
+
+def terms_of_service(request):
+    return render(request, 'a_landing/terms_of_service.html')

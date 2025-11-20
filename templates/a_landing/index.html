@@ -28,7 +28,6 @@
         <a href="#hero">Kodu</a>
         <a href="#features">Võimalused</a>
         <a href="#plans">Paketid</a>
-        <a href="#about">Meist</a>
       </nav>
       <div class="landing-nav-actions">
         <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
@@ -61,7 +60,6 @@
           <a href="#hero">Kodu</a>
           <a href="#features">Võimalused</a>
           <a href="#plans">Paketid</a>
-          <a href="#about">Meist</a>
         </nav>
         <div class="mobile-menu-separator"></div>
         <div class="mobile-menu-actions">
@@ -75,72 +73,100 @@
       <!-- Hero Section - 100vh -->
       <section class="hero-full" id="hero">
         <div class="hero-content scroll-fade-in">
-          <span class="hero-eyebrow">Pere rutiinid uuel tasemel</span>
-          <h1>Too igasse päeva selgust, rõõmu ja koostööd.</h1>
+          <h1 class="hero-headline-split">
+            <span class="hero-headline-line">Korralda pereelu</span>
+            <span class="hero-headline-line hero-headline-accent">kasuta vähem aega</span>
+          </h1>
           <p class="hero-description">
-            Perekas ühendab ühised ülesandetahvlid, motiveerivad preemiad ja koostöö ostunimekirja ühte elegantsesse juhtimiskeskusesse. Püsige sünkroonis, kuhu iganes elu teid viib.
+            Perekas on Eesti perekondade jaoks loodud platvorm, mis ühendab ülesannete halduse, preemiasüsteemi ja ostunimekirjad ühte kohta. Lapsevanemad saavad paremini planeerida, lapsed õpivad vastutustundlikkust ja kogu pere töötab koos sujuvalt.
           </p>
           <div class="hero-actions">
             <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
-            <a class="landing-button ghost" href="#features">Vaata võimalusi</a>
+            <a class="landing-button ghost" href="#features">Vaata funktsioone</a>
           </div>
         </div>
         <div class="hero-visual scroll-scale">
           <div class="hero-dashboard-preview">
             <div class="hero-dashboard-header">
               <div class="hero-dashboard-title">
-                <span class="hero-dashboard-icon">👨‍👩‍👧‍👦</span>
+                <div class="hero-dashboard-icon-wrapper">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
                 <div>
                   <strong>Perekond Tamm</strong>
-                  <span>4 liiget</span>
+                  <span>Täna</span>
                 </div>
               </div>
-              <span class="hero-dashboard-badge">Täna</span>
             </div>
             <div class="hero-dashboard-content">
-              <div class="hero-dashboard-section">
-                <h4>Ülesanded</h4>
-                <div class="hero-task-item">
-                  <span class="hero-task-check">✓</span>
-                  <div>
-                    <strong>Liis</strong>
-                    <span>Koolitöö finiš</span>
-                  </div>
-                  <span class="hero-task-points">+30</span>
+              <div class="hero-dashboard-main-stats">
+                <div class="hero-stat-card">
+                  <div class="hero-stat-number">12</div>
+                  <div class="hero-stat-label">Ülesannet täna</div>
                 </div>
-                <div class="hero-task-item">
-                  <span class="hero-task-check">✓</span>
-                  <div>
-                    <strong>Mart</strong>
-                    <span>Koeraga jalutuskäik</span>
-                  </div>
-                  <span class="hero-task-status">Valmis</span>
+                <div class="hero-stat-card">
+                  <div class="hero-stat-number">3</div>
+                  <div class="hero-stat-label">Preemiat</div>
                 </div>
               </div>
-              <div class="hero-dashboard-section">
-                <h4>Preemiad</h4>
-                <div class="hero-reward-item">
-                  <span class="hero-reward-icon">⭐</span>
-                  <div>
-                    <strong>Kertu</strong>
-                    <span>Mänguõhtu</span>
+              
+              <div class="hero-dashboard-section hero-dashboard-tasks">
+                <div class="hero-section-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  <h4>Ülesanded</h4>
+                </div>
+                <div class="hero-task-list">
+                  <div class="hero-task-item-new">
+                    <div class="hero-task-check-new completed">✓</div>
+                    <div class="hero-task-content">
+                      <strong>Liis</strong>
+                      <span>Koolitöö ära tehtud</span>
+                    </div>
+                    <span class="hero-task-points-new">+30</span>
                   </div>
-                  <span class="hero-reward-badge">Vastu võetud</span>
+                  <div class="hero-task-item-new">
+                    <div class="hero-task-check-new completed">✓</div>
+                    <div class="hero-task-content">
+                      <strong>Mart</strong>
+                      <span>Koeraga jalutuskäik</span>
+                    </div>
+                    <span class="hero-task-status-new">Valmis</span>
+                  </div>
+                  <div class="hero-task-item-new">
+                    <div class="hero-task-check-new"></div>
+                    <div class="hero-task-content">
+                      <strong>Kertu</strong>
+                      <span>Tuba korras</span>
+                    </div>
+                    <span class="hero-task-status-new">Ootel</span>
+                  </div>
                 </div>
               </div>
-              <div class="hero-dashboard-section">
-                <h4>Ostunimekiri</h4>
-                <div class="hero-shopping-item">
-                  <span class="hero-shopping-check">✓</span>
-                  <span>Piim</span>
+
+              <div class="hero-dashboard-section hero-dashboard-rewards">
+                <div class="hero-section-header">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                  <h4>Preemiad</h4>
                 </div>
-                <div class="hero-shopping-item">
-                  <span class="hero-shopping-check">✓</span>
-                  <span>Leib</span>
-                </div>
-                <div class="hero-shopping-item pending">
-                  <span class="hero-shopping-check"></span>
-                  <span>Muna</span>
+                <div class="hero-reward-list">
+                  <div class="hero-reward-item-new">
+                    <div class="hero-reward-icon-new">⭐</div>
+                    <div class="hero-reward-content">
+                      <strong>Kertu</strong>
+                      <span>Mänguõhtu</span>
+                    </div>
+                    <span class="hero-reward-badge-new">Vastu võetud</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -149,175 +175,238 @@
       </section>
 
       <!-- Features Section -->
-      <section class="section-minimal" id="features">
-        <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Mida pakume</span>
-          <h2>Kõik, mida on vaja planeerimiseks, tegutsemiseks ja ühiseks tähistamiseks</h2>
-          <p>Dünaamilised tööriistad hoiavad kõiki motiveerituna – vahe on lihtsalt kastide märkimisel ja päris ühiste võitude loomisel.</p>
-        </div>
-        <div class="features-grid-minimal">
-          <div class="feature-card-minimal scroll-scale scroll-delay-1">
-            <div class="feature-icon-minimal">✓</div>
-            <h3>Ülesannete haldus</h3>
-            <p>Ühised tahvlid, mis hoiavad kogu pere organiseerituna ja vastutavana. Määra või jaga ülesandeid ringi sekunditega.</p>
-          </div>
-          <div class="feature-card-minimal scroll-scale scroll-delay-2">
-            <div class="feature-icon-minimal">⭐</div>
-            <h3>Preemiamäng</h3>
-            <p>Motiveerivad preemiad, mis tähistavad igat sammu ja loovad harjumusi. Lapsed jälgivad punkte ja hääletavad eesmärkide üle.</p>
-          </div>
-          <div class="feature-card-minimal scroll-scale scroll-delay-3">
-            <div class="feature-icon-minimal">🛒</div>
-            <h3>Ostunimekirjad</h3>
-            <p>Koostöö nimekirjad, mis hoiavad majapidamise varud korras ja jagatud. Reaalajas uuendused kõigis seadmetes.</p>
-          </div>
-          <div class="feature-card-minimal scroll-scale">
-            <div class="feature-icon-minimal">⚡</div>
-            <h3>Automatiseerimine</h3>
-            <p>Nutika automaatika abil liiguvad pere rutiinid peaaegu iseseisvalt. Korda mustreid korduvate koduste tööde jaoks.</p>
+      <section class="section-seamless" id="features">
+        <div class="container-modern">
+          <div class="features-grid-product">
+            <div class="feature-card-product scroll-scale scroll-delay-1">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </div>
+              <h3>Ülesannete haldamine</h3>
+              <p>Määra, jälgi ja valida ülesandeid pereliikmete vahel. Selge ülevaade kõigist tehtud ja tegemata töödest.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-2">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+              </div>
+              <h3>Preemiasüsteem</h3>
+              <p>Motiveeri lapsesid punktide ja preemiatega. Lastel on selge ülevaade oma saavutustest ja võimalus valida endale sobiv preemia.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-3">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+              </div>
+              <h3>Ühine ostunimekiri</h3>
+              <p>Sünkroonitud ostunimekirjad, mida kõik näevad reaalajas. Lisa ja märgi tooted kätte saamiseks.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-4">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+              </div>
+              <h3>Automaatne korduvus</h3>
+              <p>Seadista korduvad ülesanded automaatseks määramiseks. Säästa aega korduste lisamisel.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-5">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <h3>Reaalajas sünkroonimine</h3>
+              <p>Kõik muudatused uuenevad kohe kõigis seadmetes. Ei pea ootama või värskendama lehte.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-6">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <h3>Turbekaitstud</h3>
+              <p>Kõik andmed on turvaliselt kaitstud. Saad kontrollida, kes mida näeb ja teeb.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Stats Section -->
-      <section class="section-minimal section-stats">
-        <div class="stats-grid-minimal">
-          <div class="stat-item-minimal scroll-fade-in scroll-delay-1">
-            <div class="stat-number-minimal">12k+</div>
-            <div class="stat-label-minimal">Perekonda</div>
+      <!-- Transition Section -->
+      <section class="section-seamless section-transition">
+        <div class="container-modern">
+          <div class="transition-content scroll-fade-in">
+            <h2 class="transition-headline">Kõik ühes kohas. Lihtne, selge, efektiivne.</h2>
+            <p class="transition-description">
+              Perekas ühendab kõik vajalikud tööriistad ühte platvormi. Lapsevanemad saavad paremini planeerida, lapsed õpivad vastutustundlikkust ja kogu pere töötab koos sujuvalt. Vaata, mida ütlevad meie kasutajad:
+            </p>
           </div>
-          <div class="stat-item-minimal scroll-fade-in scroll-delay-2">
-            <div class="stat-number-minimal">500k+</div>
-            <div class="stat-label-minimal">Täitunud ülesannet</div>
-          </div>
-          <div class="stat-item-minimal scroll-fade-in scroll-delay-3">
-            <div class="stat-number-minimal">98%</div>
-            <div class="stat-label-minimal">Rahulolu</div>
+        </div>
+      </section>
+
+      <!-- Testimonials Section -->
+      <section class="section-seamless" id="testimonials">
+        <div class="container-modern">
+          <div class="testimonials-scroll-wrapper">
+            <div class="testimonials-grid-supabase">
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-1">
+                <p class="testimonial-quote-supabase">"Perekas on muutnud meie pereelu oluliselt lihtsamaks. Ülesanded on nüüd selgelt määratud, tülid on kadunud ja lapsed on motiveeritumatud tänu preemiasüsteemile."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PT</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Tamm</div>
+                    <div class="testimonial-author-location-supabase">Tallinn</div>
+                  </div>
+                </div>
+              </div>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-2">
+                <p class="testimonial-quote-supabase">"Meie teismelised on aktiivsed Perekas kasutajad. Nad jälgivad oma ülesandeid, koguvad punkte ja otsivad endale sobivaid preemiaid."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PS</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Saar</div>
+                    <div class="testimonial-author-location-supabase">Tartu</div>
+                  </div>
+                </div>
+              </div>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-3">
+                <p class="testimonial-quote-supabase">"Ostunimekirja funktsioon on olnud absoluutne pärl. Kõik liikmed saavad lisada vajalikke tooteid ja märkida kätte saadud asjad."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PM</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Mets</div>
+                    <div class="testimonial-author-location-supabase">Pärnu</div>
+                  </div>
+                </div>
+              </div>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-4">
+                <p class="testimonial-quote-supabase">"Lapsed armastavad punkte ja jälgivad oma saavutusi. See on andnud neile suurema vastutustunde ja motiveerib neid rohkem tegema."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PK</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Kask</div>
+                    <div class="testimonial-author-location-supabase">Viljandi</div>
+                  </div>
+                </div>
+              </div>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-5">
+                <p class="testimonial-quote-supabase">"Meie pere on kasutanud Perekast juba üle aasta. See on muutnud meie igapäevaelu palju sujuvamaks ja vähem stressirohkeks."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PL</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Lepp</div>
+                    <div class="testimonial-author-location-supabase">Rakvere</div>
+                  </div>
+                </div>
+              </div>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-6">
+                <p class="testimonial-quote-supabase">"Automaatne korduvus on suurepärane funktsioon. Me ei pea enam iga nädal samu ülesandeid uuesti lisama."</p>
+                <div class="testimonial-author-supabase">
+                  <div class="testimonial-avatar-supabase">PV</div>
+                  <div class="testimonial-author-info">
+                    <div class="testimonial-author-name-supabase">Perekond Vaher</div>
+                    <div class="testimonial-author-location-supabase">Narva</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <!-- Plans Section -->
-      <section class="section-minimal" id="plans">
-        <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Paindlik hinnastus</span>
-          <h2>Paketid iga pere rütmi jaoks</h2>
-          <p>Alusta tasuta ja kasva edasi automatiseerimise, süvitsivaatete ja tähtsate tähistamisteni.</p>
-        </div>
-        <div class="pricing-toggle-wrapper scroll-fade-in">
-          <div class="pricing-toggle">
-            <span class="pricing-toggle-label">Kuu</span>
-            <button class="pricing-toggle-switch" id="pricingToggle" aria-label="Toggle pricing">
-              <span class="pricing-toggle-slider"></span>
-            </button>
-            <span class="pricing-toggle-label">Aasta <span class="pricing-save-badge">Säästa 20%</span></span>
+      <section class="section-seamless" id="plans">
+        <div class="container-modern">
+          <div class="pricing-header-inline scroll-fade-in">
+            <div>
+              <h2>Vali sobiv pakett</h2>
+              <p class="pricing-subtitle-inline">Alusta tasuta ja testi kõiki põhifunktsioone</p>
+            </div>
+            <div class="pricing-toggle-wrapper-modern">
+              <div class="pricing-toggle-modern">
+                <span class="pricing-toggle-label">Kuu</span>
+                <button class="pricing-toggle-switch-modern" id="pricingToggle" aria-label="Toggle pricing">
+                  <span class="pricing-toggle-slider-modern"></span>
+                </button>
+                <span class="pricing-toggle-label">Aasta <span class="pricing-save-badge-modern">Säästa 20%</span></span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="plans-layout plans-three-column">
-          <article class="plan-card scroll-scale scroll-delay-1">
-            <h2>TASUTA</h2>
-            <p class="plan-price">
-              <span class="plan-price-monthly">€0<span>/kuu</span></span>
-              <span class="plan-price-yearly" style="display: none;">€0<span>/aasta</span></span>
-            </p>
-            <ul>
-              <li>1 lapsevanem</li>
-              <li>1 laps</li>
-              <li>5 ülesannet kuus</li>
-              <li>3 preemiat kuus</li>
-              <li class="no-access">Ostunimekiri puudub</li>
-            </ul>
-            <a class="landing-button secondary" href="{% url 'account_signup' %}">Alusta tasuta</a>
-          </article>
+          <div class="plans-grid-modern">
+            <article class="plan-card-modern scroll-scale scroll-delay-1">
+              <div class="plan-header-modern">
+                <h3>TASUTA</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly">€0<span>/kuu</span></span>
+                <span class="plan-price-yearly" style="display: none;">€0<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>1 lapsevanem</li>
+                <li>1 laps</li>
+                <li>5 ülesannet kuus</li>
+                <li>3 preemiat kuus</li>
+                <li class="no-access">Ostunimekiri puudub</li>
+              </ul>
+              <a class="landing-button secondary plan-button-modern" href="{% url 'account_signup' %}">Alusta tasuta</a>
+            </article>
 
-          <article class="plan-card plan-featured scroll-scale scroll-delay-2">
-            <div class="plan-popular-badge">Kõige populaarsem</div>
-            <h2>ALGUS</h2>
-            <p class="plan-price">
-              <span class="plan-price-monthly">€9.99<span>/kuu</span></span>
-              <span class="plan-price-yearly" style="display: none;">€95.90<span>/aasta</span></span>
-            </p>
-            <ul>
-              <li>2 lapsevanemat</li>
-              <li>2 last</li>
-              <li>20 ülesannet kuus</li>
-              <li>15 preemiat kuus</li>
-              <li>Ostunimekirja ligipääs</li>
-            </ul>
-            <a class="landing-button primary" href="{% url 'account_signup' %}">Vali pakett</a>
-          </article>
+            <article class="plan-card-modern plan-featured-modern scroll-scale scroll-delay-2">
+              <div class="plan-popular-badge-modern">Kõige populaarsem</div>
+              <div class="plan-header-modern">
+                <h3>ALGUS</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly">€9<span>/kuu</span></span>
+                <span class="plan-price-yearly" style="display: none;">€89<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>2 lapsevanemat</li>
+                <li>2 last</li>
+                <li>20 ülesannet kuus</li>
+                <li>15 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
+              </ul>
+              <a class="landing-button primary plan-button-modern" href="{% url 'account_signup' %}">Vali pakett</a>
+            </article>
 
-          <article class="plan-card scroll-scale scroll-delay-3">
-            <h2>PRO</h2>
-            <p class="plan-price">
-              <span class="plan-price-monthly">€19.99<span>/kuu</span></span>
-              <span class="plan-price-yearly" style="display: none;">€191.90<span>/aasta</span></span>
-            </p>
-            <ul>
-              <li>4 lapsevanemat</li>
-              <li>10 last</li>
-              <li>100 ülesannet kuus</li>
-              <li>50 preemiat kuus</li>
-              <li>Ostunimekirja ligipääs</li>
-            </ul>
-            <a class="landing-button secondary" href="{% url 'account_signup' %}">Vali pakett</a>
-          </article>
-        </div>
-      </section>
-
-      <!-- Testimonials Section -->
-      <section class="section-minimal" id="testimonials">
-        <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Perede lemmik</span>
-          <h2>"Perekas muutis meie to-do nimekirja millekski, mille üle lapsed rõõmustavad."</h2>
-        </div>
-        <div class="testimonials-grid-minimal">
-          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-1">
-            <p>"Tülidest said viisipõksud. Kõik teavad, mis täna tähtis on, ja preemiad tunnevad end väikeste pidustustena."</p>
-            <span class="testimonial-author">— Perekond Tamm</span>
-          </div>
-          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-2">
-            <p>"Perekas annab meie teismelistele vastutuse. Nad valivad preemiad, hoiavad oma punktidel silma peal ja tuletavad isegi oste meelde."</p>
-            <span class="testimonial-author">— Perekond Saar</span>
-          </div>
-          <div class="testimonial-card-minimal scroll-slide-up scroll-delay-3">
-            <p>"Töölaud on meie uus hommikurituaal. Ülesanded, poenimekiri ja nädalavahetuse plaanid – kõik liigub koos."</p>
-            <span class="testimonial-author">— Perekond Mets</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- About Section -->
-      <section class="section-minimal" id="about">
-        <div class="section-header-minimal scroll-fade-in">
-          <span class="section-eyebrow-minimal">Meie lugu</span>
-          <h2>Sündinud päris pereelust, loodud rõõmsaks tulemuslikkuseks</h2>
-          <p>Perekas sündis lapsevanematest, kes soovisid muuta koristusgraafikud lähedushetkedeks. Täna aitame kodusid üle terve maailma.</p>
-        </div>
-        <div class="features-grid-minimal">
-          <div class="feature-card-minimal scroll-scale scroll-delay-1">
-            <h3>Missioon</h3>
-            <p>Anda peredele tööriistad, mis ühendavad selguse, tähistamise ja koostöö – nii kulub vähem aega koordineerimisele ja rohkem aega koos kasvamisele.</p>
-          </div>
-          <div class="feature-card-minimal scroll-scale scroll-delay-2">
-            <h3>Visioon</h3>
-            <p>Maailm, kus iga pere, sõltumata suurusest, naudib sujuvaid rutiine, jagatud vastutust ja rõõmu tehtud sammude üle.</p>
-          </div>
-          <div class="feature-card-minimal scroll-scale scroll-delay-3">
-            <h3>Meeskond</h3>
-            <p>Oleme disainerid, lapsevanemad, õpetajad ja unistajad. Kuulame tähelepanelikult Perekas kasutajaid ning ehitame koos nendega.</p>
+            <article class="plan-card-modern scroll-scale scroll-delay-3">
+              <div class="plan-header-modern">
+                <h3>PRO</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly">€17<span>/kuu</span></span>
+                <span class="plan-price-yearly" style="display: none;">€149<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>4 lapsevanemat</li>
+                <li>10 last</li>
+                <li>100 ülesannet kuus</li>
+                <li>50 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
+              </ul>
+              <a class="landing-button secondary plan-button-modern" href="{% url 'account_signup' %}">Vali pakett</a>
+            </article>
           </div>
         </div>
       </section>
 
       <!-- CTA Section -->
-      <section class="section-minimal section-cta-full" id="get-started">
-        <div class="section-container">
-          <div class="cta-content-minimal scroll-slide-up">
-            <h2>Valmis looma rõõmsat tulemuslikkust?</h2>
-            <p>Alusta tasuta – krediitkaarti pole vaja – ja avasta Perekas kogemus.</p>
-            <div class="cta-actions-minimal">
-              <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
+      <section class="section-seamless section-cta-seamless" id="get-started">
+        <div class="container-modern">
+          <div class="cta-content-flowing scroll-slide-up">
+            <h2 class="cta-headline-flowing">Valmis oma pereelu lihtsamaks muutma?</h2>
+            <p class="cta-description-flowing">Alusta tasuta proovimist juba täna. Krediitkaarti pole vaja ja saad testida kõiki põhifunktsioone ilma kohustusteta.</p>
+            <div class="cta-actions-modern">
+              <a class="landing-button primary cta-button-large" href="{% url 'account_signup' %}">Alusta kohe tasuta</a>
               <a class="landing-button ghost" href="#plans">Vaata pakette</a>
             </div>
           </div>
@@ -428,21 +517,27 @@
       const pricingToggle = document.getElementById('pricingToggle');
       if (pricingToggle) {
         let isYearly = false;
-        pricingToggle.addEventListener('click', function() {
+        pricingToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
           isYearly = !isYearly;
           const monthlyPrices = document.querySelectorAll('.plan-price-monthly');
           const yearlyPrices = document.querySelectorAll('.plan-price-yearly');
-          const slider = this.querySelector('.pricing-toggle-slider');
+          const slider = this.querySelector('.pricing-toggle-slider-modern');
           
           if (isYearly) {
             monthlyPrices.forEach(el => el.style.display = 'none');
             yearlyPrices.forEach(el => el.style.display = 'inline');
-            slider.style.transform = 'translateX(100%)';
+            if (slider) {
+              slider.style.transform = 'translateX(26px)';
+            }
             this.setAttribute('aria-checked', 'true');
           } else {
             monthlyPrices.forEach(el => el.style.display = 'inline');
             yearlyPrices.forEach(el => el.style.display = 'none');
-            slider.style.transform = 'translateX(0)';
+            if (slider) {
+              slider.style.transform = 'translateX(0)';
+            }
             this.setAttribute('aria-checked', 'false');
           }
         });
