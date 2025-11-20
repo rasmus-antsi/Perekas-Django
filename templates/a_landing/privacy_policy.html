@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privaatsuspoliitika - Perekas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body>
+    {% include 'a_landing/partials/nav.html' %}
+
+    <main class="page-container" style="max-width: 900px; margin: 0 auto; padding: clamp(6rem, 10vw, 8rem) clamp(1.5rem, 4vw, 3rem);">
+      <div class="section-header-modern" style="text-align: left; margin-bottom: 3rem;">
+        <h1 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 1rem;">Privaatsuspoliitika</h1>
+        <p style="color: rgba(148, 163, 184, 0.8); font-size: 0.95rem;">Viimati uuendatud: {% now "d.m.Y" %}</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 2rem; color: rgba(203, 213, 225, 0.9); line-height: 1.8;">
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">1. Sissejuhatus</h2>
+          <p>Perekas väärtustab teie privaatsust. See privaatsuspoliitika kirjeldab, kuidas me kogume, kasutame ja kaitse teie isikuandmeid, kui te kasutate meie platvormi.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">2. Andmete kogumine</h2>
+          <p>Me kogume järgmist tüüpi andmeid:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Isikuandmed: nimi, e-posti aadress, sünniaeg</li>
+            <li>Kontoandmed: kasutajanimi, parool (krüpteeritud)</li>
+            <li>Pereliikmete andmed: teie pere liikmete nimed ja sünniajad</li>
+            <li>Kasutusandmed: tegevused platvormil, ülesanded, preemiad</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">3. Andmete kasutamine</h2>
+          <p>Me kasutame teie andmeid järgmistel eesmärkidel:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Platvormi funktsionaalsuse pakkumine</li>
+            <li>Konto haldus ja turvalisuse tagamine</li>
+            <li>Teie küsitlustele vastamine</li>
+            <li>Platvormi täiustamine ja arendamine</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">4. Andmete jagamine</h2>
+          <p>Me ei jaga teie isikuandmeid kolmandate osapooltega, välja arvatud:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Seaduslike kohustuste täitmiseks</li>
+            <li>Teie nõusolekuga</li>
+            <li>Teenusepakkujatele, kes aitavad meil platvormi töötada (andmebaas, hosting)</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">5. Teie õigused</h2>
+          <p>Teil on õigus:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Ligipääs oma isikuandmetele</li>
+            <li>Andmete parandamine</li>
+            <li>Andmete kustutamine</li>
+            <li>Andmete töötlemise piiramine</li>
+            <li>Andmete edastamise õigus</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">6. Küpsised</h2>
+          <p>Me kasutame küpsiseid platvormi funktsionaalsuse tagamiseks. Teil on võimalus küpsiste kasutamist oma brauseri seadetes hallata.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">7. Kontakt</h2>
+          <p>Küsimuste korral privaatsuspoliitika kohta võtke meiega ühendust:</p>
+          <p style="margin-top: 0.5rem;">
+            <a href="mailto:info@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none; font-weight: 600;">info@perekas.ee</a>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    {% include 'a_landing/partials/footer.html' %}
+  </body>
+</html>
+
