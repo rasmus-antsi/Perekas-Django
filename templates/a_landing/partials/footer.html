@@ -1,10 +1,51 @@
 <footer class="landing-footer">
-  <div class="landing-footer-links">
-    <a href="#hero">Kodu</a>
-    <a href="#features">Võimalused</a>
-    <a href="#plans">Paketid</a>
-    <a href="#about">Meist</a>
-    <a href="mailto:hello@perekas.ee">Tugi</a>
+  <div class="landing-footer-container">
+    <div class="landing-footer-brand">
+      <a href="#hero" class="landing-footer-logo">
+        <span class="landing-logo">PE</span>
+        <div>
+          <span class="landing-brand-title">Perekas</span>
+          <span class="landing-brand-tagline">Koos iga päev</span>
+        </div>
+      </a>
+      <p class="landing-footer-description">
+        Korralda pereelu ühes kohas. Ülesanded, preemiad ja ostunimekirjad ühte platvormi.
+      </p>
+    </div>
+    
+    <div class="landing-footer-section">
+      <h3 class="landing-footer-heading">Navigeerimine</h3>
+      <nav class="landing-footer-links">
+        <a href="#hero">Kodu</a>
+        <a href="#features">Võimalused</a>
+        <a href="#plans">Paketid</a>
+        <a href="#testimonials">Arvustused</a>
+      </nav>
+    </div>
+    
+    <div class="landing-footer-section">
+      <h3 class="landing-footer-heading">Seaduslik</h3>
+      <nav class="landing-footer-links">
+        <a href="{% url 'a_landing:privacy_policy' %}">Privaatsuspoliitika</a>
+        <a href="{% url 'a_landing:terms_of_service' %}">Kasutustingimused</a>
+      </nav>
+    </div>
+    
+    <div class="landing-footer-section">
+      <h3 class="landing-footer-heading">Kontakt</h3>
+      <nav class="landing-footer-links">
+        <a href="mailto:info@perekas.ee">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 0.5rem;">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+          info@perekas.ee
+        </a>
+      </nav>
+    </div>
   </div>
-  <p>© {% now "Y" %} Perekas. Kõik õigused kaitstud.</p>
+  
+  <div class="landing-footer-bottom">
+    <p>© {% now "Y" %} Perekas. Kõik õigused kaitstud.</p>
+  </div>
 </footer>

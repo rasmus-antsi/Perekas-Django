@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasutustingimused - Perekas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+  </head>
+  <body>
+    {% include 'a_landing/partials/nav.html' %}
+
+    <main class="page-container" style="max-width: 900px; margin: 0 auto; padding: clamp(6rem, 10vw, 8rem) clamp(1.5rem, 4vw, 3rem);">
+      <div class="section-header-modern" style="text-align: left; margin-bottom: 3rem;">
+        <h1 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 1rem;">Kasutustingimused</h1>
+        <p style="color: rgba(148, 163, 184, 0.8); font-size: 0.95rem;">Viimati uuendatud: {% now "d.m.Y" %}</p>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 2rem; color: rgba(203, 213, 225, 0.9); line-height: 1.8;">
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">1. Nõustumine tingimustega</h2>
+          <p>Kasutades Perekas platvormi, nõustute nende kasutustingimustega. Kui te ei nõustu, palun ärge kasutage meie teenust.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">2. Konto</h2>
+          <p>Konto loomiseks peate:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Olema vähemalt 13 aastat vana</li>
+            <li>Esitama õiged ja täielikud andmed</li>
+            <li>Hoidma oma kontot turvaliselt ja privaatselt</li>
+            <li>Vastutama kõigi oma konto tegevuste eest</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">3. Keelatud tegevused</h2>
+          <p>Platvormi kasutamisel on keelatud:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Valeandmete esitamine</li>
+            <li>Teiste kasutajate kontodele ligipääsemine</li>
+            <li>Platvormi kahjustamine või häirimine</li>
+            <li>Ebaseadusliku sisu postitamine</li>
+            <li>Võrgurünnakute või kahjuliku tarkvara levitamine</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">4. Tellimus ja tasu</h2>
+          <p>Mõned funktsioonid on tasulised. Tellimustega kehtib:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Hinnad on näidatud tellimuse hetkel</li>
+            <li>Tasumine toimub ette</li>
+            <li>Tellimust saab igal ajal tühistada</li>
+            <li>Tühistamisel ei tagastata juba makstud summasid</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">5. Vastutus</h2>
+          <p>Me pakume platvormi "nagu on". Me ei garanteeri:</p>
+          <ul style="margin: 1rem 0; padding-left: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li>Katkematut tööd</li>
+            <li>Veadeta funktsionaalsust</li>
+            <li>Andmete kaotsiminekut</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">6. Intellektuaalomand</h2>
+          <p>Kogu platvormi sisu, sealhulgas logo, disain ja tarkvara, on Perekas omand. Teil on õigus kasutada platvormi ainult nende tingimuste kohaselt.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">7. Konto peatamine</h2>
+          <p>Meil on õigus peatada või kustutada teie konto, kui te rikute neid tingimusi või kui oleme kahtlustanud ebaseaduslikku tegevust.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">8. Tingimuste muutmine</h2>
+          <p>Meil on õigus muuta neid tingimusi igal ajal. Muudatused jõustuvad kohe pärast avaldamist. Jätkuv kasutamine tähendab nõustumist uute tingimustega.</p>
+        </section>
+
+        <section>
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #f8fafc; margin-bottom: 1rem;">9. Kontakt</h2>
+          <p>Küsimuste korral kasutustingimuste kohta võtke meiega ühendust:</p>
+          <p style="margin-top: 0.5rem;">
+            <a href="mailto:info@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none; font-weight: 600;">info@perekas.ee</a>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    {% include 'a_landing/partials/footer.html' %}
+  </body>
+</html>
+
