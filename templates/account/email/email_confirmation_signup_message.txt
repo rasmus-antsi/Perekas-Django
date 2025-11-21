@@ -1,6 +1,6 @@
 {% load i18n %}{% trans "Tere tulemast Perekas!" %}
 
-{% blocktrans %}Tere, {{ user.get_full_name|default:user.username }}!{% endblocktrans %}
+{% blocktrans %}Tere, {{ user.display_name }}!{% endblocktrans %}
 
 {% trans "Täname liitumise eest! Palun kinnita oma e-posti aadress, klõpsates allolevat linki:" %}
 

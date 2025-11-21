@@ -74,11 +74,11 @@
       <section class="hero-full" id="hero">
         <div class="hero-content scroll-fade-in">
           <h1 class="hero-headline-split">
-            <span class="hero-headline-line">Korralda pereelu</span>
-            <span class="hero-headline-line hero-headline-accent">kasuta vähem aega</span>
+            <span class="hero-headline-line">Selgem pereelu algab</span>
+            <span class="hero-headline-line hero-headline-accent">ühest kohast.</span>
           </h1>
           <p class="hero-description">
-            Perekas on Eesti perekondade jaoks loodud platvorm, mis ühendab ülesannete halduse, preemiasüsteemi ja ostunimekirjad ühte kohta. Lapsevanemad saavad paremini planeerida, lapsed õpivad vastutustundlikkust ja kogu pere töötab koos sujuvalt.
+            Perekas toob ülesanded, preemiad ja ostunimekirjad mugavalt kokku, et pere saaks tegutseda ühtse meeskonnana. Vanematel on rahulik ülevaade, lastel selged eesmärgid ja kodune elu muutub lihtsamaks.
           </p>
           <div class="hero-actions">
             <a class="landing-button primary" href="{% url 'account_signup' %}">Alusta tasuta</a>
@@ -86,6 +86,7 @@
           </div>
         </div>
         <div class="hero-visual scroll-scale">
+          <div class="hero-visual-glow" aria-hidden="true"></div>
           <div class="hero-dashboard-preview">
             <div class="hero-dashboard-header">
               <div class="hero-dashboard-title">
@@ -104,17 +105,6 @@
               </div>
             </div>
             <div class="hero-dashboard-content">
-              <div class="hero-dashboard-main-stats">
-                <div class="hero-stat-card">
-                  <div class="hero-stat-number">12</div>
-                  <div class="hero-stat-label">Ülesannet täna</div>
-                </div>
-                <div class="hero-stat-card">
-                  <div class="hero-stat-number">3</div>
-                  <div class="hero-stat-label">Preemiat</div>
-                </div>
-              </div>
-              
               <div class="hero-dashboard-section hero-dashboard-tasks">
                 <div class="hero-section-header">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -185,8 +175,8 @@
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                 </svg>
               </div>
-              <h3>Ülesannete haldamine</h3>
-              <p>Määra, jälgi ja valida ülesandeid pereliikmete vahel. Selge ülevaade kõigist tehtud ja tegemata töödest.</p>
+              <h3>Ülesannete jagamine</h3>
+              <p>Määra ja jälgi pereülesandeid ühes selges vaates. Igal pereliikmel on oma roll ning kõik tehtud ja tegemata toimetused on alati arusaadavalt nähtavad.</p>
             </div>
             <div class="feature-card-product scroll-scale scroll-delay-2">
               <div class="feature-icon-product">
@@ -194,8 +184,8 @@
                   <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                 </svg>
               </div>
-              <h3>Preemiasüsteem</h3>
-              <p>Motiveeri lapsesid punktide ja preemiatega. Lastel on selge ülevaade oma saavutustest ja võimalus valida endale sobiv preemia.</p>
+              <h3>Punktisüsteem</h3>
+              <p>Toeta laste iseseisvust ja motiveeri neid punktide ning läbimõeldud tasudega. Lapsed näevad oma edusamme ja saavad valida endale sobiva preemia, mis muudab panustamise päriselt motiveerivaks.</p>
             </div>
             <div class="feature-card-product scroll-scale scroll-delay-3">
               <div class="feature-icon-product">
@@ -206,7 +196,7 @@
                 </svg>
               </div>
               <h3>Ühine ostunimekiri</h3>
-              <p>Sünkroonitud ostunimekirjad, mida kõik näevad reaalajas. Lisa ja märgi tooted kätte saamiseks.</p>
+              <p>Reaalajas sünkroonitud ostunimekirjad, mida kogu pere saab kasutada. Lisa, jaga ja märgi tooted kiiresti ära — nii teab igaüks täpselt, mida poest tuua.</p>
             </div>
             {% comment %}
             <div class="feature-card-product scroll-scale scroll-delay-4">
@@ -248,7 +238,7 @@
           <div class="transition-content scroll-fade-in">
             <h2 class="transition-headline">Kõik ühes kohas. Lihtne, selge, efektiivne.</h2>
             <p class="transition-description">
-              Perekas ühendab kõik vajalikud tööriistad ühte platvormi. Lapsevanemad saavad paremini planeerida, lapsed õpivad vastutustundlikkust ja kogu pere töötab koos sujuvalt. Vaata, mida ütlevad meie kasutajad:
+              Perekas koondab kõik vajalikud tööriistad ühte platvormi. Vanematel on lihtsam planeerida, lastel on selged ootused ja kogu pere töötab sujuvalt koos.
             </p>
           </div>
         </div>
@@ -260,7 +250,7 @@
           <div class="testimonials-scroll-wrapper">
             <div class="testimonials-grid-supabase">
               <div class="testimonial-card-supabase scroll-slide-up scroll-delay-1">
-                <p class="testimonial-quote-supabase">"Perekas on muutnud meie pereelu oluliselt lihtsamaks. Ülesanded on nüüd selgelt määratud, tülid on kadunud ja lapsed on motiveeritumatud tänu preemiasüsteemile."</p>
+                <p class="testimonial-quote-supabase">"Perekas on meie pereelu palju lihtsamaks teinud. Ülesanded on nüüd selgelt määratud ja lapsed teavad täpselt, mida oodatakse."</p>
                 <div class="testimonial-author-supabase">
                   <div class="testimonial-avatar-supabase">PT</div>
                   <div class="testimonial-author-info">
@@ -270,7 +260,7 @@
                 </div>
               </div>
               <div class="testimonial-card-supabase scroll-slide-up scroll-delay-2">
-                <p class="testimonial-quote-supabase">"Meie teismelised on aktiivsed Perekas kasutajad. Nad jälgivad oma ülesandeid, koguvad punkte ja otsivad endale sobivaid preemiaid."</p>
+                <p class="testimonial-quote-supabase">"Meie teismelised jälgivad oma ülesandeid ja koguvad punkte ise. See on muutnud igapäevaelu palju sujuvamaks ja motiveerivaks."</p>
                 <div class="testimonial-author-supabase">
                   <div class="testimonial-avatar-supabase">PS</div>
                   <div class="testimonial-author-info">
@@ -280,7 +270,7 @@
                 </div>
               </div>
               <div class="testimonial-card-supabase scroll-slide-up scroll-delay-3">
-                <p class="testimonial-quote-supabase">"Ostunimekirja funktsioon on olnud absoluutne pärl. Kõik liikmed saavad lisada vajalikke tooteid ja märkida kätte saadud asjad."</p>
+                <p class="testimonial-quote-supabase">"Ostunimekirja funktsioon on imeline — kogu pere saab lisada vajalikke tooteid ja märkida, mis on juba ostetud. Ei mingit segadust!"</p>
                 <div class="testimonial-author-supabase">
                   <div class="testimonial-avatar-supabase">PM</div>
                   <div class="testimonial-author-info">
@@ -290,7 +280,7 @@
                 </div>
               </div>
               <div class="testimonial-card-supabase scroll-slide-up scroll-delay-4">
-                <p class="testimonial-quote-supabase">"Lapsed armastavad punkte ja jälgivad oma saavutusi. See on andnud neile suurema vastutustunde ja motiveerib neid rohkem tegema."</p>
+                <p class="testimonial-quote-supabase">"Lapsed armastavad punktisüsteemi. Nad näevad oma saavutusi ja tunnevad suuremat vastutust, mis teeb kodused toimetused lõbusamaks."</p>
                 <div class="testimonial-author-supabase">
                   <div class="testimonial-avatar-supabase">PK</div>
                   <div class="testimonial-author-info">
@@ -300,7 +290,7 @@
                 </div>
               </div>
               <div class="testimonial-card-supabase scroll-slide-up scroll-delay-5">
-                <p class="testimonial-quote-supabase">"Meie pere on kasutanud Perekast juba üle aasta. See on muutnud meie igapäevaelu palju sujuvamaks ja vähem stressirohkeks."</p>
+                <p class="testimonial-quote-supabase">"Kõik vajalik ühes kohas: ülesanded, preemiad ja ostunimekirjad. See on aidanud meil peres selget korda luua ja stressi vähendada."</p>
                 <div class="testimonial-author-supabase">
                   <div class="testimonial-avatar-supabase">PL</div>
                   <div class="testimonial-author-info">
@@ -309,18 +299,16 @@
                   </div>
                 </div>
               </div>
-              {% comment %}
-              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-6">
-                <p class="testimonial-quote-supabase">"Automaatne korduvus on suurepärane funktsioon. Me ei pea enam iga nädal samu ülesandeid uuesti lisama."</p>
+              <div class="testimonial-card-supabase scroll-slide-up scroll-delay-5">
+                <p class="testimonial-quote-supabase">"Perekas motiveerib lapsi panustama ja annab vanematele rahuliku ülevaate. Igapäevased ülesanded ei ole kunagi olnud nii lihtsad."</p>
                 <div class="testimonial-author-supabase">
-                  <div class="testimonial-avatar-supabase">PV</div>
+                  <div class="testimonial-avatar-supabase">PS</div>
                   <div class="testimonial-author-info">
-                    <div class="testimonial-author-name-supabase">Perekond Vaher</div>
-                    <div class="testimonial-author-location-supabase">Narva</div>
+                    <div class="testimonial-author-name-supabase">Perekond Sirel</div>
+                    <div class="testimonial-author-location-supabase">Tartu</div>
                   </div>
                 </div>
               </div>
-              {% endcomment %}
             </div>
           </div>
         </div>
@@ -407,11 +395,10 @@
       <section class="section-seamless section-cta-seamless" id="get-started">
         <div class="container-modern">
           <div class="cta-content-flowing scroll-slide-up">
-            <h2 class="cta-headline-flowing">Valmis oma pereelu lihtsamaks muutma?</h2>
-            <p class="cta-description-flowing">Alusta tasuta proovimist juba täna. Krediitkaarti pole vaja ja saad testida kõiki põhifunktsioone ilma kohustusteta.</p>
+            <h2 class="cta-headline-flowing">Lihtsam igapäevaelu algab siit</h2>
+            <p class="cta-description-flowing">Testi kõiki põhifunktsioone kohe — tasuta ja ilma krediitkaardita. Tee pereelu lihtsamaks juba täna!</p>
             <div class="cta-actions-modern">
-              <a class="landing-button primary cta-button-large" href="{% url 'account_signup' %}">Alusta kohe tasuta</a>
-              <a class="landing-button ghost" href="#plans">Vaata pakette</a>
+              <a class="landing-button primary cta-button-large" href="{% url 'account_signup' %}">Alusta tasuta</a>
             </div>
           </div>
         </div>

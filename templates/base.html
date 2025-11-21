@@ -89,8 +89,9 @@
           </div>
         </div>
 
-        {% block sidebar_nav %}
-        <nav class="sidebar-nav">
+        <div class="sidebar-nav-top">
+          {% block sidebar_nav %}
+          <nav class="sidebar-nav">
           <a class="nav-link{% block nav_dashboard_active %}{% endblock %}" href="{% url 'a_dashboard:dashboard' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 12l2-2 3 3 7-7 6 6v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -120,11 +121,13 @@
             </svg>
             <span>Ostunimekiri</span>
           </a>
-        </nav>
-        {% endblock %}
-
-        {% block sidebar_nav_bottom %}
-        <nav class="sidebar-nav sidebar-nav-bottom">
+          </nav>
+          {% endblock %}
+        </div>
+        
+        <div class="sidebar-nav-bottom-section">
+          {% block sidebar_nav_bottom %}
+          <nav class="sidebar-nav sidebar-nav-bottom">
           <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_account:settings' %}?section=general">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
@@ -142,15 +145,15 @@
               <span>Perekond</span>
             </a>
           {% endif %}
-        </nav>
-        {% endblock %}
-
-        <div class="sidebar-footer">
-        <div class="sidebar-footer-title">{{user.first_name}} {{user.last_name}} - {{user.points}} pkt</div>
-          <form method="post" action="{% url 'account_logout' %}">
-            {% csrf_token %}
-          <button type="submit" class="sidebar-logout">Logi välja</button>
-          </form>
+          </nav>
+          <div class="sidebar-footer">
+            <div class="sidebar-footer-title">{{user.first_name}} {{user.last_name}} - {{user.points}} pkt</div>
+            <form method="post" action="{% url 'account_logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="sidebar-logout">Logi välja</button>
+            </form>
+          </div>
+          {% endblock %}
         </div>
       </aside>
 

@@ -53,9 +53,9 @@
             {% for member in members %}
               <div class="member-card">
                 <div class="member-header">
-                  <div class="member-avatar">{{ member.get_full_name|default:member.username|slice:":2"|upper }}</div>
+                  <div class="member-avatar">{{ member.display_name|slice:":2"|upper }}</div>
                   <div>
-                    <h3>{{ member.get_full_name|default:member.username }}</h3>
+                    <h3>{{ member.display_name }}</h3>
                     <p>{{ member.points }} punkti · {{ member.get_role_display }}</p>
                     {% if member == family.owner %}
                       <span class="member-badge">Pere looja</span>
@@ -65,7 +65,7 @@
                 {% if is_owner and member != family.owner %}
                   <form method="post" action="{% url 'a_family:remove_member' member.id %}" style="margin-top: 1rem;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-ghost" onclick="return confirm('Kas eemaldada {{ member.get_full_name|default:member.username }} perest?')" style="color: rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 0.3);">
+                    <button type="submit" class="btn btn-ghost" onclick="return confirm('Kas eemaldada {{ member.display_name }} perest?')" style="color: rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 0.3);">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
                         <path d="M3 6h18"></path>
                         <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
