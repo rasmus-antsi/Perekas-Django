@@ -85,7 +85,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j. M" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
@@ -193,7 +193,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }} {{ task.completed_at|date:"j. M, H:i" }}</span>
+                    <span class="task-meta-label">Lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -203,7 +203,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j. M" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
@@ -288,7 +288,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Kinnitas {{ task.approved_by.get_full_name|default:task.approved_by.username }} {{ task.approved_at|date:"j. M, H:i" }}</span>
+                    <span class="task-meta-label">Kinnitas {{ task.approved_by.get_full_name|default:task.approved_by.username }} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -298,7 +298,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j. M" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
