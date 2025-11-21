@@ -309,25 +309,43 @@
     /* Modal Styles */
     .modal-overlay {
       display: none;
-      position: fixed;
-      inset: 0;
+      position: fixed !important;
+      inset: 0 !important;
       background: rgba(4, 8, 24, 0.85);
       backdrop-filter: blur(12px);
       z-index: 1000;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
+      padding: 1rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
     .modal-content {
+      position: relative;
       background: var(--color-surface);
       border-radius: var(--radius-lg);
       border: 1px solid rgba(59, 72, 99, 0.4);
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
       max-width: 900px;
       width: 100%;
-      max-height: 90vh;
+      max-height: calc(100vh - 2rem);
       overflow-y: auto;
+      margin: auto;
+    }
+    
+    @media (max-width: 768px) {
+      .modal-overlay {
+        align-items: flex-start;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      
+      .modal-content {
+        margin-top: auto;
+        margin-bottom: auto;
+        max-height: calc(100vh - 4rem);
+      }
     }
     
     .upgrade-modal {
