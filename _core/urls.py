@@ -33,6 +33,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('family/', include('a_family.urls')),
     path('dashboard/', include('a_dashboard.urls')),
+    path('setup/', include('a_setup.urls')),
     path('subscription/', include('a_subscription.urls')),
     path('shopping/', include('a_shopping.urls')),
     path('rewards/', include('a_rewards.urls')),
