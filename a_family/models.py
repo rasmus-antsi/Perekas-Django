@@ -26,8 +26,31 @@ class User(AbstractUser):
         verbose_name = 'user'
         verbose_name_plural = 'users'
 
+    def get_display_name(self):
+        full_name = (self.get_full_name() or '').strip()
+        if full_name:
+            return full_name
+
+        if self.first_name and self.last_name:
+            return f'{self.first_name} {self.last_name}'.strip()
+
+        if self.first_name:
+            return self.first_name
+
+        if self.last_name:
+            return self.last_name
+
+        if self.email:
+            return self.email.split('@')[0]
+
+        return 'Perekas kasutaja'
+
+    @property
+    def display_name(self):
+        return self.get_display_name()
+
     def __str__(self):
-        return f'{self.get_full_name() or self.username} ({self.get_role_display()})'
+        return f'{self.get_display_name()} ({self.get_role_display()})'
 
 
 class Family(models.Model):

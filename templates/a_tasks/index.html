@@ -49,13 +49,13 @@
                         {% if task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                          {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõikile
                         {% endif %}
                       {% else %}
                         {% if task.assigned_to %}
-                          Määratud: {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                          Määratud: {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõikile
                         {% endif %}
@@ -160,13 +160,13 @@
                         {% if task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                          {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõikile
                         {% endif %}
                       {% else %}
                         {% if task.assigned_to %}
-                          Määratud: {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                          Määratud: {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõikile
                         {% endif %}
@@ -193,7 +193,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Lõpetas {{ task.completed_by.display_name }} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -260,10 +260,10 @@
                           {% if winner == user %}
                             Punktid teenis: Sina
                           {% else %}
-                            Punktid teenis: {{ winner.get_full_name|default:winner.username }}
+                            Punktid teenis: {{ winner.display_name }}
                           {% endif %}
                         {% else %}
-                          Punktid teenis: {{ winner.get_full_name|default:winner.username }}
+                          Punktid teenis: {{ winner.display_name }}
                         {% endif %}
                       {% endwith %}
                     </p>
@@ -288,7 +288,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Kinnitas {{ task.approved_by.get_full_name|default:task.approved_by.username }} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Kinnitas {{ task.approved_by.display_name }} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -371,7 +371,7 @@
               <option value="">Avatud ülesanne (ükskõik milline laps)</option>
               {% for member in family_members %}
                 <option value="{{ member.id }}">
-                  {{ member.get_full_name|default:member.username }}
+                  {{ member.display_name }}
                   {% if member.role %}
                     ({{ member.get_role_display }})
                   {% endif %}

@@ -79,16 +79,20 @@ def general_settings(request):
 
     # Handle form submission
     if request.method == 'POST' and request.POST.get('form_type') == 'profile':
-        display_name = request.POST.get('display_name', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
         email = request.POST.get('email', '').strip()
         role = request.POST.get('role')
+        updated_fields = set()
         
-        # Update display name (first_name and last_name)
-        if display_name:
-            name_parts = display_name.split(' ', 1)
-            user.first_name = name_parts[0]
-            user.last_name = name_parts[1] if len(name_parts) > 1 else ''
-            user.save(update_fields=['first_name', 'last_name'])
+        # Update first and last name
+        if first_name != user.first_name:
+            user.first_name = first_name
+            updated_fields.add('first_name')
+
+        if last_name != user.last_name:
+            user.last_name = last_name
+            updated_fields.add('last_name')
         
         # Update email
         if email and email != user.email:
@@ -97,16 +101,16 @@ def general_settings(request):
                 messages.error(request, "See e-posti aadress on juba kasutusel.")
             else:
                 user.email = email
-                user.save(update_fields=['email'])
+                updated_fields.add('email')
                 messages.success(request, "E-posti aadress uuendatud.")
         
         # Update role (only if user is parent and changing their own role)
         if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
             user.role = role
-            user.save(update_fields=['role'])
-            messages.success(request, "Profiil uuendatud.")
-        
-        if not email or email == user.email:
+            updated_fields.add('role')
+
+        if updated_fields:
+            user.save(update_fields=list(updated_fields))
             messages.success(request, "Profiil uuendatud.")
         return redirect('a_account:settings?section=general')
 
@@ -205,14 +209,18 @@ def subscription_settings(request):
         action = request.POST.get('subscription_action')
         
         if action == 'downgrade':
-            # Downgrade to FREE tier
+            # Redirect to Stripe customer portal for downgrade/cancellation
             subscription = Subscription.objects.filter(
                 owner=user,
                 tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
             ).first()
             
-            if not subscription or not subscription.stripe_subscription_id:
-                messages.error(request, "Aktiivset tellimust ei leitud.")
+            if not subscription:
+                messages.error(request, "Tellimust ei leitud.")
+                return redirect('a_account:settings?section=subscriptions')
+            
+            if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
+                messages.error(request, "Stripe kliendi ID puudub.")
                 return redirect('a_account:settings?section=subscriptions')
             
             if not django_settings.STRIPE_SECRET_KEY:
@@ -222,23 +230,29 @@ def subscription_settings(request):
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
             try:
-                # Cancel the Stripe subscription (at period end to keep access until then)
-                stripe.Subscription.modify(
-                    subscription.stripe_subscription_id,
-                    cancel_at_period_end=True,
-                )
+                # Create customer portal session for managing subscription
+                portal_params = {
+                    'customer': subscription.stripe_customer_id,
+                    'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                    'locale': 'et',
+                }
                 
-                # Update local subscription - keep tier until period_end, then it will revert to FREE via webhook
-                subscription.status = Subscription.STATUS_CANCELLED
-                subscription.save()
+                # Only add configuration if it's set (optional parameter)
+                if hasattr(django_settings, 'STRIPE_CUSTOMER_PORTAL_ID') and django_settings.STRIPE_CUSTOMER_PORTAL_ID:
+                    portal_params['configuration'] = django_settings.STRIPE_CUSTOMER_PORTAL_ID
                 
-                messages.success(request, "Tellimus tühistati. Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.")
-                logger.info(f"Subscription {subscription.id} cancelled for user {user.id}")
+                portal_session = stripe.billing_portal.Session.create(**portal_params)
+                
+                return redirect(portal_session.url)
+                
+            except AttributeError as e:
+                # Handle case where billing_portal API might not be available
+                logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
+                messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
                 return redirect('a_account:settings?section=subscriptions')
-                
             except stripe.error.StripeError as e:
-                messages.error(request, f"Tellimuse tühistamisel tekkis viga: {str(e)}")
-                logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
+                messages.error(request, f"Stripe'i viga: {str(e)}")
+                logger.error(f"Stripe error: {str(e)}", exc_info=True)
                 return redirect('a_account:settings?section=subscriptions')
         
         elif action == 'edit_portal':
@@ -263,17 +277,42 @@ def subscription_settings(request):
             
             try:
                 # Create customer portal session
-                portal_session = stripe.billing_portal.Session.create(
-                    customer=subscription.stripe_customer_id,
-                    return_url=request.build_absolute_uri('/account/settings/?section=subscriptions'),
-                    configuration=django_settings.STRIPE_CUSTOMER_PORTAL_ID,
-                    locale='et',
-                )
+                # First check if billing_portal exists by trying to access it
+                try:
+                    billing_portal = stripe.billing_portal
+                except AttributeError:
+                    logger.error("Stripe billing_portal API not available in this Stripe SDK version")
+                    messages.error(request, "Stripe'i kliendiportaali API pole sinu Stripe versioonis toetatud.")
+                    return redirect('a_account:settings?section=subscriptions')
+                
+                # Check if configuration ID is set
+                portal_params = {
+                    'customer': subscription.stripe_customer_id,
+                    'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                    'locale': 'et',
+                }
+                
+                # Only add configuration if it's set (optional parameter)
+                if hasattr(django_settings, 'STRIPE_CUSTOMER_PORTAL_ID') and django_settings.STRIPE_CUSTOMER_PORTAL_ID:
+                    portal_params['configuration'] = django_settings.STRIPE_CUSTOMER_PORTAL_ID
+                
+                # Create billing portal session
+                portal_session = billing_portal.Session.create(**portal_params)
                 
                 return redirect(portal_session.url)
                 
+            except AttributeError as e:
+                # Handle case where billing_portal API might not be available
+                logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
+                messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
+                return redirect('a_account:settings?section=subscriptions')
             except stripe.error.StripeError as e:
                 messages.error(request, f"Stripe'i viga: {str(e)}")
+                logger.error(f"Stripe error: {str(e)}", exc_info=True)
+                return redirect('a_account:settings?section=subscriptions')
+            except Exception as e:
+                logger.error(f"Unexpected error creating billing portal session: {str(e)}", exc_info=True)
+                messages.error(request, f"Viga portaali loomisel: {str(e)}")
                 return redirect('a_account:settings?section=subscriptions')
         
         elif action == 'upgrade':
@@ -411,22 +450,31 @@ def subscription_settings(request):
     if can_manage_subscription and family:
         try:
             tier = get_family_subscription(family)
+            if not tier:
+                tier = Subscription.TIER_FREE
             
             subscription = Subscription.objects.filter(
                 owner=user,
                 tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
             ).first()
             
+            # Get display tier safely
+            tier_choices = dict(Subscription.TIER_CHOICES)
+            display_tier = tier_choices.get(tier, tier)
+            if not display_tier:
+                display_tier = tier_choices.get(Subscription.TIER_FREE, Subscription.TIER_FREE)
+            
             subscription_data = {
-                'tier': tier or Subscription.TIER_FREE,
-                'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier or Subscription.TIER_FREE),
+                'tier': tier,
+                'display_tier': display_tier,
                 'subscription': subscription,
             }
         except Exception as e:
             logger.error(f"Error loading subscription data: {str(e)}", exc_info=True)
+            tier_choices = dict(Subscription.TIER_CHOICES)
             subscription_data = {
                 'tier': Subscription.TIER_FREE,
-                'display_tier': dict(Subscription.TIER_CHOICES).get(Subscription.TIER_FREE, Subscription.TIER_FREE),
+                'display_tier': tier_choices.get(Subscription.TIER_FREE, Subscription.TIER_FREE),
                 'subscription': None,
             }
 

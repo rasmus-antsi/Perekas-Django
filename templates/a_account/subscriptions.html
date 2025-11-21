@@ -9,214 +9,175 @@
   </section>
 
   {% if can_manage_subscription and subscription_data %}
-    <div class="settings-grid settings-grid-single">
-      <section class="settings-card">
-        <header class="settings-card-header card-header">
-          <div class="card-title-wrap">
-            <span class="card-icon icon-purple"></span>
-            <div>
-              <h2>Tellimus</h2>
-              <p>Sinu kehtiv tellimus ja arveldusinfo.</p>
-            </div>
-          </div>
-        </header>
-        <div class="settings-card-body">
-          <div class="subscription-modern">
-            <div class="subscription-info-modern">
-              <div class="plan-badge-modern plan-badge-{{ subscription_data.tier|lower }}">
-                <span>{{ subscription_data.display_tier }}</span>
-              </div>
-              <div class="subscription-details-modern">
-                <h3 class="plan-name-modern">{{ subscription_data.display_tier }} pakett</h3>
-                {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
-                  <p class="renewal-date-modern">
-                    Uueneb: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}
-                  </p>
-                {% elif subscription_data.tier == 'FREE' %}
-                  <p class="renewal-date-modern">Tasuta pakett</p>
-                {% endif %}
-              </div>
-            </div>
-            <div class="subscription-actions-modern">
-              {% if subscription_data.tier == 'FREE' %}
-                <button type="button" class="btn btn-primary" onclick="openUpgradeModal()">Uuenda paketti</button>
-              {% elif subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
-                <form method="post" style="display: inline;">
-                  {% csrf_token %}
-                  <input type="hidden" name="form_type" value="subscription">
-                  <input type="hidden" name="subscription_action" value="edit_portal">
-                  <button type="submit" class="btn btn-ghost">Halda tellimust</button>
-                </form>
-                <button type="button" class="btn btn-primary" onclick="openUpgradeModal()">Muuda paketti</button>
-                <form method="post" style="display: inline;" onsubmit="return confirm('Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.');">
-                  {% csrf_token %}
-                  <input type="hidden" name="form_type" value="subscription">
-                  <input type="hidden" name="subscription_action" value="downgrade">
-                  <button type="submit" class="btn btn-ghost" style="color: #dc3545;">Tühista tellimus</button>
-                </form>
+    <div class="subscription-wrapper">
+      <section class="subscription-highlight-card">
+        <div class="subscription-highlight-top">
+          <div class="subscription-highlight">
+            <span class="subscription-badge">
+              {% if subscription_data.tier|default:'FREE' == 'FREE' %}
+                Tasuta pakett
+              {% else %}
+                Aktiivne tellimus
               {% endif %}
-            </div>
+            </span>
+            <h2>{{ subscription_data.display_tier|default:'Tasuta' }} pakett</h2>
+            {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
+              <p>Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}</p>
+            {% else %}
+              <p>Alusta tasulist paketti, et avada rohkem võimalusi.</p>
+            {% endif %}
           </div>
+          <a href="#subscription-plans" class="btn btn-primary">Vaata pakette</a>
+        </div>
+        <div class="subscription-highlight-actions">
+          {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="subscription">
+              <input type="hidden" name="subscription_action" value="edit_portal">
+              <button type="submit" class="btn btn-ghost">Halda Stripe'is</button>
+            </form>
+            {% if subscription_data.tier|default:'FREE' != 'FREE' %}
+              <form method="post" onsubmit="return confirm('Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.');">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="subscription">
+                <input type="hidden" name="subscription_action" value="downgrade">
+                <button type="submit" class="btn btn-ghost" style="color: #f87171;">Tühista tellimus</button>
+              </form>
+            {% endif %}
+          {% endif %}
         </div>
       </section>
 
-      <!-- All Plans Display -->
-      <div class="plans-grid-settings">
-        <div class="plan-card-modal {% if subscription_data.tier == 'FREE' %}plan-current{% endif %}">
-          <div class="plan-header-modal">
-            <h3>Tasuta</h3>
-            <div class="plan-price-modal">€0<span>/kuu</span></div>
+      <section id="subscription-plans" class="subscription-plan-section">
+        <div class="pricing-header-inline">
+          <div>
+            <h2>Vali sobiv pakett</h2>
+            <p class="pricing-subtitle-inline">Alusta tasuta ja testi kõiki põhifunktsioone</p>
           </div>
-          <ul class="plan-features-modal">
-            <li>1 lapsevanem</li>
-            <li>1 laps</li>
-            <li>5 ülesannet kuus</li>
-            <li>3 preemiat kuus</li>
-            <li class="feature-disabled">Ostunimekirja pole</li>
-          </ul>
-          {% if subscription_data.tier == 'FREE' %}
-            <div class="plan-badge-current">Praegune</div>
-          {% endif %}
+          <div class="pricing-toggle-wrapper-modern">
+            <div class="pricing-toggle-modern">
+              <span class="pricing-toggle-label">Kuu</span>
+              <button class="pricing-toggle-switch-modern" id="pricingToggle" aria-label="Lülita hinnakujundus">
+                <span class="pricing-toggle-slider-modern"></span>
+              </button>
+              <span class="pricing-toggle-label">Aasta <span class="pricing-save-badge-modern">Säästa 20%</span></span>
+            </div>
+          </div>
         </div>
 
-        <div class="plan-card-modal plan-featured-modal {% if subscription_data.tier == 'STARTER' %}plan-current{% endif %}">
-          <div class="plan-badge-popular">Populaarne</div>
-          <div class="plan-header-modal">
-            <h3>Algtase</h3>
-            <div class="plan-price-modal">€9.99<span>/kuu</span></div>
-          </div>
-          <ul class="plan-features-modal">
-            <li>2 lapsevanemat</li>
-            <li>2 last</li>
-            <li>20 ülesannet kuus</li>
-            <li>15 preemiat kuus</li>
-            <li class="feature-enabled">Ostunimekiri ✓</li>
-          </ul>
-          {% if subscription_data.tier == 'STARTER' %}
-            <div class="plan-badge-current">Praegune</div>
-          {% else %}
-            <form method="post">
-              {% csrf_token %}
-              <input type="hidden" name="form_type" value="subscription">
-              <input type="hidden" name="subscription_action" value="upgrade">
-              <input type="hidden" name="tier" value="STARTER">
-              <input type="hidden" name="billing_period" value="monthly">
-              <button type="submit" class="btn btn-primary btn-full">Vali Algtase</button>
-            </form>
-          {% endif %}
-        </div>
-
-        <div class="plan-card-modal {% if subscription_data.tier == 'PRO' %}plan-current{% endif %}">
-          <div class="plan-header-modal">
-            <h3>Pro</h3>
-            <div class="plan-price-modal">€19.99<span>/kuu</span></div>
-          </div>
-          <ul class="plan-features-modal">
-            <li>4 lapsevanemat</li>
-            <li>10 last</li>
-            <li>100 ülesannet kuus</li>
-            <li>50 preemiat kuus</li>
-            <li class="feature-enabled">Ostunimekiri ✓</li>
-          </ul>
-          {% if subscription_data.tier == 'PRO' %}
-            <div class="plan-badge-current">Praegune</div>
-          {% else %}
-            <form method="post">
-              {% csrf_token %}
-              <input type="hidden" name="form_type" value="subscription">
-              <input type="hidden" name="subscription_action" value="upgrade">
-              <input type="hidden" name="tier" value="PRO">
-              <input type="hidden" name="billing_period" value="monthly">
-              <button type="submit" class="btn btn-primary btn-full">Vali Pro</button>
-            </form>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Upgrade Modal -->
-    <div id="upgradeModal" class="modal-overlay" {% if show_upgrade_modal %}style="display: flex;"{% endif %}>
-      <div class="modal-content upgrade-modal">
-        <div class="modal-header">
-          <h2>Vali pakett</h2>
-          <button type="button" class="modal-close" onclick="closeUpgradeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="plans-grid-modal">
-            <div class="plan-card-modal {% if subscription_data.tier == 'FREE' %}plan-current{% endif %}">
-              <div class="plan-header-modal">
-                <h3>Tasuta</h3>
-                <div class="plan-price-modal">€0<span>/kuu</span></div>
+        <div class="plans-grid-modern">
+          {% with tier=subscription_data.tier|default:'FREE' %}
+            <article class="plan-card-modern {% if tier == 'FREE' %}plan-current-modern{% endif %}">
+              <div class="plan-header-modern">
+                <h3>TASUTA</h3>
               </div>
-              <ul class="plan-features-modal">
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€0<span>/kuu</span></span>
+                <span class="plan-price-yearly">€0<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
                 <li>1 lapsevanem</li>
                 <li>1 laps</li>
                 <li>5 ülesannet kuus</li>
                 <li>3 preemiat kuus</li>
-                <li class="feature-disabled">Ostunimekirja pole</li>
+                <li class="no-access">Ostunimekiri puudub</li>
               </ul>
-              {% if subscription_data.tier == 'FREE' %}
-                <div class="plan-badge-current">Praegune</div>
+              {% if tier != 'FREE' %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="downgrade">
+                  <button type="submit" class="landing-button secondary plan-button-modern">Lähtu tasuta paketile</button>
+                </form>
               {% else %}
-                <div class="plan-disabled-text">Alandamine pole võimalik</div>
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(59, 72, 99, 0.3); color: rgba(148, 163, 184, 0.6);">Praegune pakett</div>
               {% endif %}
-            </div>
+            </article>
 
-            <div class="plan-card-modal plan-featured-modal {% if subscription_data.tier == 'STARTER' %}plan-current{% endif %}">
-              <div class="plan-badge-popular">Populaarne</div>
-              <div class="plan-header-modal">
-                <h3>Algtase</h3>
-                <div class="plan-price-modal">€9.99<span>/kuu</span></div>
+            <article class="plan-card-modern plan-featured-modern {% if tier == 'STARTER' %}plan-current-modern{% endif %}">
+              {% if tier != 'STARTER' %}
+                <div class="plan-popular-badge-modern">Kõige populaarsem</div>
+              {% else %}
+                <div class="plan-popular-badge-modern" style="background: rgba(34, 197, 94, 0.9);">Praegune</div>
+              {% endif %}
+              <div class="plan-header-modern">
+                <h3>ALGUS</h3>
               </div>
-              <ul class="plan-features-modal">
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€9<span>/kuu</span></span>
+                <span class="plan-price-yearly">€89<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
                 <li>2 lapsevanemat</li>
                 <li>2 last</li>
                 <li>20 ülesannet kuus</li>
                 <li>15 preemiat kuus</li>
-                <li class="feature-enabled">Ostunimekiri ✓</li>
+                <li>Ostunimekirja ligipääs</li>
               </ul>
-              {% if subscription_data.tier == 'STARTER' %}
-                <div class="plan-badge-current">Praegune</div>
-              {% else %}
-                <form method="post">
+              {% if tier != 'STARTER' %}
+                <form method="post" id="upgrade-form-starter-monthly" style="display: none;">
                   {% csrf_token %}
                   <input type="hidden" name="form_type" value="subscription">
                   <input type="hidden" name="subscription_action" value="upgrade">
                   <input type="hidden" name="tier" value="STARTER">
                   <input type="hidden" name="billing_period" value="monthly">
-                  <button type="submit" class="btn btn-primary btn-full">Vali Algtase</button>
                 </form>
+                <form method="post" id="upgrade-form-starter-yearly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="STARTER">
+                  <input type="hidden" name="billing_period" value="yearly">
+                </form>
+                <button type="button" class="landing-button primary plan-button-modern" onclick="submitUpgrade('starter')">Vali Algus</button>
+              {% else %}
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
               {% endif %}
-            </div>
+            </article>
 
-            <div class="plan-card-modal {% if subscription_data.tier == 'PRO' %}plan-current{% endif %}">
-              <div class="plan-header-modal">
-                <h3>Pro</h3>
-                <div class="plan-price-modal">€19.99<span>/kuu</span></div>
+            <article class="plan-card-modern {% if tier == 'PRO' %}plan-current-modern{% endif %}">
+              <div class="plan-header-modern">
+                <h3>PRO</h3>
               </div>
-              <ul class="plan-features-modal">
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€17<span>/kuu</span></span>
+                <span class="plan-price-yearly">€149<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
                 <li>4 lapsevanemat</li>
                 <li>10 last</li>
                 <li>100 ülesannet kuus</li>
                 <li>50 preemiat kuus</li>
-                <li class="feature-enabled">Ostunimekiri ✓</li>
+                <li>Ostunimekirja ligipääs</li>
               </ul>
-              {% if subscription_data.tier == 'PRO' %}
-                <div class="plan-badge-current">Praegune</div>
-              {% else %}
-                <form method="post">
+              {% if tier != 'PRO' %}
+                <form method="post" id="upgrade-form-pro-monthly" style="display: none;">
                   {% csrf_token %}
                   <input type="hidden" name="form_type" value="subscription">
                   <input type="hidden" name="subscription_action" value="upgrade">
                   <input type="hidden" name="tier" value="PRO">
                   <input type="hidden" name="billing_period" value="monthly">
-                  <button type="submit" class="btn btn-primary btn-full">Vali Pro</button>
                 </form>
+                <form method="post" id="upgrade-form-pro-yearly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="PRO">
+                  <input type="hidden" name="billing_period" value="yearly">
+                </form>
+                <button type="button" class="landing-button secondary plan-button-modern" onclick="submitUpgrade('pro')">Vali Pro</button>
+              {% else %}
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
               {% endif %}
-            </div>
-          </div>
+            </article>
+          {% endwith %}
         </div>
-      </div>
+
+        <div class="subscription-help" style="text-align: center; margin-top: 2rem;">
+          Vajad abi paketi valimisel? Kirjuta julgesti aadressil <a href="mailto:tugi@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none;">tugi@perekas.ee</a> – aitame sobiva lahenduse leida.
+        </div>
+      </section>
     </div>
   {% else %}
     <div class="empty-state full-row">
@@ -225,8 +186,16 @@
   {% endif %}
 
   <style>
+    /* Legacy modal styles removed in favour of inline plan selection */
     .settings-grid-single {
       grid-template-columns: 1fr !important;
+    }
+    
+    /* Plan current styling */
+    .plan-current-modern {
+      border-color: rgba(34, 197, 94, 0.5) !important;
+      background: rgba(34, 197, 94, 0.05) !important;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15) !important;
     }
     
     .form-grid-single {
@@ -304,6 +273,46 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.5rem;
       margin-top: 2rem;
+    }
+    
+    /* Make plans wider in settings page - override all constraints */
+    .subscription-plan-section .plans-grid-modern {
+      max-width: 100% !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+    
+    .subscription-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .subscription-plan-section {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    /* Override page container max-width specifically for subscription page */
+    .page-container.settings-page:has(.subscription-plan-section) {
+      max-width: 100% !important;
+    }
+    
+    /* Fallback for browsers that don't support :has() */
+    @supports not selector(:has(*)) {
+      .page-container.settings-page {
+        max-width: 100% !important;
+      }
+    }
+    
+    /* Ensure full width for subscription section */
+    section[class*="subscription"] {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    /* Remove any padding/margin constraints */
+    .subscription-plan-section > * {
+      max-width: 100% !important;
     }
     
     /* Modal Styles */
@@ -556,41 +565,53 @@
   </style>
 
   <script>
-    function openUpgradeModal() {
-      document.getElementById('upgradeModal').style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-    }
+    // Pricing toggle functionality
+    window.isYearly = false;
+    const pricingToggle = document.getElementById('pricingToggle');
     
-    function closeUpgradeModal() {
-      document.getElementById('upgradeModal').style.display = 'none';
-      document.body.style.overflow = '';
-      if (window.location.search.includes('upgrade=1')) {
-        const url = new URL(window.location);
-        url.searchParams.delete('upgrade');
-        window.history.replaceState({}, '', url);
-      }
-    }
-    
-    document.addEventListener('DOMContentLoaded', function() {
-      const modal = document.getElementById('upgradeModal');
-      if (modal) {
-        modal.addEventListener('click', function(e) {
-          if (e.target === modal) {
-            closeUpgradeModal();
-          }
-        });
-        
-        document.addEventListener('keydown', function(e) {
-          if (e.key === 'Escape' && modal.style.display === 'flex') {
-            closeUpgradeModal();
-          }
-        });
-      }
+    if (pricingToggle) {
+      const monthlyPrices = document.querySelectorAll('.plan-price-monthly');
+      const yearlyPrices = document.querySelectorAll('.plan-price-yearly');
+      const slider = pricingToggle.querySelector('.pricing-toggle-slider-modern');
       
-      {% if show_upgrade_modal %}
-      openUpgradeModal();
-      {% endif %}
-    });
+      pricingToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.isYearly = !window.isYearly;
+        
+        if (window.isYearly) {
+          // Fade out monthly prices, then fade in yearly prices
+          monthlyPrices.forEach(el => el.classList.remove('active'));
+          setTimeout(() => {
+            yearlyPrices.forEach(el => el.classList.add('active'));
+          }, 200);
+          if (slider) {
+            slider.style.transform = 'translateX(26px)';
+          }
+          this.setAttribute('aria-checked', 'true');
+        } else {
+          // Fade out yearly prices, then fade in monthly prices
+          yearlyPrices.forEach(el => el.classList.remove('active'));
+          setTimeout(() => {
+            monthlyPrices.forEach(el => el.classList.add('active'));
+          }, 200);
+          if (slider) {
+            slider.style.transform = 'translateX(0)';
+          }
+          this.setAttribute('aria-checked', 'false');
+        }
+      });
+    }
+    
+    // Handle upgrade form submission based on current billing period
+    function submitUpgrade(tier) {
+      const billingPeriod = window.isYearly ? 'yearly' : 'monthly';
+      const formId = `upgrade-form-${tier}-${billingPeriod}`;
+      const form = document.getElementById(formId);
+      if (form) {
+        form.submit();
+      }
+    }
   </script>
 {% endblock %}
 

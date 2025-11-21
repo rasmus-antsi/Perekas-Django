@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block email_title %}{% trans "Sinu pere on loodud" %}{% endblock %}
-{% block email_heading %}{% trans "Pere on valmis, {{ user.first_name|default:user.username }}!" %}{% endblock %}
+{% block email_heading %}{% trans "Pere on valmis, {{ user.get_full_name|default:user.first_name|default:'Perekas kasutaja' }}!" %}{% endblock %}
 {% block email_subheading %}
   <p class="email-subtitle">{% trans "Jaga allolevat koodi pereliikmetega või kopeeri link." %}</p>
 {% endblock %}

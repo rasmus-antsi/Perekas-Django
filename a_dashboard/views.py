@@ -121,7 +121,7 @@ def dashboard(request):
             ).count()
             progress_ratio = completed_count / total_tasks_display if total_tasks_display else 0
 
-            display_name = member.get_full_name() or member.username
+            display_name = member.get_display_name()
             family_members.append(
                 {
                     "name": display_name,
@@ -187,16 +187,20 @@ def settings(request):
         
         # Handle profile update
         if form_type == 'profile':
-            display_name = request.POST.get('display_name', '').strip()
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
             role = request.POST.get('role')
+            updated_fields = set()
             
-            # Update display name (first_name and last_name)
-            if display_name:
-                name_parts = display_name.split(' ', 1)
-                user.first_name = name_parts[0]
-                user.last_name = name_parts[1] if len(name_parts) > 1 else ''
-                user.save(update_fields=['first_name', 'last_name'])
+            # Update first and last name
+            if first_name != user.first_name:
+                user.first_name = first_name
+                updated_fields.add('first_name')
+
+            if last_name != user.last_name:
+                user.last_name = last_name
+                updated_fields.add('last_name')
             
             # Update email
             if email and email != user.email:
@@ -205,16 +209,16 @@ def settings(request):
                     messages.error(request, "See e-posti aadress on juba kasutusel.")
                 else:
                     user.email = email
-                    user.save(update_fields=['email'])
+                    updated_fields.add('email')
                     messages.success(request, "E-posti aadress uuendatud.")
             
             # Update role (only if user is parent and changing their own role)
             if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
                 user.role = role
-                user.save(update_fields=['role'])
-                messages.success(request, "Profiil uuendatud.")
-            
-            if not email or email == user.email:
+                updated_fields.add('role')
+
+            if updated_fields:
+                user.save(update_fields=list(updated_fields))
                 messages.success(request, "Profiil uuendatud.")
             return redirect('a_dashboard:settings?section=general')
         

@@ -57,7 +57,7 @@ class Subscription(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.owner.username} - {self.get_tier_display()} ({self.get_status_display()})'
+        return f'{self.owner.get_display_name()} - {self.get_tier_display()} ({self.get_status_display()})'
 
     def is_active(self):
         """Check if subscription is currently active"""

@@ -187,7 +187,7 @@ def remove_member(request, user_id):
         # Remove from members
         if member_to_remove in family.members.all():
             family.members.remove(member_to_remove)
-            messages.success(request, f'{member_to_remove.get_full_name() or member_to_remove.username} eemaldati perest.')
+            messages.success(request, f'{member_to_remove.get_display_name()} eemaldati perest.')
         else:
             messages.info(request, 'See kasutaja ei kuulu sinu perre.')
     except User.DoesNotExist:
