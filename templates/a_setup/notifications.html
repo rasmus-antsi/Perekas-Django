@@ -1,0 +1,68 @@
+{% extends "a_setup/base.html" %}
+
+{% block settings_content %}
+  <section class="settings-header">
+    <div>
+      <h1 class="page-title">Teavitused</h1>
+      <p class="page-subtitle">Vali, millal ja kuidas perele teateid saadame.</p>
+    </div>
+  </section>
+
+  <div class="settings-grid settings-grid-single">
+    <section class="settings-card">
+      <header class="settings-card-header card-header">
+        <div class="card-title-wrap">
+          <span class="card-icon icon-teal"></span>
+          <div>
+            <h2>Teavitused</h2>
+            <p>Vali, millal ja kuidas perele teateid saadame.</p>
+          </div>
+        </div>
+      </header>
+      <div class="settings-card-body">
+        <form method="post" class="settings-form">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="notifications">
+          <fieldset class="settings-toggle-list">
+            <label class="settings-checkbox">
+              <input type="checkbox" name="notify_tasks" {% if notification_preferences.task_updates %}checked{% endif %}>
+              <span class="settings-checkbox-indicator"></span>
+              <div>
+                <span class="toggle-title">Ülesannete tegevus</span>
+                <span class="toggle-description">Teated täidetud ja kinnitust ootavate ülesannete kohta.</span>
+              </div>
+            </label>
+            <label class="settings-checkbox">
+              <input type="checkbox" name="notify_rewards" {% if notification_preferences.reward_updates %}checked{% endif %}>
+              <span class="settings-checkbox-indicator"></span>
+              <div>
+                <span class="toggle-title">Preemiate uuendused</span>
+                <span class="toggle-description">Teated, kui preemiad lisatakse või lunastatakse.</span>
+              </div>
+            </label>
+            <label class="settings-checkbox">
+              <input type="checkbox" name="notify_shopping" {% if notification_preferences.shopping_updates %}checked{% endif %}>
+              <span class="settings-checkbox-indicator"></span>
+              <div>
+                <span class="toggle-title">Ostunimekirja muudatused</span>
+                <span class="toggle-description">Püsi kursis uute esemete ja ostude olekuga.</span>
+              </div>
+            </label>
+            <label class="settings-checkbox">
+              <input type="checkbox" name="notify_summary" {% if notification_preferences.weekly_summary %}checked{% endif %}>
+              <span class="settings-checkbox-indicator"></span>
+              <div>
+                <span class="toggle-title">Nädala kokkuvõte</span>
+                <span class="toggle-description">Saa kord nädalas ülevaade pere tegevustest.</span>
+              </div>
+            </label>
+          </fieldset>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Uuenda teavitusi</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+

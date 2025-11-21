@@ -89,6 +89,7 @@
           </div>
         </div>
 
+        {% block sidebar_nav %}
         <nav class="sidebar-nav">
           <a class="nav-link{% block nav_dashboard_active %}{% endblock %}" href="{% url 'a_dashboard:dashboard' %}">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -120,9 +121,11 @@
             <span>Ostunimekiri</span>
           </a>
         </nav>
+        {% endblock %}
 
+        {% block sidebar_nav_bottom %}
         <nav class="sidebar-nav sidebar-nav-bottom">
-          <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_dashboard:settings' %}">
+          <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_setup:settings' %}?section=general">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -140,6 +143,7 @@
             </a>
           {% endif %}
         </nav>
+        {% endblock %}
 
         <div class="sidebar-footer">
         <div class="sidebar-footer-title">{{user.first_name}} {{user.last_name}} - {{user.points}} pkt</div>
@@ -233,6 +237,72 @@
             }
           });
         });
+
+        const sidebar = document.getElementById('sidebar');
+        const settingsNav = document.querySelector('.settings-nav');
+        const isSettingsPage = settingsNav !== null;
+        const comingFromSettings = sessionStorage.getItem('fromSettings');
+        const comingFromMainApp = sessionStorage.getItem('fromMainApp');
+        const hasAnimatedSettings = sessionStorage.getItem('hasAnimatedSettings') === 'true';
+
+        if (isSettingsPage) {
+          // We're on a settings page
+          if (!hasAnimatedSettings && comingFromMainApp === 'true') {
+            // First time entering settings from main app - animate entire sidebar
+            sidebar.classList.add('settings-sidebar-fade-in');
+            sessionStorage.setItem('hasAnimatedSettings', 'true');
+            sessionStorage.removeItem('fromMainApp');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+              sidebar.classList.remove('settings-sidebar-fade-in');
+            }, 1000);
+          } else if (!hasAnimatedSettings) {
+            // First load of settings page (e.g., direct URL) - animate once
+            settingsNav.classList.add('initial-load');
+            sidebar.classList.add('settings-initial-load');
+            sessionStorage.setItem('hasAnimatedSettings', 'true');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+              settingsNav.classList.remove('initial-load');
+              sidebar.classList.remove('settings-initial-load');
+            }, 1000);
+          }
+          // If hasAnimatedSettings is true, don't animate (user is just switching sections)
+        } else {
+          // We're on main app page
+          if (comingFromSettings === 'true') {
+            // Coming from settings - animate entire main sidebar
+            sidebar.classList.add('sidebar-fade-in');
+            sessionStorage.removeItem('fromSettings');
+            sessionStorage.removeItem('hasAnimatedSettings');
+            
+            // Remove animation class after animation completes
+            setTimeout(() => {
+              sidebar.classList.remove('sidebar-fade-in');
+            }, 1000);
+          }
+        }
+      });
+
+      // Track navigation to/from settings
+      document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link) return;
+        
+        const href = link.getAttribute('href') || '';
+        const settingsNav = document.querySelector('.settings-nav');
+        
+        // If clicking "Tagasi" (back) button from settings, mark that we're leaving settings
+        if (settingsNav && (href.includes('dashboard') || link.textContent.trim() === 'Tagasi')) {
+          sessionStorage.setItem('fromSettings', 'true');
+        }
+        // If clicking settings link from main app, mark that we're going to settings
+        else if (!settingsNav && (href.includes('/setup/settings') || href.includes('settings'))) {
+          sessionStorage.setItem('fromMainApp', 'true');
+          sessionStorage.removeItem('hasAnimatedSettings'); // Allow animation on first entry
+        }
       });
 
       // Simple page fade-in on load (like landing page)
