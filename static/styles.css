@@ -38,6 +38,154 @@ body {
   overflow-x: hidden;
 }
 
+/* Main content fade-in on page load */
+.main-content {
+  animation: contentFadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+/* Auth pages fade-in on page load */
+.auth-main,
+.auth-container {
+  animation: contentFadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+@keyframes contentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered element animations for app pages */
+.page-header {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s forwards;
+  opacity: 0;
+}
+
+.page-container > section:first-of-type,
+.points-overview-card,
+.list-section:first-of-type,
+.rewards-section:first-of-type {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+  opacity: 0;
+}
+
+.page-container > section:nth-of-type(2),
+.list-section:nth-of-type(2),
+.rewards-section:nth-of-type(2) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+  opacity: 0;
+}
+
+.page-container > section:nth-of-type(3),
+.list-section:nth-of-type(3),
+.rewards-section:nth-of-type(3) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s forwards;
+  opacity: 0;
+}
+
+/* Stagger cards within sections */
+.task-card:nth-child(1),
+.reward-card:nth-child(1),
+.item-card:nth-child(1),
+.stat-card:nth-child(1) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.1s forwards;
+  opacity: 0;
+}
+
+.task-card:nth-child(2),
+.reward-card:nth-child(2),
+.item-card:nth-child(2),
+.stat-card:nth-child(2) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.15s forwards;
+  opacity: 0;
+}
+
+.task-card:nth-child(3),
+.reward-card:nth-child(3),
+.item-card:nth-child(3),
+.stat-card:nth-child(3) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+  opacity: 0;
+}
+
+.task-card:nth-child(4),
+.reward-card:nth-child(4),
+.item-card:nth-child(4),
+.stat-card:nth-child(4) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.25s forwards;
+  opacity: 0;
+}
+
+.task-card:nth-child(5),
+.reward-card:nth-child(5),
+.item-card:nth-child(5),
+.stat-card:nth-child(5) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+  opacity: 0;
+}
+
+.task-card:nth-child(n+6),
+.reward-card:nth-child(n+6),
+.item-card:nth-child(n+6),
+.stat-card:nth-child(n+6) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.35s forwards;
+  opacity: 0;
+}
+
+/* Settings page specific */
+.settings-grid > section:first-of-type {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+  opacity: 0;
+}
+
+.settings-grid > section:nth-of-type(2) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+  opacity: 0;
+}
+
+.settings-grid > section:nth-of-type(3) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s forwards;
+  opacity: 0;
+}
+
+.settings-grid > section:nth-of-type(4) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.5s forwards;
+  opacity: 0;
+}
+
+/* Dashboard specific */
+.dashboard-stats-grid .stat-card:nth-child(1) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s forwards;
+  opacity: 0;
+}
+
+.dashboard-stats-grid .stat-card:nth-child(2) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.25s forwards;
+  opacity: 0;
+}
+
+.dashboard-stats-grid .stat-card:nth-child(3) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.3s forwards;
+  opacity: 0;
+}
+
+.dashboard-stats-grid .stat-card:nth-child(4) {
+  animation: contentFadeIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.35s forwards;
+  opacity: 0;
+}
+
+/* App shell fade management */
+.app-shell {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .background-glow {
   position: fixed;
   inset: 0;
@@ -52,6 +200,8 @@ body {
   min-height: 100vh;
   position: relative;
   z-index: 1;
+  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity;
 }
 
 /* Ensure messages appear above everything */
@@ -219,6 +369,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .page-container.dashboard-page {
@@ -3399,8 +3550,14 @@ body.modal-open {
   border: 1px solid rgba(59, 72, 99, 0.6);
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
+}
+
+.pricing-toggle-switch-modern[aria-checked="true"] {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.7), rgba(139, 92, 246, 0.7));
+  border-color: rgba(99, 102, 241, 0.8);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
 }
 
 .pricing-toggle-slider-modern {
@@ -3411,7 +3568,12 @@ body.modal-open {
   height: 22px;
   background: rgba(203, 213, 225, 0.9);
   border-radius: 50%;
-  transition: transform 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pricing-toggle-switch-modern[aria-checked="true"] .pricing-toggle-slider-modern {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pricing-save-badge-modern {
@@ -3478,6 +3640,8 @@ body.modal-open {
 
 .plan-price-modern {
   margin: 0 0 1.5rem;
+  position: relative;
+  min-height: 2.5rem;
 }
 
 .plan-price-modern span {
@@ -3485,6 +3649,28 @@ body.modal-open {
   font-weight: 700;
   line-height: 1;
   color: #f8fafc;
+  display: inline-block;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.plan-price-monthly,
+.plan-price-yearly {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.plan-price-monthly.active,
+.plan-price-yearly.active {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+  position: relative;
 }
 
 .plan-price-modern span span {
@@ -6101,4 +6287,5 @@ body.modal-open {
     width: 100%;
   }
 }
+
 

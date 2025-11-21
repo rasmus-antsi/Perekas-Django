@@ -191,7 +191,7 @@
                     <h3 class="plan-name-modern">{{ subscription_data.display_tier }} pakett</h3>
                     {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
                       <p class="renewal-date-modern">
-                        Uueneb: {{ subscription_data.subscription.current_period_end|date:"j. F Y" }}
+                        Uueneb: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}
                       </p>
                     {% elif subscription_data.tier == 'FREE' %}
                       <p class="renewal-date-modern">Tasuta pakett</p>

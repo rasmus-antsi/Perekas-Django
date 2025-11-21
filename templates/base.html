@@ -65,9 +65,9 @@
   </head>
   <body>
     <div class="background-glow"></div>
-    <div class="app-shell">
+    <div class="app-shell" id="appShell">
       <!-- Mobile Menu Toggle -->
-      <button class="mobile-nav-toggle" aria-label="Toggle menu" onclick="toggleMobileNav()">
+      <button class="mobile-nav-toggle" aria-label="Lülita menüü" onclick="toggleMobileNav()">
         <span></span>
         <span></span>
         <span></span>
@@ -234,6 +234,10 @@
           });
         });
       });
+
+      // Simple page fade-in on load (like landing page)
+      // Content automatically fades in via CSS animation
+      // No JavaScript needed for transitions
     </script>
   </body>
 </html>

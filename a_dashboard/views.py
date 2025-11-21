@@ -166,7 +166,12 @@ def settings(request):
     is_child = user.role == User.ROLE_CHILD
 
     # Only family owner can manage subscription
-    can_manage_subscription = family and family.owner == user
+    can_manage_subscription = False
+    if family is not None:
+        try:
+            can_manage_subscription = family.owner == user
+        except (AttributeError, ValueError):
+            can_manage_subscription = False
 
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
@@ -274,8 +279,12 @@ def settings(request):
                     tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
                 ).first()
                 
-                if not subscription or not subscription.stripe_customer_id:
-                    messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
+                if not subscription:
+                    messages.error(request, "Tellimust ei leitud.")
+                    return redirect('a_dashboard:settings')
+                
+                if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
+                    messages.error(request, "Stripe kliendi ID puudub.")
                     return redirect('a_dashboard:settings')
                 
                 if not django_settings.STRIPE_SECRET_KEY:
@@ -431,26 +440,35 @@ def settings(request):
 
     # Get subscription data if user can manage it
     subscription_data = None
-    if can_manage_subscription:
-        tier = get_family_subscription(family)
-        
-        subscription = Subscription.objects.filter(
-            owner=user,
-            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
-        ).first()
-        
-        subscription_data = {
-            'tier': tier,
-            'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier),
-            'subscription': subscription,
-        }
+    if can_manage_subscription and family:
+        try:
+            tier = get_family_subscription(family)
+            
+            subscription = Subscription.objects.filter(
+                owner=user,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).first()
+            
+            subscription_data = {
+                'tier': tier or Subscription.TIER_FREE,
+                'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier or Subscription.TIER_FREE),
+                'subscription': subscription,
+            }
+        except Exception as e:
+            logger.error(f"Error loading subscription data: {str(e)}", exc_info=True)
+            subscription_data = {
+                'tier': Subscription.TIER_FREE,
+                'display_tier': dict(Subscription.TIER_CHOICES).get(Subscription.TIER_FREE, Subscription.TIER_FREE),
+                'subscription': None,
+            }
 
     # Load notification preferences from user model, with defaults
-    notification_preferences = user.notification_preferences or {
-        "task_updates": True,
-        "reward_updates": True,
-        "shopping_updates": False,
-        "weekly_summary": True,
+    user_prefs = user.notification_preferences or {}
+    notification_preferences = {
+        "task_updates": user_prefs.get("task_updates", True),
+        "reward_updates": user_prefs.get("reward_updates", True),
+        "shopping_updates": user_prefs.get("shopping_updates", False),
+        "weekly_summary": user_prefs.get("weekly_summary", True),
     }
 
     context = {
