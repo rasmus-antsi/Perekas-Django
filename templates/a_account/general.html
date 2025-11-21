@@ -1,0 +1,62 @@
+{% extends "a_account/base.html" %}
+
+{% block settings_content %}
+  <section class="settings-header">
+    <div>
+      <h1 class="page-title">Üldine</h1>
+      <p class="page-subtitle">Konto- ja profiiliseaded.</p>
+    </div>
+  </section>
+
+  <div class="settings-grid settings-grid-single">
+    <section class="settings-card">
+      <header class="settings-card-header card-header">
+        <div class="card-title-wrap">
+          <span class="card-icon icon-purple"></span>
+          <div>
+            <h2>Profiil ja konto</h2>
+            <p>Uuenda oma isikuandmeid ja turvaseadeid.</p>
+          </div>
+        </div>
+      </header>
+      <div class="settings-card-body">
+        <form method="post" class="settings-form">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="profile">
+          <div class="form-grid form-grid-single">
+            <label class="form-field">
+              <span class="field-label">Eesnimi</span>
+              <input type="text" name="first_name" value="{{ settings_user.first_name|default_if_none:'' }}" placeholder="Eesnimi">
+            </label>
+            <label class="form-field">
+              <span class="field-label">Perekonnanimi</span>
+              <input type="text" name="last_name" value="{{ settings_user.last_name|default_if_none:'' }}" placeholder="Perekonnanimi">
+            </label>
+            <label class="form-field">
+              <span class="field-label">E-posti aadress</span>
+              <input type="email" name="email" value="{{ settings_user.email }}" placeholder="name@email.com">
+            </label>
+          </div>
+          <label class="form-field">
+            <span class="field-label">Roll</span>
+            <div class="field-select">
+              <select name="role" {% if not is_parent %}disabled{% endif %}>
+                <option value="{{ role_parent }}" {% if current_role == role_parent %}selected{% endif %}>Lapsevanem</option>
+                <option value="{{ role_child }}" {% if current_role == role_child %}selected{% endif %}>Laps</option>
+              </select>
+            </div>
+            {% if not is_parent %}
+              <span class="field-hint">Ainult lapsevanemad saavad rolle muuta.</span>
+            {% endif %}
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvesta muudatused</button>
+            <button type="button" class="btn btn-ghost">Muuda parooli</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+{% endblock %}
+

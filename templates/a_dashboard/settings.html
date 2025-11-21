@@ -42,8 +42,12 @@
               <input type="hidden" name="form_type" value="profile">
               <div class="form-grid form-grid-single">
                 <label class="form-field">
-                  <span class="field-label">Kuvatav nimi</span>
-                  <input type="text" name="display_name" value="{{ settings_user.get_full_name|default:settings_user.username }}" placeholder="Sisesta oma nimi">
+                  <span class="field-label">Eesnimi</span>
+                  <input type="text" name="first_name" value="{{ settings_user.first_name|default_if_none:'' }}" placeholder="Eesnimi">
+                </label>
+                <label class="form-field">
+                  <span class="field-label">Perekonnanimi</span>
+                  <input type="text" name="last_name" value="{{ settings_user.last_name|default_if_none:'' }}" placeholder="Perekonnanimi">
                 </label>
                 <label class="form-field">
                   <span class="field-label">E-posti aadress</span>
@@ -191,7 +195,7 @@
                     <h3 class="plan-name-modern">{{ subscription_data.display_tier }} pakett</h3>
                     {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
                       <p class="renewal-date-modern">
-                        Uueneb: {{ subscription_data.subscription.current_period_end|date:"j. F Y" }}
+                        Uueneb: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}
                       </p>
                     {% elif subscription_data.tier == 'FREE' %}
                       <p class="renewal-date-modern">Tasuta pakett</p>

@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'a_shopping',
     'a_rewards',
     'a_tasks',
+    'a_account',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',

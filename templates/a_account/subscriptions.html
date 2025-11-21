@@ -1,0 +1,617 @@
+{% extends "a_account/base.html" %}
+
+{% block settings_content %}
+  <section class="settings-header">
+    <div>
+      <h1 class="page-title">Tellimused</h1>
+      <p class="page-subtitle">Halda oma tellimust ja pakette.</p>
+    </div>
+  </section>
+
+  {% if can_manage_subscription and subscription_data %}
+    <div class="subscription-wrapper">
+      <section class="subscription-highlight-card">
+        <div class="subscription-highlight-top">
+          <div class="subscription-highlight">
+            <span class="subscription-badge">
+              {% if subscription_data.tier|default:'FREE' == 'FREE' %}
+                Tasuta pakett
+              {% else %}
+                Aktiivne tellimus
+              {% endif %}
+            </span>
+            <h2>{{ subscription_data.display_tier|default:'Tasuta' }} pakett</h2>
+            {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
+              <p>Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}</p>
+            {% else %}
+              <p>Alusta tasulist paketti, et avada rohkem võimalusi.</p>
+            {% endif %}
+          </div>
+          <a href="#subscription-plans" class="btn btn-primary">Vaata pakette</a>
+        </div>
+        <div class="subscription-highlight-actions">
+          {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="form_type" value="subscription">
+              <input type="hidden" name="subscription_action" value="edit_portal">
+              <button type="submit" class="btn btn-ghost">Halda Stripe'is</button>
+            </form>
+            {% if subscription_data.tier|default:'FREE' != 'FREE' %}
+              <form method="post" onsubmit="return confirm('Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.');">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="subscription">
+                <input type="hidden" name="subscription_action" value="downgrade">
+                <button type="submit" class="btn btn-ghost" style="color: #f87171;">Tühista tellimus</button>
+              </form>
+            {% endif %}
+          {% endif %}
+        </div>
+      </section>
+
+      <section id="subscription-plans" class="subscription-plan-section">
+        <div class="pricing-header-inline">
+          <div>
+            <h2>Vali sobiv pakett</h2>
+            <p class="pricing-subtitle-inline">Alusta tasuta ja testi kõiki põhifunktsioone</p>
+          </div>
+          <div class="pricing-toggle-wrapper-modern">
+            <div class="pricing-toggle-modern">
+              <span class="pricing-toggle-label">Kuu</span>
+              <button class="pricing-toggle-switch-modern" id="pricingToggle" aria-label="Lülita hinnakujundus">
+                <span class="pricing-toggle-slider-modern"></span>
+              </button>
+              <span class="pricing-toggle-label">Aasta <span class="pricing-save-badge-modern">Säästa 20%</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="plans-grid-modern">
+          {% with tier=subscription_data.tier|default:'FREE' %}
+            <article class="plan-card-modern {% if tier == 'FREE' %}plan-current-modern{% endif %}">
+              <div class="plan-header-modern">
+                <h3>TASUTA</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€0<span>/kuu</span></span>
+                <span class="plan-price-yearly">€0<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>1 lapsevanem</li>
+                <li>1 laps</li>
+                <li>5 ülesannet kuus</li>
+                <li>3 preemiat kuus</li>
+                <li class="no-access">Ostunimekiri puudub</li>
+              </ul>
+              {% if tier != 'FREE' %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="downgrade">
+                  <button type="submit" class="landing-button secondary plan-button-modern">Lähtu tasuta paketile</button>
+                </form>
+              {% else %}
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(59, 72, 99, 0.3); color: rgba(148, 163, 184, 0.6);">Praegune pakett</div>
+              {% endif %}
+            </article>
+
+            <article class="plan-card-modern plan-featured-modern {% if tier == 'STARTER' %}plan-current-modern{% endif %}">
+              {% if tier != 'STARTER' %}
+                <div class="plan-popular-badge-modern">Kõige populaarsem</div>
+              {% else %}
+                <div class="plan-popular-badge-modern" style="background: rgba(34, 197, 94, 0.9);">Praegune</div>
+              {% endif %}
+              <div class="plan-header-modern">
+                <h3>ALGUS</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€9<span>/kuu</span></span>
+                <span class="plan-price-yearly">€89<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>2 lapsevanemat</li>
+                <li>2 last</li>
+                <li>20 ülesannet kuus</li>
+                <li>15 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
+              </ul>
+              {% if tier != 'STARTER' %}
+                <form method="post" id="upgrade-form-starter-monthly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="STARTER">
+                  <input type="hidden" name="billing_period" value="monthly">
+                </form>
+                <form method="post" id="upgrade-form-starter-yearly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="STARTER">
+                  <input type="hidden" name="billing_period" value="yearly">
+                </form>
+                <button type="button" class="landing-button primary plan-button-modern" onclick="submitUpgrade('starter')">Vali Algus</button>
+              {% else %}
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
+              {% endif %}
+            </article>
+
+            <article class="plan-card-modern {% if tier == 'PRO' %}plan-current-modern{% endif %}">
+              <div class="plan-header-modern">
+                <h3>PRO</h3>
+              </div>
+              <div class="plan-price-modern">
+                <span class="plan-price-monthly active">€17<span>/kuu</span></span>
+                <span class="plan-price-yearly">€149<span>/aasta</span></span>
+              </div>
+              <ul class="plan-features-modern">
+                <li>4 lapsevanemat</li>
+                <li>10 last</li>
+                <li>100 ülesannet kuus</li>
+                <li>50 preemiat kuus</li>
+                <li>Ostunimekirja ligipääs</li>
+              </ul>
+              {% if tier != 'PRO' %}
+                <form method="post" id="upgrade-form-pro-monthly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="PRO">
+                  <input type="hidden" name="billing_period" value="monthly">
+                </form>
+                <form method="post" id="upgrade-form-pro-yearly" style="display: none;">
+                  {% csrf_token %}
+                  <input type="hidden" name="form_type" value="subscription">
+                  <input type="hidden" name="subscription_action" value="upgrade">
+                  <input type="hidden" name="tier" value="PRO">
+                  <input type="hidden" name="billing_period" value="yearly">
+                </form>
+                <button type="button" class="landing-button secondary plan-button-modern" onclick="submitUpgrade('pro')">Vali Pro</button>
+              {% else %}
+                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
+              {% endif %}
+            </article>
+          {% endwith %}
+        </div>
+
+        <div class="subscription-help" style="text-align: center; margin-top: 2rem;">
+          Vajad abi paketi valimisel? Kirjuta julgesti aadressil <a href="mailto:tugi@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none;">tugi@perekas.ee</a> – aitame sobiva lahenduse leida.
+        </div>
+      </section>
+    </div>
+  {% else %}
+    <div class="empty-state full-row">
+      <p>Tellimuste haldamiseks pead olema pere omanik.</p>
+    </div>
+  {% endif %}
+
+  <style>
+    /* Legacy modal styles removed in favour of inline plan selection */
+    .settings-grid-single {
+      grid-template-columns: 1fr !important;
+    }
+    
+    /* Plan current styling */
+    .plan-current-modern {
+      border-color: rgba(34, 197, 94, 0.5) !important;
+      background: rgba(34, 197, 94, 0.05) !important;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15) !important;
+    }
+    
+    .form-grid-single {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .subscription-modern {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      padding: 1.25rem 0;
+    }
+    
+    .subscription-info-modern {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex: 1;
+    }
+    
+    .plan-badge-modern {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+    .plan-badge-free {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--color-text-secondary);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .plan-badge-starter {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .plan-badge-pro {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.3);
+    }
+    
+    .subscription-details-modern {
+      flex: 1;
+    }
+    
+    .plan-name-modern {
+      font-size: 1.375rem;
+      font-weight: 700;
+      margin: 0 0 0.375rem 0;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+    
+    .renewal-date-modern {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      margin: 0;
+    }
+    
+    .subscription-actions-modern {
+      display: flex;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .plans-grid-settings {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    /* Make plans wider in settings page - override all constraints */
+    .subscription-plan-section .plans-grid-modern {
+      max-width: 100% !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+    
+    .subscription-wrapper {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    .subscription-plan-section {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    /* Override page container max-width specifically for subscription page */
+    .page-container.settings-page:has(.subscription-plan-section) {
+      max-width: 100% !important;
+    }
+    
+    /* Fallback for browsers that don't support :has() */
+    @supports not selector(:has(*)) {
+      .page-container.settings-page {
+        max-width: 100% !important;
+      }
+    }
+    
+    /* Ensure full width for subscription section */
+    section[class*="subscription"] {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    
+    /* Remove any padding/margin constraints */
+    .subscription-plan-section > * {
+      max-width: 100% !important;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(4, 8, 24, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-content {
+      position: relative;
+      background: var(--color-surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(59, 72, 99, 0.4);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      max-width: 900px;
+      width: 100%;
+      max-height: calc(100vh - 2rem);
+      overflow-y: auto;
+      margin: auto;
+    }
+    
+    @media (max-width: 768px) {
+      .modal-overlay {
+        align-items: flex-start;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      
+      .modal-content {
+        margin-top: auto;
+        margin-bottom: auto;
+        max-height: calc(100vh - 4rem);
+      }
+    }
+    
+    .upgrade-modal {
+      padding: 0;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid rgba(59, 72, 99, 0.4);
+    }
+    
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      font-size: 2rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+    }
+    
+    .modal-close:hover {
+      background: rgba(59, 72, 99, 0.3);
+      color: var(--color-text-primary);
+    }
+    
+    .modal-body {
+      padding: 2rem;
+    }
+    
+    .plans-grid-modal {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    
+    .plan-card-modal {
+      position: relative;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(59, 72, 99, 0.4);
+      border-radius: var(--radius-md);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s;
+    }
+    
+    .plan-card-modal:hover {
+      border-color: rgba(59, 72, 99, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    .plan-featured-modal {
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 10px 30px rgba(59, 130, 246, 0.1);
+    }
+    
+    .plan-badge-popular {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.95), rgba(236, 72, 153, 0.9));
+      color: white;
+      padding: 0.375rem 1rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .plan-header-modal {
+      margin-bottom: 1.5rem;
+    }
+    
+    .plan-header-modal h3 {
+      margin: 0 0 0.75rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .plan-price-modal {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+    
+    .plan-price-modal span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      margin-left: 0.25rem;
+    }
+    
+    .plan-features-modal {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .plan-features-modal li {
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+    
+    .plan-features-modal li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--color-text-muted);
+    }
+    
+    .plan-features-modal .feature-enabled {
+      color: var(--color-success);
+    }
+    
+    .plan-features-modal .feature-enabled::before {
+      content: "✓";
+      color: var(--color-success);
+    }
+    
+    .plan-features-modal .feature-disabled {
+      color: var(--color-text-muted);
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+    
+    .plan-badge-current {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--color-success);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 0.5rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .plan-disabled-text {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      background: rgba(59, 72, 99, 0.2);
+      color: var(--color-text-muted);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .plan-current {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+      .subscription-modern {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .subscription-info-modern {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .subscription-actions-modern {
+        width: 100%;
+      }
+      
+      .subscription-actions-modern .btn {
+        flex: 1;
+      }
+      
+      .plans-grid-modal,
+      .plans-grid-settings {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <script>
+    // Pricing toggle functionality
+    window.isYearly = false;
+    const pricingToggle = document.getElementById('pricingToggle');
+    
+    if (pricingToggle) {
+      const monthlyPrices = document.querySelectorAll('.plan-price-monthly');
+      const yearlyPrices = document.querySelectorAll('.plan-price-yearly');
+      const slider = pricingToggle.querySelector('.pricing-toggle-slider-modern');
+      
+      pricingToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.isYearly = !window.isYearly;
+        
+        if (window.isYearly) {
+          // Fade out monthly prices, then fade in yearly prices
+          monthlyPrices.forEach(el => el.classList.remove('active'));
+          setTimeout(() => {
+            yearlyPrices.forEach(el => el.classList.add('active'));
+          }, 200);
+          if (slider) {
+            slider.style.transform = 'translateX(26px)';
+          }
+          this.setAttribute('aria-checked', 'true');
+        } else {
+          // Fade out yearly prices, then fade in monthly prices
+          yearlyPrices.forEach(el => el.classList.remove('active'));
+          setTimeout(() => {
+            monthlyPrices.forEach(el => el.classList.add('active'));
+          }, 200);
+          if (slider) {
+            slider.style.transform = 'translateX(0)';
+          }
+          this.setAttribute('aria-checked', 'false');
+        }
+      });
+    }
+    
+    // Handle upgrade form submission based on current billing period
+    function submitUpgrade(tier) {
+      const billingPeriod = window.isYearly ? 'yearly' : 'monthly';
+      const formId = `upgrade-form-${tier}-${billingPeriod}`;
+      const form = document.getElementById(formId);
+      if (form) {
+        form.submit();
+      }
+    }
+  </script>
+{% endblock %}
+

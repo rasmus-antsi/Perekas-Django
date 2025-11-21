@@ -65,7 +65,7 @@ def send_family_member_joined_email(request, family, member):
     dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
     context = {
         'family': family,
-        'member_name': member.get_full_name() or member.username,
+        'member_name': member.get_display_name(),
         'member_role': member.get_role_display() if hasattr(member, 'get_role_display') else '',
         'dashboard_url': dashboard_url,
     }

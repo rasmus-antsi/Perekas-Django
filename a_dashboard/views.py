@@ -121,7 +121,7 @@ def dashboard(request):
             ).count()
             progress_ratio = completed_count / total_tasks_display if total_tasks_display else 0
 
-            display_name = member.get_full_name() or member.username
+            display_name = member.get_display_name()
             family_members.append(
                 {
                     "name": display_name,
@@ -166,10 +166,20 @@ def settings(request):
     is_child = user.role == User.ROLE_CHILD
 
     # Only family owner can manage subscription
-    can_manage_subscription = family and family.owner == user
+    can_manage_subscription = False
+    if family is not None:
+        try:
+            can_manage_subscription = family.owner == user
+        except (AttributeError, ValueError):
+            can_manage_subscription = False
 
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
+    
+    # Get current section from URL parameter (default to 'general')
+    current_section = request.GET.get('section', 'general')
+    if current_section not in ['general', 'notifications', 'subscriptions']:
+        current_section = 'general'
 
     # Handle form submissions
     if request.method == 'POST':
@@ -177,16 +187,20 @@ def settings(request):
         
         # Handle profile update
         if form_type == 'profile':
-            display_name = request.POST.get('display_name', '').strip()
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
             role = request.POST.get('role')
+            updated_fields = set()
             
-            # Update display name (first_name and last_name)
-            if display_name:
-                name_parts = display_name.split(' ', 1)
-                user.first_name = name_parts[0]
-                user.last_name = name_parts[1] if len(name_parts) > 1 else ''
-                user.save(update_fields=['first_name', 'last_name'])
+            # Update first and last name
+            if first_name != user.first_name:
+                user.first_name = first_name
+                updated_fields.add('first_name')
+
+            if last_name != user.last_name:
+                user.last_name = last_name
+                updated_fields.add('last_name')
             
             # Update email
             if email and email != user.email:
@@ -195,18 +209,18 @@ def settings(request):
                     messages.error(request, "See e-posti aadress on juba kasutusel.")
                 else:
                     user.email = email
-                    user.save(update_fields=['email'])
+                    updated_fields.add('email')
                     messages.success(request, "E-posti aadress uuendatud.")
             
             # Update role (only if user is parent and changing their own role)
             if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
                 user.role = role
-                user.save(update_fields=['role'])
+                updated_fields.add('role')
+
+            if updated_fields:
+                user.save(update_fields=list(updated_fields))
                 messages.success(request, "Profiil uuendatud.")
-            
-            if not email or email == user.email:
-                messages.success(request, "Profiil uuendatud.")
-            return redirect('a_dashboard:settings')
+            return redirect('a_dashboard:settings?section=general')
         
         # Handle notification preferences
         elif form_type == 'notifications':
@@ -225,7 +239,7 @@ def settings(request):
             user.notification_preferences = prefs
             user.save(update_fields=['notification_preferences'])
             messages.success(request, "Teavituste eelistused salvestatud.")
-            return redirect('a_dashboard:settings')
+            return redirect('a_dashboard:settings?section=notifications')
         
         # Handle subscription actions (only for family owners)
         elif form_type == 'subscription' and can_manage_subscription:
@@ -240,11 +254,11 @@ def settings(request):
                 
                 if not subscription or not subscription.stripe_subscription_id:
                     messages.error(request, "Aktiivset tellimust ei leitud.")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 if not django_settings.STRIPE_SECRET_KEY:
                     messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 stripe.api_key = django_settings.STRIPE_SECRET_KEY
                 
@@ -261,12 +275,12 @@ def settings(request):
                     
                     messages.success(request, "Tellimus tühistati. Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.")
                     logger.info(f"Subscription {subscription.id} cancelled for user {user.id}")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                     
                 except stripe.error.StripeError as e:
                     messages.error(request, f"Tellimuse tühistamisel tekkis viga: {str(e)}")
                     logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
             
             elif action == 'edit_portal':
                 subscription = Subscription.objects.filter(
@@ -274,13 +288,17 @@ def settings(request):
                     tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
                 ).first()
                 
-                if not subscription or not subscription.stripe_customer_id:
-                    messages.error(request, "Tellimust pole või Stripe kliendi ID puudub.")
-                    return redirect('a_dashboard:settings')
+                if not subscription:
+                    messages.error(request, "Tellimust ei leitud.")
+                    return redirect('a_dashboard:settings?section=subscriptions')
+                
+                if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
+                    messages.error(request, "Stripe kliendi ID puudub.")
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 if not django_settings.STRIPE_SECRET_KEY:
                     messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 stripe.api_key = django_settings.STRIPE_SECRET_KEY
                 
@@ -288,7 +306,7 @@ def settings(request):
                     # Create customer portal session
                     portal_session = stripe.billing_portal.Session.create(
                         customer=subscription.stripe_customer_id,
-                        return_url=request.build_absolute_uri('/dashboard/settings/'),
+                        return_url=request.build_absolute_uri('/dashboard/settings/?section=subscriptions'),
                         configuration=django_settings.STRIPE_CUSTOMER_PORTAL_ID,
                         locale='et',
                     )
@@ -297,7 +315,7 @@ def settings(request):
                     
                 except stripe.error.StripeError as e:
                     messages.error(request, f"Stripe'i viga: {str(e)}")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
             
             elif action == 'upgrade':
                 tier = request.POST.get('tier')
@@ -305,7 +323,7 @@ def settings(request):
                 
                 if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
                     messages.error(request, "Vigane paketivalik.")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 # Get appropriate price ID
                 if tier == Subscription.TIER_STARTER:
@@ -315,7 +333,7 @@ def settings(request):
                 
                 if not django_settings.STRIPE_SECRET_KEY:
                     messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
                 
                 stripe.api_key = django_settings.STRIPE_SECRET_KEY
                 
@@ -347,7 +365,7 @@ def settings(request):
                         except stripe.error.StripeError as e:
                             logger.error(f"Error finding/creating customer: {str(e)}")
                             messages.error(request, f"Kliendi loomisel tekkis viga: {str(e)}")
-                            return redirect('a_dashboard:settings')
+                            return redirect('a_dashboard:settings?section=subscriptions')
                     else:
                         try:
                             customer = stripe.Customer.retrieve(customer_id)
@@ -398,11 +416,11 @@ def settings(request):
                             existing_subscription.save()
                             
                             messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
-                            return redirect('a_dashboard:settings')
+                            return redirect('a_dashboard:settings?section=subscriptions')
                             
                         except stripe.error.StripeError as e:
                             messages.error(request, f"Tellimuse uuendamisel tekkis viga: {str(e)}")
-                            return redirect('a_dashboard:settings')
+                            return redirect('a_dashboard:settings?section=subscriptions')
                     
                     # No active subscription - create new one via checkout
                     checkout_session = stripe.checkout.Session.create(
@@ -414,7 +432,7 @@ def settings(request):
                         }],
                         mode='subscription',
                         success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
-                        cancel_url=request.build_absolute_uri('/dashboard/settings/'),
+                        cancel_url=request.build_absolute_uri('/dashboard/settings/?section=subscriptions'),
                         locale='et',
                         metadata={
                             'user_id': str(user.id),
@@ -427,30 +445,39 @@ def settings(request):
                     
                 except stripe.error.StripeError as e:
                     messages.error(request, f"Stripe'i viga: {str(e)}")
-                    return redirect('a_dashboard:settings')
+                    return redirect('a_dashboard:settings?section=subscriptions')
 
     # Get subscription data if user can manage it
     subscription_data = None
-    if can_manage_subscription:
-        tier = get_family_subscription(family)
-        
-        subscription = Subscription.objects.filter(
-            owner=user,
-            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
-        ).first()
-        
-        subscription_data = {
-            'tier': tier,
-            'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier),
-            'subscription': subscription,
-        }
+    if can_manage_subscription and family:
+        try:
+            tier = get_family_subscription(family)
+            
+            subscription = Subscription.objects.filter(
+                owner=user,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).first()
+            
+            subscription_data = {
+                'tier': tier or Subscription.TIER_FREE,
+                'display_tier': dict(Subscription.TIER_CHOICES).get(tier, tier or Subscription.TIER_FREE),
+                'subscription': subscription,
+            }
+        except Exception as e:
+            logger.error(f"Error loading subscription data: {str(e)}", exc_info=True)
+            subscription_data = {
+                'tier': Subscription.TIER_FREE,
+                'display_tier': dict(Subscription.TIER_CHOICES).get(Subscription.TIER_FREE, Subscription.TIER_FREE),
+                'subscription': None,
+            }
 
     # Load notification preferences from user model, with defaults
-    notification_preferences = user.notification_preferences or {
-        "task_updates": True,
-        "reward_updates": True,
-        "shopping_updates": False,
-        "weekly_summary": True,
+    user_prefs = user.notification_preferences or {}
+    notification_preferences = {
+        "task_updates": user_prefs.get("task_updates", True),
+        "reward_updates": user_prefs.get("reward_updates", True),
+        "shopping_updates": user_prefs.get("shopping_updates", False),
+        "weekly_summary": user_prefs.get("weekly_summary", True),
     }
 
     context = {
@@ -465,5 +492,6 @@ def settings(request):
         "subscription_data": subscription_data,
         "can_manage_subscription": can_manage_subscription,
         "show_upgrade_modal": show_upgrade_modal,
+        "current_section": current_section,
     }
     return render(request, 'a_dashboard/settings.html', context)
