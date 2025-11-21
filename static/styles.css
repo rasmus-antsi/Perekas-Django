@@ -1332,6 +1332,9 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 50;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
 }
 
 .task-modal.is-visible {
@@ -1339,7 +1342,7 @@ body {
 }
 
 .task-modal-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(3, 7, 18, 0.65);
   backdrop-filter: blur(6px);
@@ -1348,6 +1351,8 @@ body {
 .task-modal-content {
   position: relative;
   width: min(560px, calc(100% - 2rem));
+  max-width: 100%;
+  margin: auto;
   background: linear-gradient(135deg, rgba(17, 25, 45, 0.95), rgba(10, 15, 28, 0.95));
   border-radius: var(--radius-md);
   border: 1px solid rgba(59, 72, 99, 0.45);
@@ -1357,6 +1362,25 @@ body {
   flex-direction: column;
   gap: 1.25rem;
   z-index: 51;
+}
+
+/* Ensure modal content is centered on mobile when scrolled */
+.task-modal.is-visible {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .task-modal {
+    align-items: center;
+    padding: 1rem;
+  }
+  
+  .task-modal-content {
+    margin: auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .task-modal-close {
@@ -1416,6 +1440,9 @@ body.modal-open {
   align-items: center;
   justify-content: center;
   z-index: 60;
+  padding: 1rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .confirm-modal.is-visible {
@@ -1423,15 +1450,18 @@ body.modal-open {
 }
 
 .confirm-modal-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(3, 7, 18, 0.75);
   backdrop-filter: blur(8px);
+  z-index: 60;
 }
 
 .confirm-modal-content {
   position: relative;
   width: min(420px, calc(100% - 2rem));
+  max-width: 100%;
+  margin: auto;
   background: linear-gradient(135deg, rgba(17, 25, 45, 0.98), rgba(10, 15, 28, 0.98));
   border-radius: var(--radius-md);
   border: 1px solid rgba(59, 72, 99, 0.5);
@@ -1441,6 +1471,73 @@ body.modal-open {
   flex-direction: column;
   gap: 1.5rem;
   animation: confirmModalSlideIn 0.2s ease-out;
+  z-index: 61;
+  flex-shrink: 0;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure confirmation modal is centered on mobile when scrolled */
+@media (max-width: 768px) {
+  .confirm-modal {
+    padding: 1rem;
+  }
+  
+  .confirm-modal-content {
+    margin: auto;
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+  }
+}
+
+/* Generic modal-overlay and modal-content (used in onboarding, subscriptions, etc.) */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 1rem;
+  background: rgba(4, 8, 24, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+.modal-overlay[style*="display: flex"],
+.modal-overlay[style*="display:flex"] {
+  display: flex !important;
+}
+
+.modal-content {
+  position: relative;
+  width: min(900px, calc(100% - 2rem));
+  max-width: 100%;
+  margin: auto;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(59, 72, 99, 0.4);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure generic modals are centered on mobile when scrolled */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+  
+  .modal-content {
+    margin-top: auto;
+    margin-bottom: auto;
+    max-height: calc(100vh - 4rem);
+  }
 }
 
 @keyframes confirmModalSlideIn {
