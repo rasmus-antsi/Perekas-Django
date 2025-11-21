@@ -108,7 +108,7 @@ def general_settings(request):
         
         if not email or email == user.email:
             messages.success(request, "Profiil uuendatud.")
-        return redirect('a_setup:settings?section=general')
+        return redirect('a_account:settings?section=general')
 
     # Only family owner can manage subscription
     can_manage_subscription = False
@@ -129,7 +129,7 @@ def general_settings(request):
         "can_manage_subscription": can_manage_subscription,
         "user": user,
     }
-    return render(request, 'a_setup/general.html', context)
+    return render(request, 'a_account/general.html', context)
 
 
 @login_required
@@ -163,7 +163,7 @@ def notification_settings(request):
         user.notification_preferences = prefs
         user.save(update_fields=['notification_preferences'])
         messages.success(request, "Teavituste eelistused salvestatud.")
-        return redirect('a_setup:settings?section=notifications')
+        return redirect('a_account:settings?section=notifications')
 
     # Load notification preferences from user model, with defaults
     user_prefs = user.notification_preferences or {}
@@ -180,7 +180,7 @@ def notification_settings(request):
         "can_manage_subscription": can_manage_subscription,
         "user": user,
     }
-    return render(request, 'a_setup/notifications.html', context)
+    return render(request, 'a_account/notifications.html', context)
 
 
 @login_required
@@ -213,11 +213,11 @@ def subscription_settings(request):
             
             if not subscription or not subscription.stripe_subscription_id:
                 messages.error(request, "Aktiivset tellimust ei leitud.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
@@ -234,12 +234,12 @@ def subscription_settings(request):
                 
                 messages.success(request, "Tellimus tühistati. Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.")
                 logger.info(f"Subscription {subscription.id} cancelled for user {user.id}")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
                 
             except stripe.error.StripeError as e:
                 messages.error(request, f"Tellimuse tühistamisel tekkis viga: {str(e)}")
                 logger.error(f"Error cancelling subscription: {str(e)}", exc_info=True)
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
         
         elif action == 'edit_portal':
             subscription = Subscription.objects.filter(
@@ -249,15 +249,15 @@ def subscription_settings(request):
             
             if not subscription:
                 messages.error(request, "Tellimust ei leitud.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
                 messages.error(request, "Stripe kliendi ID puudub.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
@@ -265,7 +265,7 @@ def subscription_settings(request):
                 # Create customer portal session
                 portal_session = stripe.billing_portal.Session.create(
                     customer=subscription.stripe_customer_id,
-                    return_url=request.build_absolute_uri('/setup/settings/?section=subscriptions'),
+                    return_url=request.build_absolute_uri('/account/settings/?section=subscriptions'),
                     configuration=django_settings.STRIPE_CUSTOMER_PORTAL_ID,
                     locale='et',
                 )
@@ -274,7 +274,7 @@ def subscription_settings(request):
                 
             except stripe.error.StripeError as e:
                 messages.error(request, f"Stripe'i viga: {str(e)}")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
         
         elif action == 'upgrade':
             tier = request.POST.get('tier')
@@ -282,7 +282,7 @@ def subscription_settings(request):
             
             if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
                 messages.error(request, "Vigane paketivalik.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             # Get appropriate price ID
             if tier == Subscription.TIER_STARTER:
@@ -292,7 +292,7 @@ def subscription_settings(request):
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
@@ -324,7 +324,7 @@ def subscription_settings(request):
                     except stripe.error.StripeError as e:
                         logger.error(f"Error finding/creating customer: {str(e)}")
                         messages.error(request, f"Kliendi loomisel tekkis viga: {str(e)}")
-                        return redirect('a_setup:settings?section=subscriptions')
+                        return redirect('a_account:settings?section=subscriptions')
                 else:
                     try:
                         customer = stripe.Customer.retrieve(customer_id)
@@ -375,11 +375,11 @@ def subscription_settings(request):
                         existing_subscription.save()
                         
                         messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
-                        return redirect('a_setup:settings?section=subscriptions')
+                        return redirect('a_account:settings?section=subscriptions')
                         
                     except stripe.error.StripeError as e:
                         messages.error(request, f"Tellimuse uuendamisel tekkis viga: {str(e)}")
-                        return redirect('a_setup:settings?section=subscriptions')
+                        return redirect('a_account:settings?section=subscriptions')
                 
                 # No active subscription - create new one via checkout
                 checkout_session = stripe.checkout.Session.create(
@@ -391,7 +391,7 @@ def subscription_settings(request):
                     }],
                     mode='subscription',
                     success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
-                    cancel_url=request.build_absolute_uri('/setup/settings/?section=subscriptions'),
+                    cancel_url=request.build_absolute_uri('/account/settings/?section=subscriptions'),
                     locale='et',
                     metadata={
                         'user_id': str(user.id),
@@ -404,7 +404,7 @@ def subscription_settings(request):
                 
             except stripe.error.StripeError as e:
                 messages.error(request, f"Stripe'i viga: {str(e)}")
-                return redirect('a_setup:settings?section=subscriptions')
+                return redirect('a_account:settings?section=subscriptions')
 
     # Get subscription data if user can manage it
     subscription_data = None
@@ -438,5 +438,5 @@ def subscription_settings(request):
         "family": family,
         "user": user,
     }
-    return render(request, 'a_setup/subscriptions.html', context)
+    return render(request, 'a_account/subscriptions.html', context)
 
