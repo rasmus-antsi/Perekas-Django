@@ -160,15 +160,16 @@ body {
   box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.12);
 }
 
-.nav-link-settings {
+.sidebar-nav-bottom {
   margin-top: auto;
-  background: rgba(15, 23, 42, 0.72);
-  border: 1px solid rgba(59, 72, 99, 0.4);
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.65);
+  gap: 0.75rem;
+}
+
+.nav-link-settings {
+  /* Remove margin-top since it's now handled by the container */
 }
 
 .sidebar-footer {
-  margin-top: auto;
   padding: 1.25rem;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(59, 72, 99, 0.35);
@@ -923,6 +924,13 @@ body {
   line-height: 1.6;
 }
 
+.task-assigned {
+  margin: 0.75rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
 .points-chip {
   display: flex;
   flex-direction: column;
@@ -972,7 +980,65 @@ body {
 .task-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(59, 72, 99, 0.2);
+}
+
+.task-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.task-meta-icon {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.task-meta-label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.task-card.priority-0 .task-meta-item:first-child .task-meta-icon {
+  color: rgba(139, 92, 246, 0.8);
+  fill: rgba(139, 92, 246, 0.2);
+}
+
+.task-card.priority-1 .task-meta-item:first-child .task-meta-icon {
+  color: rgba(6, 182, 212, 0.8);
+  fill: rgba(6, 182, 212, 0.2);
+}
+
+.task-card.priority-2 .task-meta-item:first-child .task-meta-icon {
+  color: rgba(244, 114, 182, 0.8);
+  fill: rgba(244, 114, 182, 0.2);
+}
+
+.task-meta-item:last-child .task-meta-icon {
+  color: rgba(6, 182, 212, 0.8);
+  stroke-width: 2;
+  fill: none;
+}
+
+.task-card.awaiting .task-meta-item:nth-child(2) .task-meta-icon,
+.task-card.approved .task-meta-item:nth-child(2) .task-meta-icon {
+  color: rgba(34, 197, 94, 0.8);
+}
+
+.task-card.awaiting .task-meta-item:nth-child(2) .task-meta-icon circle,
+.task-card.approved .task-meta-item:nth-child(2) .task-meta-icon circle {
+  stroke: rgba(34, 197, 94, 0.8);
+  fill: none;
 }
 
 .task-badge {
@@ -983,18 +1049,6 @@ body {
   font-size: 0.8rem;
   letter-spacing: 0.01em;
   color: var(--color-text-secondary);
-}
-
-.task-badge.priority {
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--color-primary);
-  border-color: rgba(139, 92, 246, 0.25);
-}
-
-.task-badge.due {
-  background: rgba(6, 182, 212, 0.15);
-  color: var(--color-secondary);
-  border-color: rgba(6, 182, 212, 0.25);
 }
 
 .task-actions {
@@ -1102,6 +1156,115 @@ body {
 
 body.modal-open {
   overflow: hidden;
+}
+
+/* Confirmation Modal */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.confirm-modal.is-visible {
+  display: flex;
+}
+
+.confirm-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.75);
+  backdrop-filter: blur(8px);
+}
+
+.confirm-modal-content {
+  position: relative;
+  width: min(420px, calc(100% - 2rem));
+  background: linear-gradient(135deg, rgba(17, 25, 45, 0.98), rgba(10, 15, 28, 0.98));
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(59, 72, 99, 0.5);
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.7), 0 0 0 1px rgba(148, 163, 184, 0.15) inset;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: confirmModalSlideIn 0.2s ease-out;
+}
+
+@keyframes confirmModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirm-modal-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-text-primary);
+}
+
+.confirm-modal-message {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.confirm-modal-cancel,
+.confirm-modal-confirm {
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.confirm-modal-cancel {
+  background: rgba(30, 41, 59, 0.6);
+  color: var(--color-text-secondary);
+  border-color: rgba(59, 72, 99, 0.4);
+}
+
+.confirm-modal-cancel:hover {
+  background: rgba(30, 41, 59, 0.8);
+  color: var(--color-text-primary);
+  border-color: rgba(59, 72, 99, 0.6);
+  transform: translateY(-1px);
+}
+
+.confirm-modal-confirm {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
+  color: #fff;
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.confirm-modal-confirm:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1));
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.confirm-modal-confirm:active {
+  transform: translateY(0);
 }
 
 .points-overview-card {

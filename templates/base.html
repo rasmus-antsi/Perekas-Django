@@ -119,28 +119,30 @@
             </svg>
             <span>Ostunimekiri</span>
           </a>
+        </nav>
+
+        <nav class="sidebar-nav sidebar-nav-bottom">
+          <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_dashboard:settings' %}">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>Seaded</span>
+          </a>
+
           {% if user.role != 'child' and user.is_authenticated %}
             <a class="nav-link{% block nav_family_active %}{% endblock %}" href="{% url 'a_family:index' %}">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
-            <span>Perekond</span>
+              <span>Perekond</span>
             </a>
           {% endif %}
         </nav>
 
-        <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_dashboard:settings' %}">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span>Seaded</span>
-        </a>
-
         <div class="sidebar-footer">
-        <div class="sidebar-footer-title">Perekonto</div>
-        <div class="sidebar-footer-meta">Kõik liikmed on ühendatud</div>
+        <div class="sidebar-footer-title">{{user.first_name}} {{user.last_name}} - {{user.points}} pkt</div>
           <form method="post" action="{% url 'account_logout' %}">
             {% csrf_token %}
           <button type="submit" class="sidebar-logout">Logi välja</button>
