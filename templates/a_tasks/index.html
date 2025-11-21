@@ -44,6 +44,23 @@
                 <div class="task-card-header">
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
+                    <p class="task-assigned">
+                      {% if is_child %}
+                        {% if task.assigned_to == user %}
+                          Määratud: Sinule
+                        {% elif task.assigned_to %}
+                          {{ task.assigned_to.display_name }}
+                        {% else %}
+                          Määratud: Kõikile
+                        {% endif %}
+                      {% else %}
+                        {% if task.assigned_to %}
+                          Määratud: {{ task.assigned_to.display_name }}
+                        {% else %}
+                          Määratud: Kõikile
+                        {% endif %}
+                      {% endif %}
+                    </p>
                     {% if task.description %}
                       <p class="task-description">{{ task.description }}</p>
                     {% endif %}
@@ -54,21 +71,27 @@
                   </span>
                 </div>
                 <div class="task-meta">
-                  <span class="task-badge priority">Tähtsus: {{ task.get_priority_display }}</span>
-                  <span class="task-badge assigned">
-                    {% if task.assigned_to %}
-                      Määratud kasutajale {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
-                    {% else %}
-                      Avatud ülesanne • iga laps võib täita
-                    {% endif %}
-                  </span>
+                  <div class="task-meta-item">
+                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
+                  </div>
                   {% if task.due_date %}
-                    <span class="task-badge due">Tähtaeg {{ task.due_date|date:"j. M" }}</span>
+                    <div class="task-meta-item">
+                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                    </div>
                   {% endif %}
                 </div>
                 <div class="task-actions">
                   {% if task.can_child_complete %}
-                    <form method="post" class="icon-form">
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' täita? See märgib ülesande lõpetatuks ja ootab kinnitust.">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="complete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -97,14 +120,16 @@
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                       </svg>
                     </button>
-                    <form method="post" class="icon-form">
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See toiming on pöördumatu.">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
                       <button type="submit" class="icon-button" aria-label="Kustuta {{ task.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
                       </button>
                     </form>
@@ -126,14 +151,30 @@
         <div class="task-grid">
           {% if pending_tasks %}
             {% for task in pending_tasks %}
-              <article class="task-card awaiting">
+              <article class="task-card awaiting priority-{{ task.priority }}">
                 <div class="task-card-header">
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
-                    <p class="task-description">
-                      Lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }}
-                      {{ task.completed_at|date:"j. M, H:i" }}
+                    <p class="task-assigned">
+                      {% if is_child %}
+                        {% if task.assigned_to == user %}
+                          Määratud: Sinule
+                        {% elif task.assigned_to %}
+                          {{ task.assigned_to.display_name }}
+                        {% else %}
+                          Määratud: Kõikile
+                        {% endif %}
+                      {% else %}
+                        {% if task.assigned_to %}
+                          Määratud: {{ task.assigned_to.display_name }}
+                        {% else %}
+                          Määratud: Kõikile
+                        {% endif %}
+                      {% endif %}
                     </p>
+                    {% if task.description %}
+                      <p class="task-description">{{ task.description }}</p>
+                    {% endif %}
                   </div>
                   <span class="task-points points-chip">
                     <span class="points-value">{{ task.points }}</span>
@@ -141,18 +182,34 @@
                   </span>
                 </div>
                 <div class="task-meta">
-                  <span class="task-badge priority">Tähtsus: {{ task.get_priority_display }}</span>
-                  <span class="task-badge assigned">
-                    {% if task.assigned_to %}
-                      Määratud kasutajale {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
-                    {% else %}
-                      Avatud ülesanne • lõpetas {{ task.completed_by.get_full_name|default:task.completed_by.username }}
-                    {% endif %}
-                  </span>
+                  <div class="task-meta-item">
+                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
+                  </div>
+                  <div class="task-meta-item">
+                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="task-meta-label">Lõpetas {{ task.completed_by.display_name }} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
+                  </div>
+                  {% if task.due_date %}
+                    <div class="task-meta-item">
+                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                    </div>
+                  {% endif %}
                 </div>
                 <div class="task-actions">
                   {% if is_parent %}
-                    <form method="post" class="icon-form">
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kinnitada? See annab {{ task.points }} punkti ja märgib ülesande kinnitatud.">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="approve">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -162,14 +219,16 @@
                         </svg>
                       </button>
                     </form>
-                    <form method="post" class="icon-form">
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' uuesti avada? See eemaldab täitmise staatuse.">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="reopen">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
                       <button type="submit" class="icon-button" aria-label="Ava {{ task.name }} uuesti">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M3 12a9 9 0 1 0 9-9"></path>
-                          <polyline points="3 3 3 12 12 12"></polyline>
+                          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                          <path d="M21 3v5h-5"></path>
+                          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                          <path d="M3 21v-5h5"></path>
                         </svg>
                       </button>
                     </form>
@@ -191,14 +250,26 @@
         <div class="task-grid">
           {% if approved_tasks %}
             {% for task in approved_tasks %}
-              <article class="task-card approved">
+              <article class="task-card approved priority-{{ task.priority }}">
                 <div class="task-card-header">
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
-                    <p class="task-description">
-                      Kinnitas {{ task.approved_by.get_full_name|default:task.approved_by.username }}
-                      {{ task.approved_at|date:"j. M, H:i" }}
+                    <p class="task-assigned">
+                      {% with winner=task.assigned_to|default:task.completed_by %}
+                        {% if is_child %}
+                          {% if winner == user %}
+                            Punktid teenis: Sina
+                          {% else %}
+                            Punktid teenis: {{ winner.display_name }}
+                          {% endif %}
+                        {% else %}
+                          Punktid teenis: {{ winner.display_name }}
+                        {% endif %}
+                      {% endwith %}
                     </p>
+                    {% if task.description %}
+                      <p class="task-description">{{ task.description }}</p>
+                    {% endif %}
                   </div>
                   <span class="task-points points-chip">
                     <span class="points-value">{{ task.points }}</span>
@@ -206,22 +277,43 @@
                   </span>
                 </div>
                 <div class="task-meta">
-                  <span class="task-badge assigned">
-                    {% with winner=task.assigned_to|default:task.completed_by %}
-                      Punktid teenis {{ winner.get_full_name|default:winner.username }}
-                    {% endwith %}
-                  </span>
+                  <div class="task-meta-item">
+                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
+                  </div>
+                  <div class="task-meta-item">
+                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="task-meta-label">Kinnitas {{ task.approved_by.display_name }} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
+                  </div>
+                  {% if task.due_date %}
+                    <div class="task-meta-item">
+                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                      </svg>
+                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                    </div>
+                  {% endif %}
                 </div>
                 {% if is_parent %}
                   <div class="task-actions">
-                    <form method="post" class="icon-form">
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See toiming on pöördumatu.">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
                       <button type="submit" class="icon-button" aria-label="Kustuta {{ task.name }}">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
                         </svg>
                       </button>
                     </form>
@@ -235,6 +327,19 @@
         </div>
       </section>
     {% endif %}
+  </div>
+
+  <!-- Custom Confirmation Modal -->
+  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <h3 class="confirm-modal-title" id="confirm-modal-title">Kinnita toiming</h3>
+      <p class="confirm-modal-message" id="confirm-modal-message"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Tühista</button>
+        <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Kinnita</button>
+      </div>
+    </div>
   </div>
 
   {% if is_parent %}
@@ -266,7 +371,7 @@
               <option value="">Avatud ülesanne (ükskõik milline laps)</option>
               {% for member in family_members %}
                 <option value="{{ member.id }}">
-                  {{ member.get_full_name|default:member.username }}
+                  {{ member.display_name }}
                   {% if member.role %}
                     ({{ member.get_role_display }})
                   {% endif %}
@@ -396,7 +501,154 @@
           }
         });
       });
+
     </script>
   {% endif %}
+
+  <script>
+    // Custom confirmation modal - available for all users
+    document.addEventListener('DOMContentLoaded', function () {
+      const confirmModal = document.getElementById('confirm-modal');
+      if (!confirmModal) return;
+      
+      const confirmTitle = document.getElementById('confirm-modal-title');
+      const confirmMessage = document.getElementById('confirm-modal-message');
+      const confirmButton = document.getElementById('confirm-modal-confirm');
+      const cancelButton = document.getElementById('confirm-modal-cancel');
+      const confirmOverlay = confirmModal.querySelector('.confirm-modal-overlay');
+      
+      if (!confirmTitle || !confirmMessage || !confirmButton || !cancelButton || !confirmOverlay) {
+        console.error('Confirmation modal elements not found');
+        return;
+      }
+      
+      let confirmResolve = null;
+      let pendingForm = null;
+      let formSubmitHandler = null;
+
+      function showConfirm(title, message) {
+        return new Promise((resolve) => {
+          confirmTitle.textContent = title;
+          confirmMessage.textContent = message;
+          // Prevent body scroll and ensure modal is centered
+          document.body.classList.add('modal-open');
+          confirmModal.classList.add('is-visible');
+          // Ensure modal content is visible by scrolling container to top if needed
+          setTimeout(() => {
+            confirmModal.scrollTop = 0;
+          }, 0);
+          confirmResolve = resolve;
+        });
+      }
+
+      function closeConfirm(result) {
+        confirmModal.classList.remove('is-visible');
+        document.body.classList.remove('modal-open');
+        if (confirmResolve) {
+          confirmResolve(result);
+          confirmResolve = null;
+        }
+        
+        // If confirmed, submit the pending form
+        if (result && pendingForm) {
+          // Remove the data-confirm attribute so the form submits normally
+          pendingForm.removeAttribute('data-confirm');
+          
+          // Remove the event listener temporarily
+          if (formSubmitHandler) {
+            pendingForm.removeEventListener('submit', formSubmitHandler);
+          }
+          
+          // Submit the form directly (this bypasses event listeners)
+          if (pendingForm.requestSubmit) {
+            // Modern browsers - requestSubmit respects validation but allows submission
+            pendingForm.requestSubmit();
+          } else {
+            // Fallback - create a submit event
+            const submitEvent = new Event('submit', {
+              bubbles: true,
+              cancelable: true
+            });
+            const submitted = pendingForm.dispatchEvent(submitEvent);
+            
+            // If event wasn't prevented, submit directly
+            if (submitted) {
+              pendingForm.submit();
+            }
+          }
+          
+          // Re-add the data-confirm attribute and listener after a short delay
+          setTimeout(() => {
+            if (pendingForm && formSubmitHandler) {
+              pendingForm.setAttribute('data-confirm', pendingForm.dataset.originalConfirm || '');
+              pendingForm.addEventListener('submit', formSubmitHandler);
+            }
+          }, 100);
+        }
+        
+        pendingForm = null;
+        formSubmitHandler = null;
+      }
+
+      confirmButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(true);
+      });
+      
+      cancelButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(false);
+      });
+      
+      confirmOverlay.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(false);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && confirmModal.classList.contains('is-visible')) {
+          closeConfirm(false);
+        }
+      });
+
+      // Handle forms with data-confirm attribute
+      document.querySelectorAll('form[data-confirm]').forEach((form) => {
+        // Store original confirm message
+        form.dataset.originalConfirm = form.getAttribute('data-confirm');
+        
+        const submitHandler = async function (e) {
+          // Skip if form doesn't have data-confirm attribute (means it was removed for submission)
+          if (!form.hasAttribute('data-confirm')) {
+            return;
+          }
+          
+          e.preventDefault();
+          e.stopPropagation();
+          const message = form.getAttribute('data-confirm');
+          const action = form.querySelector('input[name="action"]')?.value || 'toiming';
+          let title = 'Kinnita toiming';
+          
+          if (action === 'delete') {
+            title = 'Kinnita kustutamine';
+          } else if (action === 'reopen') {
+            title = 'Kinnita avamine';
+          } else if (action === 'complete') {
+            title = 'Kinnita täitmine';
+          } else if (action === 'approve') {
+            title = 'Kinnita ülesanne';
+          }
+          
+          pendingForm = form;
+          formSubmitHandler = submitHandler;
+          const confirmed = await showConfirm(title, message);
+        };
+        
+        form.addEventListener('submit', submitHandler);
+      });
+    });
+  </script>
 {% endblock %}
 

@@ -6,7 +6,7 @@
 {% block email_subheading %}<p class="email-subtitle">{% trans "Kinnita e-post, et alustada perega." %}</p>{% endblock %}
 
 {% block email_content %}
-  <p>{% blocktrans %}Tere, {{ user.get_full_name|default:user.username }}!{% endblocktrans %}</p>
+  <p>{% blocktrans %}Tere, {{ user.display_name }}!{% endblocktrans %}</p>
   <p>{% trans "Täname liitumise eest. Kinnita oma e-post ja alusta perekoostööd." %}</p>
 
   <div style="text-align: center;">

@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktrans %}Tere, {{ user.get_full_name|default:user.username }}!{% endblocktrans %}
+{% load i18n %}{% blocktrans %}Tere, {{ user.display_name }}!{% endblocktrans %}
 
 {% trans "Palun kinnita oma e-posti aadress, klõpsates allolevat linki:" %}
 

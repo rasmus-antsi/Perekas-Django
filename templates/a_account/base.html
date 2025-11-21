@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Seaded | Perekas{% endblock %}
+
+{% block nav_settings_active %} active{% endblock %}
+
+{% block sidebar_nav %}
+  <nav class="sidebar-nav settings-nav">
+    <a class="nav-link" href="{% url 'a_dashboard:dashboard' %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"></path>
+      </svg>
+      <span>Tagasi</span>
+    </a>
+    <a href="{% url 'a_account:settings' %}?section=general" class="nav-link{% if current_section == 'general' %} active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+      <span>Üldine</span>
+    </a>
+    <a href="{% url 'a_account:settings' %}?section=notifications" class="nav-link{% if current_section == 'notifications' %} active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <span>Teavitused</span>
+    </a>
+    {% if can_manage_subscription %}
+    <a href="{% url 'a_account:settings' %}?section=subscriptions" class="nav-link{% if current_section == 'subscriptions' %} active{% endif %}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+        <line x1="1" y1="10" x2="23" y2="10"></line>
+      </svg>
+      <span>Tellimused</span>
+    </a>
+    {% endif %}
+  </nav>
+{% endblock %}
+
+{% block sidebar_nav_bottom %}
+  {# Empty block to remove settings and family links at bottom #}
+{% endblock %}
+
+{% block content %}
+  <div class="page-container settings-page">
+    <div class="settings-content">
+      {% block settings_content %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}
