@@ -77,52 +77,54 @@
       <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileNav()"></div>
       
       <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 3L3 9v12h6v-6h6v6h6V9z"></path>
-            </svg>
+        <div class="sidebar-top-section">
+          <div class="sidebar-header">
+            <div class="sidebar-logo">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3L3 9v12h6v-6h6v6h6V9z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="sidebar-brand">Perekas</div>
+              <div class="sidebar-tagline">Koos iga päev</div>
+            </div>
           </div>
-          <div>
-            <div class="sidebar-brand">Perekas</div>
-            <div class="sidebar-tagline">Koos iga päev</div>
-          </div>
-        </div>
 
-        <div class="sidebar-nav-top">
-          {% block sidebar_nav %}
-          <nav class="sidebar-nav">
-          <a class="nav-link{% block nav_dashboard_active %}{% endblock %}" href="{% url 'a_dashboard:dashboard' %}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 12l2-2 3 3 7-7 6 6v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            </svg>
-            <span>Ülevaade</span>
-          </a>
-          <a class="nav-link{% block nav_tasks_active %}{% endblock %}" href="{% url 'a_tasks:index' %}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 5h12"></path>
-              <path d="M3 12h12"></path>
-              <path d="M3 19h12"></path>
-              <path d="M18 9l3 3-3 3"></path>
-            </svg>
-            <span>Ülesanded</span>
-          </a>
-          <a class="nav-link{% block nav_rewards_active %}{% endblock %}" href="{% url 'a_rewards:index' %}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2l1.5 4.5H18l-3.75 2.7L15.75 14 12 11.4 8.25 14l1.5-4.8L6 6.5h4.5z"></path>
-            </svg>
-            <span>Preemiad</span>
-          </a>
-          <a class="nav-link{% block nav_shopping_active %}{% endblock %}" href="{% url 'a_shopping:index' %}">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="9" cy="21" r="1"></circle>
-              <circle cx="20" cy="21" r="1"></circle>
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-            </svg>
-            <span>Ostunimekiri</span>
-          </a>
-          </nav>
-          {% endblock %}
+          <div class="sidebar-nav-top">
+            {% block sidebar_nav %}
+            <nav class="sidebar-nav">
+            <a class="nav-link{% block nav_dashboard_active %}{% endblock %}" href="{% url 'a_dashboard:dashboard' %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 12l2-2 3 3 7-7 6 6v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              </svg>
+              <span>Ülevaade</span>
+            </a>
+            <a class="nav-link{% block nav_tasks_active %}{% endblock %}" href="{% url 'a_tasks:index' %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h12"></path>
+                <path d="M3 12h12"></path>
+                <path d="M3 19h12"></path>
+                <path d="M18 9l3 3-3 3"></path>
+              </svg>
+              <span>Ülesanded</span>
+            </a>
+            <a class="nav-link{% block nav_rewards_active %}{% endblock %}" href="{% url 'a_rewards:index' %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2l1.5 4.5H18l-3.75 2.7L15.75 14 12 11.4 8.25 14l1.5-4.8L6 6.5h4.5z"></path>
+              </svg>
+              <span>Preemiad</span>
+            </a>
+            <a class="nav-link{% block nav_shopping_active %}{% endblock %}" href="{% url 'a_shopping:index' %}">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              <span>Ostunimekiri</span>
+            </a>
+            </nav>
+            {% endblock %}
+          </div>
         </div>
         
         <div class="sidebar-nav-bottom-section">
