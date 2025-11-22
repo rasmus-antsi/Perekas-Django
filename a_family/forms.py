@@ -44,15 +44,41 @@ class FamilySignupForm(SignupForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Make email required and set placeholder
-        if 'email' in self.fields:
-            self.fields['email'].widget.attrs.update({
-                'placeholder': 'sinu@email.ee',
-            })
-        # Hide username field - we'll auto-generate it
+        
+        # Get role from POST data to determine email requirement
+        role = None
+        has_email = None
+        if self.data:
+            role = self.data.get('role')
+            has_email = self.data.get('has_email')
+        
+        # Username is now visible and required
         if 'username' in self.fields:
-            self.fields['username'].required = False
-            self.fields['username'].widget = forms.HiddenInput()
+            self.fields['username'].required = True
+            self.fields['username'].widget = forms.TextInput(attrs={
+                'placeholder': 'Sinu kasutajanimi',
+            })
+            self.fields['username'].label = 'Kasutajanimi'
+        
+        # Email handling - required for parents, optional for children
+        if 'email' in self.fields:
+            if role == User.ROLE_CHILD:
+                # For children, email is only required if they selected "has_email"
+                if has_email == 'yes':
+                    self.fields['email'].required = True
+                else:
+                    self.fields['email'].required = False
+                    self.fields['email'].widget = forms.EmailInput(attrs={
+                        'placeholder': 'sinu@email.ee',
+                        'style': 'display: none;' if has_email != 'yes' else '',
+                    })
+            else:
+                # For parents, email is always required
+                self.fields['email'].required = True
+                self.fields['email'].widget.attrs.update({
+                    'placeholder': 'sinu@email.ee',
+                })
+        
         # Update password field placeholders
         if 'password1' in self.fields:
             self.fields['password1'].widget.attrs.update({
@@ -64,37 +90,108 @@ class FamilySignupForm(SignupForm):
             })
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = self.cleaned_data.get('email', '')
+        role = self.cleaned_data.get('role') or self.data.get('role')
+        has_email = self.data.get('has_email')
+        
+        # Email is required for parents
+        if role == User.ROLE_PARENT and not email:
+            raise ValidationError('Lapsevanemate kontol peab olema e-posti aadress.')
+        
+        # For children, email is required only if they selected "has_email"
+        if role == User.ROLE_CHILD:
+            if has_email == 'yes' and not email:
+                raise ValidationError('Palun sisesta oma e-posti aadress.')
+            elif has_email == 'no':
+                # Children without email - set to None
+                return None
+        
+        # Check if email already exists (if provided)
         if email:
-            # Check if email already exists
             if User.objects.filter(email=email).exists():
                 raise ValidationError('See e-posti aadress on juba kasutuses.')
-        return email
+        
+        return email or None
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role') or self.data.get('role')
+        has_email = self.data.get('has_email')
+        
+        # For children without email, remove email from cleaned_data entirely
+        # This prevents allauth from trying to save it
+        if role == User.ROLE_CHILD and has_email == 'no':
+            if 'email' in cleaned_data:
+                del cleaned_data['email']
+            return cleaned_data
+        
+        # For parents and children with email, validate email is provided
+        email = cleaned_data.get('email', '') or None
+        
+        # Ensure email is provided for parents
+        if role == User.ROLE_PARENT and not email:
+            self.add_error('email', 'Lapsevanemate kontol peab olema e-posti aadress.')
+        
+        # For children, ensure email is provided if they selected "has_email"
+        if role == User.ROLE_CHILD and has_email == 'yes' and not email:
+            self.add_error('email', 'Palun sisesta oma e-posti aadress.')
+        
+        return cleaned_data
 
     def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if username:
-            return username
-
-        email = self.cleaned_data.get('email') or self.data.get('email', '')
-        base_username = email.split('@')[0] if email else 'perekas'
-        base_username = re.sub(r'[^\w.@+-]', '', base_username.lower()) or 'perekas'
-
-        username_candidate = base_username
-        counter = 1
-        while User.objects.filter(username=username_candidate).exists():
-            username_candidate = f"{base_username}{counter}"
-            counter += 1
-        return username_candidate
+        username = self.cleaned_data.get('username', '').strip()
+        if not username:
+            raise ValidationError('Kasutajanimi on kohustuslik.')
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            raise ValidationError('See kasutajanimi on juba kasutuses.')
+        
+        # Validate username format
+        if not re.match(r'^[\w.@+-]+$', username):
+            raise ValidationError('Kasutajanimi võib sisaldada ainult tähti, numbreid ja märke: . @ + - _')
+        
+        return username
 
     def save(self, request):
+        # Get role and email info before saving
+        role = self.cleaned_data.get("role", User.ROLE_PARENT)
+        has_email = self.data.get('has_email')
+        
+        # For children without email, email should already be removed in clean()
+        # But double-check here to be safe
+        is_child_without_email = (role == User.ROLE_CHILD and has_email == 'no')
+        
+        if is_child_without_email:
+            # Ensure email is not in cleaned_data
+            if 'email' in self.cleaned_data:
+                del self.cleaned_data['email']
+        
+        # Save user through allauth (without email if child without email)
+        # The adapter's save_user will handle setting email=None
         user = super().save(request)
+        
+        # Update user fields
         user.first_name = self.cleaned_data.get('first_name', '')
         user.last_name = self.cleaned_data.get('last_name', '')
         user.birthdate = self.cleaned_data.get('birthdate')
-        role = self.cleaned_data.get("role", User.ROLE_PARENT)
         user.role = role
-        user.save()
+        
+        # For children without email, ensure email is None (adapter should handle this, but double-check)
+        if is_child_without_email:
+            user.email = None
+        
+        # Save the user with all updates
+        user.save(update_fields=['first_name', 'last_name', 'birthdate', 'role', 'email'])
+        
+        # Delete any EmailAddress records that allauth might have created
+        if is_child_without_email:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.filter(user=user).delete()
+            except Exception:
+                pass  # Ignore errors if EmailAddress doesn't exist or is already deleted
+        
         return user
 
 

@@ -34,7 +34,7 @@
         <div class="auth-error-minimal" id="nonFieldErrors">{{ form.non_field_errors|join:", " }}</div>
       {% endif %}
 
-      <!-- Step 1: Basic Info -->
+      <!-- Step 1: Basic Info, Birthdate and Role -->
       <div class="signup-step active" data-step="1">
         <div class="auth-field-minimal{% if form.first_name.errors %} has-error{% endif %}">
           <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
@@ -52,17 +52,6 @@
           {% endfor %}
         </div>
 
-        <div class="auth-field-minimal{% if form.email.errors %} has-error{% endif %}">
-          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-          {{ form.email }}
-          {% for error in form.email.errors %}
-            <span class="auth-field-error-minimal">{{ error }}</span>
-          {% endfor %}
-        </div>
-      </div>
-
-      <!-- Step 2: Profile -->
-      <div class="signup-step" data-step="2">
         <div class="auth-field-minimal{% if form.birthdate.errors %} has-error{% endif %}">
           <label for="{{ form.birthdate.id_for_label }}">{{ form.birthdate.label }}</label>
           {{ form.birthdate }}
@@ -78,14 +67,15 @@
               <label class="role-option">
                 {{ choice.tag }}
                 <span class="role-label">
-                  {% if choice.choice_value == 'parent' %}
-                    <strong>Lapsevanem</strong>
+                  {% if choice.data.value == 'parent' %}
+                    <strong>Ma olen lapsevanem</strong>
                     <span>Saad peret luua ja hallata</span>
-                  {% elif choice.choice_value == 'child' %}
-                    <strong>Laps</strong>
+                  {% elif choice.data.value == 'child' %}
+                    <strong>Ma olen laps</strong>
                     <span>Saad liituda perega ja täita ülesandeid</span>
                   {% else %}
-                    <strong>{{ choice.choice_label }}</strong>
+                    <strong>Ma olen {{ choice.choice_label|lower }}</strong>
+                    <span>{% if choice.data.value == 'parent' %}Saad peret luua ja hallata{% elif choice.data.value == 'child' %}Saad liituda perega ja täita ülesandeid{% endif %}</span>
                   {% endif %}
                 </span>
               </label>
@@ -97,7 +87,48 @@
         </div>
       </div>
 
-      <!-- Step 3: Security -->
+      <!-- Step 2: Username and Email (conditional for children) -->
+      <div class="signup-step" data-step="2">
+        <div class="auth-field-minimal{% if form.username.errors %} has-error{% endif %}">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label|default:"Kasutajanimi" }}</label>
+          {{ form.username }}
+          {% for error in form.username.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+
+        <!-- Email options for children -->
+        <div id="child-email-options" class="auth-field-minimal" style="display: none;">
+          <label>Kas sul on e-posti aadress?</label>
+          <div class="role-selection">
+            <label class="role-option" id="has-email-option">
+              <input type="radio" name="has_email" value="yes" id="has_email_yes">
+              <span class="role-label">
+                <strong>Jah, mul on e-posti aadress</strong>
+                <span>Saad e-posti teel teavitusi</span>
+              </span>
+            </label>
+            <label class="role-option" id="no-email-option">
+              <input type="radio" name="has_email" value="no" id="has_email_no" checked>
+              <span class="role-label">
+                <strong>Ei, mul pole e-posti aadressi</strong>
+                <span>Sisse saad logida kasutajanimega</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Email field (shown for parents or children who selected "has email") -->
+        <div id="email-field-container" class="auth-field-minimal{% if form.email.errors %} has-error{% endif %}" style="display: none;">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% for error in form.email.errors %}
+            <span class="auth-field-error-minimal">{{ error }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Step 3: Password -->
       <div class="signup-step" data-step="3">
         <div class="auth-field-minimal{% if form.password1.errors %} has-error{% endif %}">
           <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
@@ -123,10 +154,6 @@
             <li data-requirement="number">Sisaldama vähemalt ühe numbri</li>
           </ul>
         </div>
-
-        {% if form.username %}
-          {{ form.username }}
-        {% endif %}
       </div>
 
       <div class="signup-actions">
@@ -408,7 +435,7 @@
 
     const stepTitles = {
       1: { title: 'Tere tulemast Perekas!', subtitle: 'Alustame sinu põhiandmetega' },
-      2: { title: 'Sinu profiil', subtitle: 'Räägi meile endast' },
+      2: { title: 'Kasutajanimi ja e-post', subtitle: 'Kuidas soovid sisse logida?' },
       3: { title: 'Turvalisus', subtitle: 'Loo turvaline parool' }
     };
 
@@ -483,20 +510,53 @@
       const stepEl = document.querySelector(`.signup-step[data-step="${step}"]`);
       if (!stepEl) return true;
 
-      const inputs = stepEl.querySelectorAll('input[required], select[required]');
       let isValid = true;
 
-      inputs.forEach(input => {
-        if (input.type === 'radio') {
-          const radioGroup = stepEl.querySelectorAll(`input[name="${input.name}"]`);
-          const isChecked = Array.from(radioGroup).some(r => r.checked);
-          if (!isChecked) {
-            isValid = false;
-          }
-        } else if (!input.value.trim()) {
+      // For step 2, handle conditional email requirement
+      if (step === 2) {
+        const selectedRole = document.querySelector('input[name="role"]:checked');
+        const hasEmailYes = document.getElementById('has_email_yes');
+        const emailContainer = document.getElementById('email-field-container');
+        const emailField = emailContainer ? emailContainer.querySelector('input[type="email"]') : null;
+        const usernameField = stepEl.querySelector('input[name="username"]');
+        
+        // Username is always required
+        if (usernameField && !usernameField.value.trim()) {
           isValid = false;
         }
-      });
+        
+        // Email is required for parents, or for children who selected "has email"
+        if (selectedRole) {
+          if (selectedRole.value === 'parent') {
+            if (emailField && !emailField.value.trim()) {
+              isValid = false;
+            }
+          } else if (selectedRole.value === 'child' && hasEmailYes && hasEmailYes.checked) {
+            if (emailField && !emailField.value.trim()) {
+              isValid = false;
+            }
+          }
+        }
+      } else {
+        // For other steps, validate all required fields
+        const inputs = stepEl.querySelectorAll('input[required]:not([style*="display: none"]):not([style*="display:none"]), select[required]:not([style*="display: none"]):not([style*="display:none"])');
+        inputs.forEach(input => {
+          // Skip hidden fields
+          if (input.closest('[style*="display: none"]') || input.closest('[style*="display:none"]')) {
+            return;
+          }
+          
+          if (input.type === 'radio') {
+            const radioGroup = stepEl.querySelectorAll(`input[name="${input.name}"]`);
+            const isChecked = Array.from(radioGroup).some(r => r.checked);
+            if (!isChecked) {
+              isValid = false;
+            }
+          } else if (input.type !== 'hidden' && !input.value.trim()) {
+            isValid = false;
+          }
+        });
+      }
 
       return isValid;
     }
@@ -519,6 +579,90 @@
       }
     });
 
+    // Handle role selection to show/hide email options for children
+    function handleRoleSelection() {
+      const roleRadios = document.querySelectorAll('input[name="role"]');
+      const childEmailOptions = document.getElementById('child-email-options');
+      const emailContainer = document.getElementById('email-field-container');
+      const emailField = emailContainer ? emailContainer.querySelector('input[type="email"]') : null;
+      const hasEmailYes = document.getElementById('has_email_yes');
+      const hasEmailNo = document.getElementById('has_email_no');
+      
+      roleRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          if (this.value === 'child') {
+            // Show email options for children
+            if (childEmailOptions) {
+              childEmailOptions.style.display = 'block';
+            }
+            // Hide email field initially - will show if they select "has email"
+            if (emailContainer) {
+              emailContainer.style.display = 'none';
+              if (emailField) {
+                emailField.required = false;
+                emailField.removeAttribute('required');
+              }
+            }
+            // Reset has_email selection
+            if (hasEmailNo) {
+              hasEmailNo.checked = true;
+            }
+          } else if (this.value === 'parent') {
+            // For parents, always show email field
+            if (childEmailOptions) {
+              childEmailOptions.style.display = 'none';
+            }
+            if (emailContainer) {
+              emailContainer.style.display = 'block';
+              if (emailField) {
+                emailField.required = true;
+                emailField.setAttribute('required', 'required');
+              }
+            }
+          }
+        });
+        
+        // Check initial state
+        if (radio.checked) {
+          radio.dispatchEvent(new Event('change'));
+        }
+      });
+    }
+
+    // Handle "has email" selection for children
+    function handleHasEmailSelection() {
+      const hasEmailYes = document.getElementById('has_email_yes');
+      const hasEmailNo = document.getElementById('has_email_no');
+      const emailContainer = document.getElementById('email-field-container');
+      const emailField = emailContainer ? emailContainer.querySelector('input[type="email"]') : null;
+      
+      if (hasEmailYes) {
+        hasEmailYes.addEventListener('change', function() {
+          if (this.checked && emailContainer) {
+            emailContainer.style.display = 'block';
+            if (emailField) {
+              emailField.required = true;
+              emailField.setAttribute('required', 'required');
+              setTimeout(() => emailField.focus(), 100);
+            }
+          }
+        });
+      }
+      
+      if (hasEmailNo) {
+        hasEmailNo.addEventListener('change', function() {
+          if (this.checked && emailContainer) {
+            emailContainer.style.display = 'none';
+            if (emailField) {
+              emailField.value = '';
+              emailField.required = false;
+              emailField.removeAttribute('required');
+            }
+          }
+        });
+      }
+    }
+
     // Initialize - check for errors and show appropriate step
     let initialStep = 1;
     if (document.querySelector('.signup-step[data-step="1"] .has-error')) {
@@ -529,6 +673,10 @@
       initialStep = 3;
     }
     updateStep(initialStep);
+    
+    // Initialize role and email selection handlers
+    handleRoleSelection();
+    handleHasEmailSelection();
 
     // Handle form errors on page load - map non-field errors to specific fields
     function mapErrorsToFields() {

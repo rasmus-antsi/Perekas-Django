@@ -14,13 +14,14 @@
         <div class="auth-error-minimal">{{ form.non_field_errors|join:", " }}</div>
       {% endif %}
 
-      <!-- Email field -->
+      <!-- Login field (username or email) -->
       <div class="auth-field-minimal{% if form.login.errors %} has-error{% endif %}">
-        <label for="{{ form.login.id_for_label }}">{{ form.login.label }}</label>
+        <label for="{{ form.login.id_for_label }}">Kasutajanimi või e-posti aadress</label>
         {{ form.login }}
         {% for error in form.login.errors %}
           <span class="auth-field-error-minimal">{{ error }}</span>
         {% endfor %}
+        <span class="field-hint" style="font-size: 0.8125rem; color: rgba(148, 163, 184, 0.7); margin-top: 0.25rem; display: block;">Lapsed saavad sisse logida kasutajanimega</span>
       </div>
 
       <!-- Password field -->
