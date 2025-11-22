@@ -19,13 +19,29 @@ def index(request):
     if family is None:
         family = Family.objects.filter(owner=user).first()
 
-    # Check if family has shopping list access
+    # Check if family has shopping list access (for all users, including children)
     if family and not has_shopping_list_access(family):
-        messages.warning(
+        messages.error(
             request,
             "Ostunimekiri on saadaval Starter või Pro paketiga. Palun uuenda tellimust, et seda kasutada."
         )
-        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+        # Redirect family owner to subscription settings, others to dashboard
+        if family.owner == user:
+            return redirect(f"{reverse('a_account:settings')}?section=subscriptions&upgrade=1")
+        else:
+            referer = request.META.get('HTTP_REFERER')
+            # Only redirect to referer if it's from the same site
+            if referer and request.build_absolute_uri('/').split('/')[2] in referer:
+                return redirect(referer)
+            return redirect(reverse('a_dashboard:dashboard'))
+    
+    # Also check if user has no family
+    if not family:
+        messages.error(request, "Ostunimekirja kasutamiseks pead olema pere liige.")
+        referer = request.META.get('HTTP_REFERER')
+        if referer and request.build_absolute_uri('/').split('/')[2] in referer:
+            return redirect(referer)
+        return redirect(reverse('a_family:onboarding'))
 
     if request.method == "POST":
         action = request.POST.get("action")

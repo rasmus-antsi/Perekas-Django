@@ -37,6 +37,7 @@ def index(request):
 
     # Redirect to onboarding if user doesn't have a family
     if not family:
+        messages.info(request, "Perega liitumiseks või uue pere loomiseks palun täida pere andmed.")
         return redirect('a_family:onboarding')
 
     # Set default role for owner if not set
@@ -180,7 +181,7 @@ def index(request):
         elif action == "reopen" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             elif not task.completed:
                 messages.warning(request, "See ülesanne pole täidetud.")
             else:
@@ -204,12 +205,12 @@ def index(request):
                         task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
                         messages.success(request, f"Ülesanne '{task.name}' avatud uuesti.")
                 except Exception as e:
-                    messages.error(request, f"Ülesande avamisel tekkis viga: {str(e)}")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 
         elif action == "approve" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             elif not task.completed:
                 messages.error(request, "Saab kinnitada ainult täidetud ülesandeid.")
             elif task.approved:
@@ -234,12 +235,12 @@ def index(request):
                             assignee.save(update_fields=["points"])
                             messages.success(request, f"Ülesanne '{task.name}' kinnitatud. {task.points} punkti lisatud.")
                 except Exception as e:
-                    messages.error(request, f"Ülesande kinnitamisel tekkis viga: {str(e)}")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 
         elif action == "unapprove" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Ülesannet ei leitud. See võib olla kustutatud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             elif not task.approved:
                 messages.warning(request, "See ülesanne pole kinnitatud.")
             else:
@@ -259,7 +260,7 @@ def index(request):
                         task.save(update_fields=["approved", "approved_by", "approved_at"])
                         messages.success(request, f"Ülesande '{task.name}' kinnitamine tühistatud.")
                 except Exception as e:
-                    messages.error(request, f"Ülesande kinnituse tühistamisel tekkis viga: {str(e)}")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 
         return redirect("a_tasks:index")
 

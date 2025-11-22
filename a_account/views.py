@@ -39,33 +39,8 @@ def _get_billing_period_from_price_id(price_id):
 
 
 def _sanitize_error_message(error_msg):
-    """Remove dev info from error messages"""
-    if not error_msg:
-        return "Tehniline viga. Palun proovi uuesti või võta ühendust toega."
-    
-    # Remove common dev info patterns
-    dev_patterns = [
-        'Request req_',
-        'No such',
-        'Invalid',
-        'stripe.',
-        'AttributeError',
-        'KeyError',
-        'TypeError',
-    ]
-    
-    # Check if error contains dev info
-    for pattern in dev_patterns:
-        if pattern in str(error_msg):
-            return "Tellimuse töötlemisel tekkis viga. Palun proovi uuesti või võta ühendust toega."
-    
-    # Return sanitized message if it looks safe
-    safe_msg = str(error_msg).strip()
-    # Limit message length
-    if len(safe_msg) > 200:
-        safe_msg = safe_msg[:200] + "..."
-    
-    return safe_msg
+    """Always return generic user-friendly error message"""
+    return "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee"
 
 
 def _get_family_for_user(user):
@@ -243,17 +218,31 @@ def notification_settings(request):
 
 @login_required
 def subscription_settings(request):
-    """Subscription management settings"""
+    """Subscription management settings - only for family owners"""
     user = request.user
     family = _get_family_for_user(user)
 
-    # Only family owner can manage subscription
+    # Only family owner can manage subscription - check access and redirect if not owner
     can_manage_subscription = False
     if family is not None:
         try:
             can_manage_subscription = family.owner == user
         except (AttributeError, ValueError):
             can_manage_subscription = False
+    
+    # Redirect non-owners with error message
+    if not can_manage_subscription:
+        # Different message for children vs non-owner parents
+        if user.role == User.ROLE_CHILD:
+            messages.error(request, "Tellimuste haldamine on lubatud ainult pere omanikule.")
+        else:
+            messages.error(request, "Tellimuste haldamiseks pead olema pere omanik.")
+        # Redirect to previous page or dashboard (safely)
+        referer = request.META.get('HTTP_REFERER')
+        # Only redirect to referer if it's from the same site
+        if referer and request.build_absolute_uri('/').split('/')[2] in referer:
+            return redirect(referer)
+        return redirect(reverse('a_dashboard:dashboard'))
 
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
@@ -270,15 +259,15 @@ def subscription_settings(request):
             ).first()
             
             if not subscription:
-                messages.error(request, "Tellimust ei leitud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
-                messages.error(request, "Stripe kliendi ID puudub.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -302,7 +291,7 @@ def subscription_settings(request):
             except (AttributeError, TypeError) as e:
                 # Handle case where billing_portal API might not be available
                 logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
-                messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             except Exception as e:
                 error_msg = str(e)
@@ -319,7 +308,7 @@ def subscription_settings(request):
                         return redirect(portal_session.url)
                     except Exception as retry_error:
                         logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
-                        messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     logger.error(f"Stripe error: {error_msg}", exc_info=True)
@@ -361,7 +350,7 @@ def subscription_settings(request):
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -370,7 +359,7 @@ def subscription_settings(request):
                 # Check if billing_portal exists before accessing it
                 if not hasattr(stripe, 'billing_portal'):
                     logger.error("Stripe billing_portal API not available in this Stripe SDK version")
-                    messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe versiooni.")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                     return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
                 # Prepare portal parameters
@@ -394,7 +383,7 @@ def subscription_settings(request):
             except (AttributeError, TypeError) as e:
                 # Handle case where billing_portal API might not be available or accessed incorrectly
                 logger.error(f"Stripe billing_portal API error: {str(e)}", exc_info=True)
-                messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             except Exception as e:
                 # Catch all Stripe errors (InvalidRequestError, etc.) and other exceptions
@@ -414,11 +403,11 @@ def subscription_settings(request):
                         return redirect(portal_session.url)
                     except Exception as retry_error:
                         logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
-                        messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     logger.error(f"Stripe portal error: {error_msg}", exc_info=True)
-                    messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                     return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         elif action == 'upgrade':
@@ -426,7 +415,7 @@ def subscription_settings(request):
             billing_period = request.POST.get('billing_period', 'monthly')
             
             if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
-                messages.error(request, "Vigane paketivalik.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             # Get appropriate price ID
@@ -436,7 +425,7 @@ def subscription_settings(request):
                 price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -469,7 +458,7 @@ def subscription_settings(request):
                     except Exception as e:
                         error_msg = str(e)
                         logger.error(f"Error finding/creating customer: {error_msg}", exc_info=True)
-                        messages.error(request, "Kliendi loomisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     try:
@@ -506,7 +495,7 @@ def subscription_settings(request):
                         new_price_tier = get_tier_from_price_id(price_id)
                         if not new_price_tier or new_price_tier != tier:
                             logger.error(f"Price ID {price_id} does not match tier {tier}")
-                            messages.error(request, "Vigane paketi valik. Palun proovi uuesti.")
+                            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                             return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                         
                         # Update subscription with new price (prorated)
