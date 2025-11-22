@@ -4,155 +4,70 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>{% block email_title %}Perekas{% endblock %}</title>
-    <style>
-      :root {
-        color-scheme: dark;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background: #03081a;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: #f8fafc;
-      }
-      .email-wrapper {
-        width: 100%;
-        padding: 32px 16px;
-        background: radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.35), transparent 55%),
-          radial-gradient(circle at 85% 15%, rgba(14, 165, 233, 0.35), transparent 55%),
-          #03081a;
-      }
-      .email-container {
-        max-width: 640px;
-        margin: 0 auto;
-        background: rgba(7, 12, 28, 0.95);
-        border-radius: 32px;
-        border: 1px solid rgba(148, 163, 184, 0.15);
-        overflow: hidden;
-        box-shadow: 0 32px 65px rgba(3, 8, 26, 0.65);
-      }
-      .email-header {
-        text-align: center;
-        padding: 48px 40px 24px;
-      }
-      .email-logo {
-        width: 56px;
-        height: 56px;
-        border-radius: 18px;
-        margin: 0 auto 16px;
-        display: grid;
-        place-items: center;
-        font-weight: 700;
-        font-size: 18px;
-        color: #f9fafb;
-        background: linear-gradient(135deg, #8b5cf6, #ec4899 60%, #38bdf8 120%);
-        box-shadow: 0 18px 28px rgba(99, 102, 241, 0.35);
-      }
-      .email-eyebrow {
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
-        font-size: 11px;
-        color: rgba(148, 163, 184, 0.7);
-        margin: 0 0 8px;
-      }
-      .email-title {
-        margin: 0;
-        font-size: 28px;
-        letter-spacing: -0.01em;
-      }
-      .email-subtitle {
-        margin: 8px 0 0;
-        color: rgba(148, 163, 184, 0.85);
-        font-size: 16px;
-      }
-      .email-content {
-        padding: 0 40px 40px;
-      }
-      .email-content p {
-        font-size: 16px;
-        line-height: 1.65;
-        color: rgba(226, 231, 255, 0.92);
-        margin: 0 0 16px;
-      }
-      .email-button {
-        display: block;
-        width: 100%;
-        max-width: 360px;
-        margin: 16px auto 0;
-        padding: 14px 28px;
-        border-radius: 18px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 15px;
-        color: #fff;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(236, 72, 153, 0.9));
-        box-shadow: 0 20px 30px rgba(99, 102, 241, 0.35);
-        box-sizing: border-box;
-        text-align: center;
-      }
-      .email-link {
-        font-size: 13px;
-        word-break: break-all;
-        color: rgba(148, 163, 184, 0.85);
-        text-decoration: none;
-      }
-      .email-panel {
-        margin-top: 24px;
-        padding: 16px 18px;
-        border-radius: 16px;
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        background: rgba(99, 102, 241, 0.09);
-        font-size: 14px;
-        color: rgba(226, 232, 255, 0.9);
-      }
-      .email-footer {
-        border-top: 1px solid rgba(148, 163, 184, 0.12);
-        padding: 24px 40px 40px;
-        text-align: center;
-        font-size: 13px;
-        color: rgba(148, 163, 184, 0.75);
-      }
-      .email-footer a {
-        color: rgba(248, 250, 252, 0.9);
-        text-decoration: none;
-      }
-      @media (max-width: 600px) {
-        .email-container {
-          border-radius: 24px;
-        }
-        .email-header,
-        .email-content,
-        .email-footer {
-          padding: 32px 24px;
-        }
-        .email-button {
-          width: 100%;
-          text-align: center;
-        }
-      }
+    <!--[if mso]>
+    <style type="text/css">
+      body, table, td {font-family: Arial, sans-serif !important;}
     </style>
+    <![endif]-->
   </head>
-  <body>
-    <div class="email-wrapper">
-      <div class="email-container">
-        <div class="email-header">
-          <div class="email-logo">PE</div>
-          {% block email_eyebrow %}{% endblock %}
-          <h1 class="email-title">{% block email_heading %}{% endblock %}</h1>
-          {% block email_subheading %}{% endblock %}
-        </div>
-        <div class="email-content">
-          {% block email_content %}{% endblock %}
-        </div>
-        <div class="email-footer">
-          {% block email_footer %}
-            <p>{% trans "Kui sa seda kirja ei oodanud, võid selle julgelt ignoreerida." %}</p>
-            <p style="margin-top: 8px;">© {% now "Y" %} Perekas</p>
-          {% endblock %}
-        </div>
-      </div>
-    </div>
+  <body style="margin: 0; padding: 0; background-color: #050816; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f8fafc;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #050816; background-image: radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.08), transparent 55%), radial-gradient(circle at 80% 10%, rgba(6, 182, 212, 0.08), transparent 55%);">
+      <tr>
+        <td align="center" style="padding: 32px 16px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 640px; background-color: rgba(15, 23, 42, 0.9); border-radius: 24px; border: 1px solid rgba(59, 72, 99, 0.4); overflow: hidden; box-shadow: 0 20px 45px rgba(2, 6, 23, 0.35);">
+            <!-- Header -->
+            <tr>
+              <td align="center" style="text-align: center; padding: 48px 40px 24px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                  <tr>
+                    <td align="center">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                        <tr>
+                          <td align="center" style="width: 56px; height: 56px; border-radius: 18px; margin: 0 auto 16px; display: block; font-weight: 700; font-size: 18px; color: #f9fafb; background: linear-gradient(135deg, #8b5cf6, #ec4899 60%, #38bdf8 120%); box-shadow: 0 18px 28px rgba(99, 102, 241, 0.35); line-height: 56px; text-align: center;">
+                            PE
+                          </td>
+                        </tr>
+                      </table>
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding-top: 16px;">
+                            {% block email_eyebrow %}{% endblock %}
+                            <h1 style="margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; color: #f8fafc; text-align: center;">
+                              {% block email_heading %}{% endblock %}
+                            </h1>
+                            {% block email_subheading %}{% endblock %}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <!-- Header background gradient -->
+            <tr>
+              <td style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.1)); height: 2px;"></td>
+            </tr>
+            <!-- Content -->
+            <tr>
+              <td style="padding: 0 40px 40px; background-color: rgba(15, 23, 42, 0.9);">
+                {% block email_content %}{% endblock %}
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td style="padding: 24px 40px 40px; background-color: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(59, 72, 99, 0.4); text-align: center; font-size: 13px; color: #94a3b8;">
+                {% block email_footer %}
+                  <p style="margin: 0 0 8px; color: #94a3b8;">{% trans "Kui sa seda kirja ei oodanud, võid selle julgelt ignoreerida." %}</p>
+                  <p style="margin: 0; color: #94a3b8;">© {% now "Y" %} Perekas</p>
+                {% endblock %}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>
-

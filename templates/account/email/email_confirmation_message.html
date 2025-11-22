@@ -3,20 +3,35 @@
 
 {% block email_title %}{% trans "Kinnita oma e-post" %}{% endblock %}
 {% block email_heading %}{% trans "Kinnita oma e-post" %}{% endblock %}
-{% block email_subheading %}<p class="email-subtitle">Perekas</p>{% endblock %}
-
-{% block email_content %}
-  <p>{% blocktrans %}Tere, {{ user.display_name }}!{% endblocktrans %}</p>
-  <p>{% trans "Palun kinnita oma e-posti aadress, klõpsates allolevat nuppu." %}</p>
-
-  <div style="text-align: center;">
-    <a href="{{ activate_url }}" class="email-button">{% trans "Kinnita e-post" %}</a>
-  </div>
-
-  <div class="email-panel">
-    <strong>{% trans "Probleem nupuga?" %}</strong>
-    <p style="margin-top: 8px;">{% trans "Kopeeri see link oma brauserisse:" %}</p>
-    <a href="{{ activate_url }}" class="email-link">{{ activate_url }}</a>
-  </div>
+{% block email_subheading %}
+  <p style="margin: 8px 0 0; color: #94a3b8; font-size: 16px; text-align: center;">Perekas</p>
 {% endblock %}
 
+{% block email_content %}
+  <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+    {% blocktrans with user_name=user.display_name %}Tere, {{ user_name }}!{% endblocktrans %}
+  </p>
+  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+    {% trans "Palun kinnita oma e-posti aadress, klõpsates allolevat nuppu." %}
+  </p>
+
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+    <tr>
+      <td align="center">
+        <a href="{{ activate_url }}" style="display: inline-block; width: 100%; max-width: 360px; margin: 16px auto 0; padding: 0.75rem 1.4rem; border-radius: 0.9rem; text-decoration: none; font-weight: 600; font-size: 0.9375rem; letter-spacing: 0.02em; color: #fbfbff; background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(236, 72, 153, 0.9)); box-shadow: 0 18px 32px rgba(99, 102, 241, 0.35); text-align: center; border: 1px solid transparent;">{% trans "Kinnita e-post" %}</a>
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 24px; padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(59, 72, 99, 0.4); background: rgba(22, 31, 56, 0.85);">
+    <tr>
+      <td style="font-size: 14px; line-height: 1.6; color: #f8fafc;">
+        <strong style="color: #f8fafc; display: block; margin-bottom: 8px;">{% trans "Probleem nupuga?" %}</strong>
+        <p style="margin: 8px 0 0; color: #94a3b8; word-break: break-all;">{% trans "Kopeeri see link oma brauserisse:" %}</p>
+        <p style="margin: 8px 0 0;">
+          <a href="{{ activate_url }}" style="color: #94a3b8; text-decoration: none; font-size: 13px; word-break: break-all;">{{ activate_url }}</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+{% endblock %}

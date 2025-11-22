@@ -2,29 +2,46 @@
 {% load i18n %}
 
 {% block email_title %}{% trans "Sinu pere on loodud" %}{% endblock %}
-{% block email_heading %}{% trans "Pere on valmis, {{ user.get_full_name|default:user.first_name|default:'Perekas kasutaja' }}!" %}{% endblock %}
+{% block email_heading %}{% blocktrans with user_name=user.display_name|default:user.first_name|default:"Perekas kasutaja" %}Pere on valmis, {{ user_name }}!{% endblocktrans %}{% endblock %}
 {% block email_subheading %}
-  <p class="email-subtitle">{% trans "Jaga allolevat koodi pereliikmetega või kopeeri link." %}</p>
+  <p style="margin: 8px 0 0; color: #94a3b8; font-size: 16px; text-align: center;">{% trans "Jaga allolevat koodi pereliikmetega või kopeeri link." %}</p>
 {% endblock %}
 
 {% block email_content %}
-  <p>{% blocktrans %}Perekas pere "{{ family.name }}" on edukalt loodud.{% endblocktrans %}</p>
-  <p>{% trans "Kasuta seda koodi, et teised pereliikmed saaksid liituda:" %}</p>
+  <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+    {% blocktrans with family_name=family.name %}Perekas pere "{{ family_name }}" on edukalt loodud.{% endblocktrans %}
+  </p>
+  <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+    {% trans "Kasuta seda koodi, et teised pereliikmed saaksid liituda:" %}
+  </p>
 
-  <div class="email-panel" style="text-align: center; font-size: 22px; letter-spacing: 0.35em;">
-    {{ family.join_code }}
-  </div>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 16px 0 24px;">
+    <tr>
+      <td align="center" style="padding: 20px; background-color: rgba(22, 31, 56, 0.85); border: 1px solid rgba(59, 72, 99, 0.4); border-radius: 16px;">
+        <p style="margin: 0; font-size: 22px; font-weight: 600; letter-spacing: 0.35em; color: #8b5cf6; font-family: monospace;">
+          {{ family.join_code }}
+        </p>
+      </td>
+    </tr>
+  </table>
 
-  <p>{% trans "Jaga koodi või kopeeri link, mis viib otse liitumislehele:" %}</p>
-  <a href="{{ onboarding_url }}" class="email-link">{{ onboarding_url }}</a>
+  <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+    {% trans "Jaga koodi või kopeeri link, mis viib otse liitumislehele:" %}
+  </p>
+  <p style="margin: 0 0 24px; font-size: 13px; line-height: 1.5; word-break: break-all;">
+    <a href="{{ onboarding_url }}" style="color: #94a3b8; text-decoration: none;">{{ onboarding_url }}</a>
+  </p>
 
-  <div class="email-panel" style="margin-top: 24px;">
-    <strong>{% trans "Kiire käivituskontroll" %}</strong>
-    <ul style="margin: 12px 0 0; padding-left: 20px; color: rgba(226, 232, 255, 0.9);">
-      <li>{% trans "Kutsu vähemalt üks liige perega liituma." %}</li>
-      <li>{% trans "Loo esimene ülesanne või preemia, et teised saaksid koheselt tegutseda." %}</li>
-      <li>{% trans "Vaata üle tellimuse piirangud, kui plaanid suuremat peret." %}</li>
-    </ul>
-  </div>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 24px; padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(59, 72, 99, 0.4); background: rgba(22, 31, 56, 0.85);">
+    <tr>
+      <td style="font-size: 14px; line-height: 1.6; color: #f8fafc;">
+        <strong style="color: #f8fafc; display: block; margin-bottom: 8px;">{% trans "Kiire käivituskontroll" %}</strong>
+        <ul style="margin: 12px 0 0; padding-left: 20px; color: #94a3b8;">
+          <li style="margin-bottom: 8px;">{% trans "Kutsu vähemalt üks liige perega liituma." %}</li>
+          <li style="margin-bottom: 8px;">{% trans "Loo esimene ülesanne või preemia, et teised saaksid koheselt tegutseda." %}</li>
+          <li>{% trans "Vaata üle tellimuse piirangud, kui plaanid suuremat peret." %}</li>
+        </ul>
+      </td>
+    </tr>
+  </table>
 {% endblock %}
-
