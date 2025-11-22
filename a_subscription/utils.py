@@ -12,22 +12,22 @@ TIER_LIMITS = {
     Subscription.TIER_FREE: {
         'max_parents': 1,
         'max_children': 1,
-        'max_tasks_per_month': 5,
-        'max_rewards_per_month': 3,
+        'max_tasks_per_month': 30,
+        'max_rewards_per_month': 4,
         'shopping_list_enabled': False,
     },
     Subscription.TIER_STARTER: {
         'max_parents': 2,
         'max_children': 2,
-        'max_tasks_per_month': 20,  # TBD - reasonable default
-        'max_rewards_per_month': 15,  # TBD - reasonable default
+        'max_tasks_per_month': 45,
+        'max_rewards_per_month': 10,
         'shopping_list_enabled': True,
     },
     Subscription.TIER_PRO: {
-        'max_parents': 4,
-        'max_children': 10,
-        'max_tasks_per_month': 100,  # TBD - reasonable default
-        'max_rewards_per_month': 50,  # TBD - reasonable default
+        'max_parents': 2,
+        'max_children': 5,
+        'max_tasks_per_month': 1000,  # Soft limit - effectively unlimited
+        'max_rewards_per_month': 50,
         'shopping_list_enabled': True,
     },
 }

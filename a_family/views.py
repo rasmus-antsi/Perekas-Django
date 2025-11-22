@@ -107,7 +107,7 @@ def onboarding(request):
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
                 except Exception as e:
-                    messages.error(request, f'Perega liitumisel tekkis viga: {str(e)}')
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
         
         else:
             if action == 'create' and not is_parent:
@@ -132,6 +132,7 @@ def index(request):
     
     # Redirect to onboarding if user doesn't have a family
     if not family:
+        messages.info(request, "Perega liitumiseks või uue pere loomiseks palun täida pere andmed.")
         return redirect('a_family:onboarding')
     
     # Redirect children - they can't see the family page
@@ -161,7 +162,7 @@ def index(request):
 def remove_member(request, user_id):
     """Remove a member from the family - only owner can do this"""
     if request.method != 'POST':
-        messages.error(request, 'Vale päringu meetod.')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
         return redirect('a_family:index')
     
     user = request.user
@@ -191,7 +192,7 @@ def remove_member(request, user_id):
         else:
             messages.info(request, 'See kasutaja ei kuulu sinu perre.')
     except User.DoesNotExist:
-        messages.error(request, 'Kasutajat ei leitud.')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
     
     return redirect('a_family:index')
 
@@ -216,10 +217,10 @@ def resend_verification_email(request):
             adapter.send_confirmation_mail(request, email_address, signup=False)
             messages.success(request, 'Kinnituse kiri saadeti uuesti. Palun kontrolli oma e-posti.')
         except EmailAddress.DoesNotExist:
-            messages.error(request, 'See e-posti aadress ei ole meie süsteemis.')
+            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
-            messages.error(request, 'E-kirja saatmisel tekkis viga. Palun proovi hiljem uuesti.')
+            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
     
     return redirect('account_email_verification_sent')

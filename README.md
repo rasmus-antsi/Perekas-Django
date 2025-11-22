@@ -378,21 +378,21 @@ This will prevent direct pushes to `master` and require all changes to go throug
 ### FREE Tier
 - 1 parent
 - 1 child
-- 5 tasks per month
-- 3 rewards per month
+- 30 tasks per month
+- 4 rewards per month
 - ❌ Shopping list access
 
 ### STARTER Tier
 - 2 parents
 - 2 children
-- 20 tasks per month
-- 15 rewards per month
+- 45 tasks per month
+- 10 rewards per month
 - ✅ Shopping list access
 
 ### PRO Tier
-- 4 parents
-- 10 children
-- 100 tasks per month
+- 2 parents
+- 5 children
+- Unlimited tasks (soft limit 1000)
 - 50 rewards per month
 - ✅ Shopping list access
 

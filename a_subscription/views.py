@@ -5,6 +5,7 @@ import stripe
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
@@ -23,12 +24,12 @@ def upgrade_success(request):
     """Handle successful subscription upgrade"""
     session_id = request.GET.get('session_id')
     if not session_id:
-        messages.error(request, "Vigane seanss.")
-        return redirect('a_dashboard:settings')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     if not settings.STRIPE_SECRET_KEY:
-        messages.error(request, "Stripe pole seadistatud.")
-        return redirect('a_dashboard:settings')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -39,8 +40,8 @@ def upgrade_success(request):
         tier_from_metadata = session.metadata.get('tier')
 
         if str(request.user.id) != str(user_id):
-            messages.error(request, "See seanss ei kuulu sinu kontole.")
-            return redirect('a_dashboard:settings')
+            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
         # Extract tier from price ID (primary method, scalable)
         tier = None
@@ -71,16 +72,16 @@ def upgrade_success(request):
             logger.info(f"Using tier {tier} from metadata for session {session_id}")
         
         if not tier:
-            messages.error(request, "Ei õnnestunud määrata paketi taset.")
+            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             logger.error(f"Could not determine tier for session {session_id}")
-            return redirect('a_dashboard:settings')
+            return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
         # Get customer ID from session
         customer_id = getattr(session, 'customer', None)
         if not customer_id:
             logger.error(f"No customer ID found in session {session_id}")
-            messages.error(request, "Tellimuses puudub kliendi ID.")
-            return redirect('a_dashboard:settings')
+            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         # Get subscription details from Stripe
         subscription_id = getattr(session, 'subscription', None)
@@ -165,16 +166,16 @@ def upgrade_success(request):
 
         messages.success(request, f"Pakett uuendati tasemele {subscription.get_tier_display()}!")
         logger.info(f"Subscription successfully created/updated for user {request.user.id}, tier: {subscription.tier}")
-        return redirect('a_dashboard:settings')
+        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error in upgrade_success: {str(e)}", exc_info=True)
-        messages.error(request, f"Tekkis viga tellimuse töötlemisel: {str(e)}")
-        return redirect('a_dashboard:settings')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
     except Exception as e:
         logger.error(f"Unexpected error in upgrade_success: {str(e)}", exc_info=True)
-        messages.error(request, "Tekkis ootamatu viga. Palun proovi uuesti või võta ühendust toega.")
-        return redirect('a_dashboard:settings')
+        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
 
 

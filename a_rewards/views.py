@@ -36,6 +36,7 @@ def index(request):
 
     # Redirect to onboarding if user doesn't have a family
     if not family:
+        messages.info(request, "Perega liitumiseks või uue pere loomiseks palun täida pere andmed.")
         return redirect('a_family:onboarding')
 
     # Set default role for owner if not set
@@ -107,7 +108,7 @@ def index(request):
         elif action == "unclaim" and is_parent:
             reward = _get_reward()
             if not reward:
-                messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             elif not reward.claimed:
                 messages.warning(request, "See preemia pole lunastatud.")
             elif not reward.claimed_by:
@@ -129,12 +130,12 @@ def index(request):
                         reward_refreshed.save(update_fields=["claimed", "claimed_by", "claimed_at"])
                         messages.success(request, f"Preemia '{reward_refreshed.name}' lunastamine tühistatud.")
                 except Exception as e:
-                    messages.error(request, f"Preemia lunastuse tühistamisel tekkis viga: {str(e)}")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 
         elif action == "claim" and is_child:
             reward = _get_reward()
             if not reward:
-                messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
             elif reward.claimed:
                 messages.warning(request, "See preemia on juba lunastatud.")
             else:
@@ -166,11 +167,11 @@ def index(request):
                             user_refreshed.save(update_fields=["points"])
                             messages.success(request, f"Preemia '{reward_refreshed.name}' lunastatud!")
                 except User.DoesNotExist:
-                    messages.error(request, "Kasutajat ei leitud.")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 except Reward.DoesNotExist:
-                    messages.error(request, "Preemiat ei leitud. See võib olla kustutatud.")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 except Exception as e:
-                    messages.error(request, f"Preemia lunastamisel tekkis viga: {str(e)}")
+                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 
         return redirect("a_rewards:index")
 
