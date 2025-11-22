@@ -21,6 +21,17 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
             logger.info("Skipping email send for user without email")
             return
         
+        # Ensure user object has display_name accessible in template
+        if 'user' in context and context['user']:
+            user = context['user']
+            # Ensure display_name is available in context
+            if not hasattr(user, 'display_name'):
+                # If display_name property doesn't exist, add it as a method result
+                try:
+                    context['user_display_name'] = user.get_display_name()
+                except Exception:
+                    context['user_display_name'] = user.username or 'Perekas kasutaja'
+        
         def _runner():
             try:
                 super(AsyncAccountAdapter, self).send_mail(template_prefix, email, context)
