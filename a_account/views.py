@@ -438,6 +438,11 @@ def subscription_settings(request):
                 ).first()
                 
                 # Get or create Stripe customer - check by email first to avoid duplicates
+                # Note: Subscription management is only for family owners (parents) who should have email
+                if not user.email:
+                    messages.error(request, "Tellimuste haldamiseks peab olema e-posti aadress.")
+                    return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+                
                 customer_id = existing_subscription.stripe_customer_id if existing_subscription else None
                 
                 if not customer_id:
