@@ -153,12 +153,13 @@ ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'a_family:onboarding'
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'a_family:onboarding'
 
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['username*', 'email*', 'password1*', 'password2*']
+# Email verification - skip for children without email (handled in adapter)
+# Set to 'optional' since children may not have email, but we'll require it for parents in the form
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
+# Login methods - support both username and email login
+ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+# Signup fields - username required, email optional (we handle requirement in forms based on role)
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'email', 'password1*', 'password2*']
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/5m',
 }

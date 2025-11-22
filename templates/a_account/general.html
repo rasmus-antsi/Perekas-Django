@@ -32,10 +32,15 @@
               <span class="field-label">Perekonnanimi</span>
               <input type="text" name="last_name" value="{{ settings_user.last_name|default_if_none:'' }}" placeholder="Perekonnanimi">
             </label>
+            {% if is_parent or settings_user.email %}
             <label class="form-field">
               <span class="field-label">E-posti aadress</span>
-              <input type="email" name="email" value="{{ settings_user.email }}" placeholder="name@email.com">
+              <input type="email" name="email" value="{{ settings_user.email|default_if_none:'' }}" placeholder="name@email.com">
+              {% if not is_parent and not settings_user.email %}
+                <span class="field-hint">Lapsel ei ole e-posti aadressi.</span>
+              {% endif %}
             </label>
+            {% endif %}
           </div>
           <label class="form-field">
             <span class="field-label">Roll</span>
