@@ -1,7 +1,7 @@
 {% extends "a_account/base.html" %}
 
 {% block settings_content %}
-  <section class="settings-header">
+  <section class="settings-header" style="margin-bottom: 1.5rem;">
     <div>
       <h1 class="page-title">Tellimused</h1>
       <p class="page-subtitle">Halda oma tellimust ja pakette.</p>
@@ -10,47 +10,8 @@
 
   {% if can_manage_subscription and subscription_data %}
     <div class="subscription-wrapper">
-      <section class="subscription-highlight-card">
-        <div class="subscription-highlight-top">
-          <div class="subscription-highlight">
-            <span class="subscription-badge">
-              {% if subscription_data.tier|default:'FREE' == 'FREE' %}
-                Tasuta pakett
-              {% else %}
-                Aktiivne tellimus
-              {% endif %}
-            </span>
-            <h2>{{ subscription_data.display_tier|default:'Tasuta' }} pakett</h2>
-            {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
-              <p>Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}</p>
-            {% else %}
-              <p>Alusta tasulist paketti, et avada rohkem võimalusi.</p>
-            {% endif %}
-          </div>
-          <a href="#subscription-plans" class="btn btn-primary">Vaata pakette</a>
-        </div>
-        <div class="subscription-highlight-actions">
-          {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
-            <form method="post">
-              {% csrf_token %}
-              <input type="hidden" name="form_type" value="subscription">
-              <input type="hidden" name="subscription_action" value="edit_portal">
-              <button type="submit" class="btn btn-ghost">Halda Stripe'is</button>
-            </form>
-            {% if subscription_data.tier|default:'FREE' != 'FREE' %}
-              <form method="post" onsubmit="return confirm('Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.');">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="subscription">
-                <input type="hidden" name="subscription_action" value="downgrade">
-                <button type="submit" class="btn btn-ghost" style="color: #f87171;">Tühista tellimus</button>
-              </form>
-            {% endif %}
-          {% endif %}
-        </div>
-      </section>
-
-      <section id="subscription-plans" class="subscription-plan-section">
-        <div class="pricing-header-inline">
+      <section id="subscription-plans" class="subscription-plan-section" style="margin-bottom: 0; padding-bottom: 0;">
+        <div class="pricing-header-inline" style="margin-bottom: 1.5rem;">
           <div>
             <h2>Vali sobiv pakett</h2>
             <p class="pricing-subtitle-inline">Alusta tasuta ja testi kõiki põhifunktsioone</p>
@@ -84,14 +45,14 @@
                 <li class="no-access">Ostunimekiri puudub</li>
               </ul>
               {% if tier != 'FREE' %}
-                <form method="post">
+                <form method="post" data-confirm="Kas oled kindel, et soovid minna tagasi tasuta paketile? See tühistab sinu praeguse tellimuse ja juurdepääs jääb kehtima kuni arveldusperioodi lõpuni.">
                   {% csrf_token %}
                   <input type="hidden" name="form_type" value="subscription">
                   <input type="hidden" name="subscription_action" value="downgrade">
                   <button type="submit" class="landing-button secondary plan-button-modern">Lähtu tasuta paketile</button>
                 </form>
               {% else %}
-                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(59, 72, 99, 0.3); color: rgba(148, 163, 184, 0.6);">Praegune pakett</div>
+                <div class="plan-button-modern plan-button-current" style="background: rgba(59, 72, 99, 0.3); color: rgba(148, 163, 184, 0.6);">Praegune pakett</div>
               {% endif %}
             </article>
 
@@ -132,7 +93,7 @@
                 </form>
                 <button type="button" class="landing-button primary plan-button-modern" onclick="submitUpgrade('starter')">Vali Algus</button>
               {% else %}
-                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
+                <div class="plan-button-modern plan-button-current" style="background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
               {% endif %}
             </article>
 
@@ -168,16 +129,47 @@
                 </form>
                 <button type="button" class="landing-button secondary plan-button-modern" onclick="submitUpgrade('pro')">Vali Pro</button>
               {% else %}
-                <div class="plan-button-modern" style="padding: 0.75rem 1.4rem; text-align: center; border-radius: 0.9rem; background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
+                <div class="plan-button-modern plan-button-current" style="background: rgba(34, 197, 94, 0.15); color: rgba(34, 197, 94, 0.9); border: 1px solid rgba(34, 197, 94, 0.3);">Praegune pakett</div>
               {% endif %}
             </article>
           {% endwith %}
         </div>
+      </section>
 
-        <div class="subscription-help" style="text-align: center; margin-top: 2rem;">
-          Vajad abi paketi valimisel? Kirjuta julgesti aadressil <a href="mailto:tugi@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none;">tugi@perekas.ee</a> – aitame sobiva lahenduse leida.
+      <section class="subscription-highlight-card" style="margin-top: 1.5rem; margin-bottom: 0;">
+        <div class="subscription-highlight-top" style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <div class="subscription-highlight">
+            <h2 style="margin: 0 0 0.5rem 0;">{{ subscription_data.display_tier|default:'Tasuta' }} pakett</h2>
+            {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
+              <p style="margin: 0;">Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}</p>
+            {% else %}
+              <p style="margin: 0;">Alusta tasulist paketti, et avada rohkem võimalusi.</p>
+            {% endif %}
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            {% if subscription_data.subscription and subscription_data.subscription.stripe_customer_id %}
+              <form method="post" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="subscription">
+                <input type="hidden" name="subscription_action" value="edit_portal">
+                <button type="submit" class="btn btn-ghost">Halda Stripe'is</button>
+              </form>
+            {% endif %}
+            {% if subscription_data.tier|default:'FREE' != 'FREE' and subscription_data.subscription %}
+              <form method="post" style="margin: 0;" data-confirm="Kas oled kindel, et soovid tellimuse tühistada? Juurdepääs jääb kehtima kuni arveldusperioodi lõpuni. Pärast seda lähed tagasi tasuta paketile.">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="subscription">
+                <input type="hidden" name="subscription_action" value="downgrade">
+                <button type="submit" class="btn btn-ghost" style="color: #f87171;">Tühista tellimus</button>
+              </form>
+            {% endif %}
+          </div>
         </div>
       </section>
+
+      <div class="subscription-help" style="text-align: center; margin-top: 1.5rem;">
+        Vajad abi paketi valimisel? Kirjuta julgesti aadressil <a href="mailto:tugi@perekas.ee" style="color: rgba(99, 102, 241, 0.9); text-decoration: none;">tugi@perekas.ee</a> – aitame sobiva lahenduse leida.
+      </div>
     </div>
   {% else %}
     <div class="empty-state full-row">
@@ -196,6 +188,73 @@
       border-color: rgba(34, 197, 94, 0.5) !important;
       background: rgba(34, 197, 94, 0.05) !important;
       box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15) !important;
+    }
+    
+    /* Popular badge spacing - add padding-top to plan-header when badge exists */
+    .plan-card-modern.plan-featured-modern .plan-header-modern {
+      padding-top: 1rem !important;
+      margin-top: 0 !important;
+    }
+    
+    /* Make all plan cards the same height */
+    /* Make all plan cards the same height using flexbox */
+    .plans-grid-modern {
+      display: flex !important;
+      gap: 1.5rem !important;
+      align-items: stretch !important;
+      flex-wrap: wrap !important;
+    }
+    
+    @media (min-width: 768px) {
+      .plans-grid-modern {
+        flex-wrap: nowrap !important;
+      }
+    }
+    
+    .plans-grid-modern > .plan-card-modern {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-width: 280px !important;
+    }
+    
+    /* Make features list grow to fill space, pushing button to bottom */
+    .plan-card-modern .plan-features-modern {
+      flex: 1 !important;
+      margin-bottom: 1.5rem !important;
+    }
+    
+    /* Ensure all buttons have the same size - match landing-button exactly */
+    .plan-button-modern,
+    .plan-button-current,
+    .btn.btn-ghost,
+    .landing-button {
+      min-height: 2.875rem !important;
+      padding: 0.75rem 1.4rem !important;
+      box-sizing: border-box !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+      font-size: 0.9375rem !important;
+      line-height: 1.4 !important;
+    }
+    
+    .plan-button-modern,
+    .plan-button-current {
+      width: 100% !important;
+      border-radius: 0.9rem !important;
+      text-decoration: none !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease !important;
+    }
+    
+    /* Ensure btn-ghost buttons in subscription highlight section match the size */
+    .subscription-highlight-card .btn.btn-ghost {
+      min-height: 2.875rem !important;
+      padding: 0.75rem 1.4rem !important;
+      border-radius: 0.85rem !important;
+      font-size: 0.9375rem !important;
     }
     
     .form-grid-single {
@@ -564,6 +623,19 @@
     }
   </style>
 
+  <!-- Confirmation Modal -->
+  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <h3 class="confirm-modal-title" id="confirm-modal-title">Kinnita toiming</h3>
+      <p class="confirm-modal-message" id="confirm-modal-message"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Tühista</button>
+        <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Kinnita</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Pricing toggle functionality
     window.isYearly = false;
@@ -612,6 +684,139 @@
         form.submit();
       }
     }
+
+    // Custom confirmation modal - same as in tasks
+    document.addEventListener('DOMContentLoaded', function () {
+      const confirmModal = document.getElementById('confirm-modal');
+      if (!confirmModal) return;
+      
+      const confirmTitle = document.getElementById('confirm-modal-title');
+      const confirmMessage = document.getElementById('confirm-modal-message');
+      const confirmButton = document.getElementById('confirm-modal-confirm');
+      const cancelButton = document.getElementById('confirm-modal-cancel');
+      const confirmOverlay = confirmModal.querySelector('.confirm-modal-overlay');
+      
+      if (!confirmTitle || !confirmMessage || !confirmButton || !cancelButton || !confirmOverlay) {
+        console.error('Confirmation modal elements not found');
+        return;
+      }
+      
+      let confirmResolve = null;
+      let pendingForm = null;
+      let formSubmitHandler = null;
+
+      function showConfirm(title, message) {
+        return new Promise((resolve) => {
+          confirmTitle.textContent = title;
+          confirmMessage.textContent = message;
+          document.body.classList.add('modal-open');
+          confirmModal.classList.add('is-visible');
+          setTimeout(() => {
+            confirmModal.scrollTop = 0;
+          }, 0);
+          confirmResolve = resolve;
+        });
+      }
+
+      function closeConfirm(result) {
+        confirmModal.classList.remove('is-visible');
+        document.body.classList.remove('modal-open');
+        if (confirmResolve) {
+          confirmResolve(result);
+          confirmResolve = null;
+        }
+        
+        // If confirmed, submit the pending form
+        if (result && pendingForm) {
+          // Remove the data-confirm attribute so the form submits normally
+          pendingForm.removeAttribute('data-confirm');
+          
+          // Remove the event listener temporarily
+          if (formSubmitHandler) {
+            pendingForm.removeEventListener('submit', formSubmitHandler);
+          }
+          
+          // Submit the form directly
+          if (pendingForm.requestSubmit) {
+            pendingForm.requestSubmit();
+          } else {
+            const submitEvent = new Event('submit', {
+              bubbles: true,
+              cancelable: true
+            });
+            const submitted = pendingForm.dispatchEvent(submitEvent);
+            
+            if (submitted) {
+              pendingForm.submit();
+            }
+          }
+          
+          // Re-add the data-confirm attribute and listener after a short delay
+          setTimeout(() => {
+            if (pendingForm && formSubmitHandler) {
+              pendingForm.setAttribute('data-confirm', pendingForm.dataset.originalConfirm || '');
+              pendingForm.addEventListener('submit', formSubmitHandler);
+            }
+          }, 100);
+        }
+        
+        pendingForm = null;
+        formSubmitHandler = null;
+      }
+
+      confirmButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(true);
+      });
+      
+      cancelButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(false);
+      });
+      
+      confirmOverlay.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeConfirm(false);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && confirmModal.classList.contains('is-visible')) {
+          closeConfirm(false);
+        }
+      });
+
+      // Handle forms with data-confirm attribute
+      document.querySelectorAll('form[data-confirm]').forEach((form) => {
+        // Store original confirm message
+        form.dataset.originalConfirm = form.getAttribute('data-confirm');
+        
+        const submitHandler = async function (e) {
+          // Skip if form doesn't have data-confirm attribute (means it was removed for submission)
+          if (!form.hasAttribute('data-confirm')) {
+            return;
+          }
+          
+          e.preventDefault();
+          e.stopPropagation();
+          const message = form.getAttribute('data-confirm');
+          const action = form.querySelector('input[name="subscription_action"]')?.value || 'toiming';
+          let title = 'Kinnita toiming';
+          
+          if (action === 'downgrade') {
+            title = 'Kinnita tellimuse tühistamine';
+          }
+          
+          pendingForm = form;
+          formSubmitHandler = submitHandler;
+          const confirmed = await showConfirm(title, message);
+        };
+        
+        form.addEventListener('submit', submitHandler);
+      });
+    });
   </script>
 {% endblock %}
 

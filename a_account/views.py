@@ -4,6 +4,7 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings as django_settings
 
@@ -11,7 +12,60 @@ logger = logging.getLogger(__name__)
 
 from a_family.models import Family, User
 from a_subscription.models import Subscription
-from a_subscription.utils import get_family_subscription
+from a_subscription.utils import get_family_subscription, get_tier_from_price_id
+
+
+def _get_billing_period_from_price_id(price_id):
+    """Get billing period (monthly/yearly) from Stripe price ID"""
+    if not price_id:
+        return None
+    
+    monthly_price_ids = [
+        getattr(django_settings, 'STARTER_MONTHLY_PRICE_ID', None),
+        getattr(django_settings, 'PRO_MONTHLY_PRICE_ID', None),
+    ]
+    
+    yearly_price_ids = [
+        getattr(django_settings, 'STARTER_YEARLY_PRICE_ID', None),
+        getattr(django_settings, 'PRO_YEARLY_PRICE_ID', None),
+    ]
+    
+    if price_id in monthly_price_ids:
+        return 'monthly'
+    elif price_id in yearly_price_ids:
+        return 'yearly'
+    
+    return None
+
+
+def _sanitize_error_message(error_msg):
+    """Remove dev info from error messages"""
+    if not error_msg:
+        return "Tehniline viga. Palun proovi uuesti või võta ühendust toega."
+    
+    # Remove common dev info patterns
+    dev_patterns = [
+        'Request req_',
+        'No such',
+        'Invalid',
+        'stripe.',
+        'AttributeError',
+        'KeyError',
+        'TypeError',
+    ]
+    
+    # Check if error contains dev info
+    for pattern in dev_patterns:
+        if pattern in str(error_msg):
+            return "Tellimuse töötlemisel tekkis viga. Palun proovi uuesti või võta ühendust toega."
+    
+    # Return sanitized message if it looks safe
+    safe_msg = str(error_msg).strip()
+    # Limit message length
+    if len(safe_msg) > 200:
+        safe_msg = safe_msg[:200] + "..."
+    
+    return safe_msg
 
 
 def _get_family_for_user(user):
@@ -112,7 +166,7 @@ def general_settings(request):
         if updated_fields:
             user.save(update_fields=list(updated_fields))
             messages.success(request, "Profiil uuendatud.")
-        return redirect('a_account:settings?section=general')
+        return redirect(f"{reverse('a_account:settings')}?section=general")
 
     # Only family owner can manage subscription
     can_manage_subscription = False
@@ -167,7 +221,7 @@ def notification_settings(request):
         user.notification_preferences = prefs
         user.save(update_fields=['notification_preferences'])
         messages.success(request, "Teavituste eelistused salvestatud.")
-        return redirect('a_account:settings?section=notifications')
+        return redirect(f"{reverse('a_account:settings')}?section=notifications")
 
     # Load notification preferences from user model, with defaults
     user_prefs = user.notification_preferences or {}
@@ -217,15 +271,15 @@ def subscription_settings(request):
             
             if not subscription:
                 messages.error(request, "Tellimust ei leitud.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
                 messages.error(request, "Stripe kliendi ID puudub.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
@@ -245,75 +299,127 @@ def subscription_settings(request):
                 
                 return redirect(portal_session.url)
                 
-            except AttributeError as e:
+            except (AttributeError, TypeError) as e:
                 # Handle case where billing_portal API might not be available
                 logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
                 messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
-                return redirect('a_account:settings?section=subscriptions')
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Stripe'i viga: {str(e)}")
-                logger.error(f"Stripe error: {str(e)}", exc_info=True)
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+            except Exception as e:
+                error_msg = str(e)
+                # Check if it's a configuration error and retry without it
+                if 'No such configuration' in error_msg or 'configuration' in error_msg.lower():
+                    logger.warning(f"Stripe portal configuration invalid, trying without configuration: {error_msg}")
+                    try:
+                        portal_params_no_config = {
+                            'customer': subscription.stripe_customer_id,
+                            'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                            'locale': 'et',
+                        }
+                        portal_session = stripe.billing_portal.Session.create(**portal_params_no_config)
+                        return redirect(portal_session.url)
+                    except Exception as retry_error:
+                        logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
+                        messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+                else:
+                    logger.error(f"Stripe error: {error_msg}", exc_info=True)
+                    sanitized_msg = _sanitize_error_message(error_msg)
+                    messages.error(request, sanitized_msg)
+                    return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         elif action == 'edit_portal':
-            subscription = Subscription.objects.filter(
-                owner=user,
-                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
-            ).first()
+            # Get current tier
+            tier = get_family_subscription(family) if family else Subscription.TIER_FREE
             
-            if not subscription:
-                messages.error(request, "Tellimust ei leitud.")
-                return redirect('a_account:settings?section=subscriptions')
+            # If on FREE tier, check if they have any subscription with customer_id (even cancelled)
+            if tier == Subscription.TIER_FREE:
+                subscription = Subscription.objects.filter(
+                    owner=user,
+                    stripe_customer_id__isnull=False
+                ).exclude(stripe_customer_id='').order_by('-created_at').first()
+                
+                if not subscription or not subscription.stripe_customer_id:
+                    messages.info(request, "Stripe'i portaali kasutamiseks pead sul olema aktiivne tellimus. Vali üks pakettidest üleval.")
+                    return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+            else:
+                # Look for active subscription
+                subscription = Subscription.objects.filter(
+                    owner=user,
+                    tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO],
+                    stripe_customer_id__isnull=False
+                ).exclude(stripe_customer_id='').first()
+                
+                # If not found, try any subscription with customer_id
+                if not subscription:
+                    subscription = Subscription.objects.filter(
+                        owner=user,
+                        stripe_customer_id__isnull=False
+                    ).exclude(stripe_customer_id='').order_by('-created_at').first()
             
-            if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
-                messages.error(request, "Stripe kliendi ID puudub.")
-                return redirect('a_account:settings?section=subscriptions')
+            if not subscription or not subscription.stripe_customer_id:
+                messages.info(request, "Stripe'i portaali kasutamiseks pead sul olema tellimus Stripe'iga seostatud. Vali üks pakettidest üleval.")
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
             try:
-                # Create customer portal session
-                # First check if billing_portal exists by trying to access it
-                try:
-                    billing_portal = stripe.billing_portal
-                except AttributeError:
+                # Check if billing_portal exists before accessing it
+                if not hasattr(stripe, 'billing_portal'):
                     logger.error("Stripe billing_portal API not available in this Stripe SDK version")
-                    messages.error(request, "Stripe'i kliendiportaali API pole sinu Stripe versioonis toetatud.")
-                    return redirect('a_account:settings?section=subscriptions')
+                    messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe versiooni.")
+                    return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
-                # Check if configuration ID is set
+                # Prepare portal parameters
                 portal_params = {
                     'customer': subscription.stripe_customer_id,
                     'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
                     'locale': 'et',
                 }
                 
-                # Only add configuration if it's set (optional parameter)
-                if hasattr(django_settings, 'STRIPE_CUSTOMER_PORTAL_ID') and django_settings.STRIPE_CUSTOMER_PORTAL_ID:
-                    portal_params['configuration'] = django_settings.STRIPE_CUSTOMER_PORTAL_ID
+                # Only add configuration if it's set and valid (optional parameter)
+                # If configuration doesn't exist, Stripe will use default portal settings
+                config_id = getattr(django_settings, 'STRIPE_CUSTOMER_PORTAL_ID', None)
+                if config_id:
+                    portal_params['configuration'] = config_id
                 
                 # Create billing portal session
-                portal_session = billing_portal.Session.create(**portal_params)
+                portal_session = stripe.billing_portal.Session.create(**portal_params)
                 
                 return redirect(portal_session.url)
                 
-            except AttributeError as e:
-                # Handle case where billing_portal API might not be available
-                logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
+            except (AttributeError, TypeError) as e:
+                # Handle case where billing_portal API might not be available or accessed incorrectly
+                logger.error(f"Stripe billing_portal API error: {str(e)}", exc_info=True)
                 messages.error(request, "Stripe'i kliendiportaali API pole saadaval. Palun kontrolli Stripe konfiguratsiooni.")
-                return redirect('a_account:settings?section=subscriptions')
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Stripe'i viga: {str(e)}")
-                logger.error(f"Stripe error: {str(e)}", exc_info=True)
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             except Exception as e:
-                logger.error(f"Unexpected error creating billing portal session: {str(e)}", exc_info=True)
-                messages.error(request, f"Viga portaali loomisel: {str(e)}")
-                return redirect('a_account:settings?section=subscriptions')
+                # Catch all Stripe errors (InvalidRequestError, etc.) and other exceptions
+                error_msg = str(e)
+                
+                # Check if it's a configuration error
+                if 'No such configuration' in error_msg or 'configuration' in error_msg.lower():
+                    logger.warning(f"Stripe portal configuration invalid, trying without configuration: {error_msg}")
+                    # Try again without the configuration parameter
+                    try:
+                        portal_params_no_config = {
+                            'customer': subscription.stripe_customer_id,
+                            'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                            'locale': 'et',
+                        }
+                        portal_session = stripe.billing_portal.Session.create(**portal_params_no_config)
+                        return redirect(portal_session.url)
+                    except Exception as retry_error:
+                        logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
+                        messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+                else:
+                    logger.error(f"Stripe portal error: {error_msg}", exc_info=True)
+                    messages.error(request, "Stripe'i portaali kasutamisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                    return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         elif action == 'upgrade':
             tier = request.POST.get('tier')
@@ -321,7 +427,7 @@ def subscription_settings(request):
             
             if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
                 messages.error(request, "Vigane paketivalik.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             # Get appropriate price ID
             if tier == Subscription.TIER_STARTER:
@@ -331,7 +437,7 @@ def subscription_settings(request):
             
             if not django_settings.STRIPE_SECRET_KEY:
                 messages.error(request, "Stripe pole seadistatud. Palun võta ühendust toega.")
-                return redirect('a_account:settings?section=subscriptions')
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
@@ -360,14 +466,15 @@ def subscription_settings(request):
                             )
                             customer_id = customer.id
                             logger.info(f"Created new Stripe customer {customer_id} for user {user.id}")
-                    except stripe.error.StripeError as e:
-                        logger.error(f"Error finding/creating customer: {str(e)}")
-                        messages.error(request, f"Kliendi loomisel tekkis viga: {str(e)}")
-                        return redirect('a_account:settings?section=subscriptions')
+                    except Exception as e:
+                        error_msg = str(e)
+                        logger.error(f"Error finding/creating customer: {error_msg}", exc_info=True)
+                        messages.error(request, "Kliendi loomisel tekkis viga. Palun proovi uuesti või võta ühendust toega.")
+                        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     try:
                         customer = stripe.Customer.retrieve(customer_id)
-                    except stripe.error.StripeError:
+                    except Exception:
                         # Customer doesn't exist, create new one
                         customer = stripe.Customer.create(
                             email=user.email,
@@ -382,17 +489,35 @@ def subscription_settings(request):
                         # Retrieve the Stripe subscription
                         stripe_subscription = stripe.Subscription.retrieve(existing_subscription.stripe_subscription_id)
                         
+                        # Get current price ID and billing period from Stripe subscription
+                        current_price_id = stripe_subscription['items']['data'][0]['price']['id']
+                        current_billing_period = _get_billing_period_from_price_id(current_price_id)
+                        
+                        # Validate billing period change if switching
+                        if current_billing_period and billing_period != current_billing_period:
+                            # User is changing billing period (monthly <-> yearly)
+                            # This is allowed - Stripe will handle proration correctly
+                            logger.info(f"User {user.id} changing billing period from {current_billing_period} to {billing_period}")
+                        
                         # Get the current subscription item ID
                         subscription_item_id = stripe_subscription['items']['data'][0]['id']
                         
+                        # Verify the new price ID is valid
+                        new_price_tier = get_tier_from_price_id(price_id)
+                        if not new_price_tier or new_price_tier != tier:
+                            logger.error(f"Price ID {price_id} does not match tier {tier}")
+                            messages.error(request, "Vigane paketi valik. Palun proovi uuesti.")
+                            return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+                        
                         # Update subscription with new price (prorated)
+                        # Stripe will automatically handle proration when changing between monthly/yearly
                         updated_subscription = stripe.Subscription.modify(
                             existing_subscription.stripe_subscription_id,
                             items=[{
                                 'id': subscription_item_id,
                                 'price': price_id,
                             }],
-                            proration_behavior='always',  # Always prorate when changing plans
+                            proration_behavior='create_prorations',  # Always prorate when changing plans
                             metadata={
                                 'user_id': str(user.id),
                                 'family_id': str(family.id),
@@ -403,22 +528,43 @@ def subscription_settings(request):
                         # Update local subscription record
                         existing_subscription.tier = tier
                         existing_subscription.status = updated_subscription.status
-                        if updated_subscription.current_period_start:
-                            existing_subscription.current_period_start = timezone.make_aware(
-                                datetime.fromtimestamp(updated_subscription.current_period_start)
-                            )
-                        if updated_subscription.current_period_end:
-                            existing_subscription.current_period_end = timezone.make_aware(
-                                datetime.fromtimestamp(updated_subscription.current_period_end)
-                            )
+                        
+                        # Safely update period dates from Stripe subscription object
+                        # These are optional fields, so we catch any errors and continue
+                        try:
+                            period_start = getattr(updated_subscription, 'current_period_start', None)
+                            if period_start:
+                                existing_subscription.current_period_start = timezone.make_aware(
+                                    datetime.fromtimestamp(int(period_start))
+                                )
+                        except Exception as e:
+                            logger.warning(f"Could not update current_period_start: {str(e)}")
+                            # Continue without updating period start - not critical for subscription
+                        
+                        try:
+                            period_end = getattr(updated_subscription, 'current_period_end', None)
+                            if period_end:
+                                existing_subscription.current_period_end = timezone.make_aware(
+                                    datetime.fromtimestamp(int(period_end))
+                                )
+                        except Exception as e:
+                            logger.warning(f"Could not update current_period_end: {str(e)}")
+                            # Continue without updating period end - not critical for subscription
+                        
                         existing_subscription.save()
                         
                         messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
-                        return redirect('a_account:settings?section=subscriptions')
+                        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                         
-                    except stripe.error.StripeError as e:
-                        messages.error(request, f"Tellimuse uuendamisel tekkis viga: {str(e)}")
-                        return redirect('a_account:settings?section=subscriptions')
+                    except Exception as e:
+                        error_msg = str(e) or repr(e)
+                        error_type = type(e).__name__
+                        logger.error(f"Stripe subscription update error ({error_type}): {error_msg}", exc_info=True)
+                        
+                        # Sanitize error message before showing to user
+                        sanitized_msg = _sanitize_error_message(error_msg)
+                        messages.error(request, sanitized_msg)
+                        return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
                 # No active subscription - create new one via checkout
                 checkout_session = stripe.checkout.Session.create(
@@ -441,9 +587,12 @@ def subscription_settings(request):
                 
                 return redirect(checkout_session.url)
                 
-            except stripe.error.StripeError as e:
-                messages.error(request, f"Stripe'i viga: {str(e)}")
-                return redirect('a_account:settings?section=subscriptions')
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(f"Stripe error: {error_msg}", exc_info=True)
+                sanitized_msg = _sanitize_error_message(error_msg)
+                messages.error(request, sanitized_msg)
+                return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     # Get subscription data if user can manage it
     subscription_data = None
