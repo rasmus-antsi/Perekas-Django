@@ -68,7 +68,20 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
         
         # Save the user (with email=None for children without email)
         if commit:
-            user.save()
+            try:
+                user.save()
+            except Exception as e:
+                # If we get an IntegrityError about email being NOT NULL, the migration hasn't been run
+                if 'NOT NULL constraint failed: auth_user.email' in str(e) or 'email' in str(e).lower():
+                    logger.error(
+                        "Database migration not applied! The email field is still NOT NULL. "
+                        "Please run: python manage.py migrate a_family"
+                    )
+                    raise Exception(
+                        "Database schema is out of date. Please contact support or run migrations."
+                    ) from e
+                raise
+        
         return user
     
     def is_email_verification_required(self, request):

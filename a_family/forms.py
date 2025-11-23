@@ -182,7 +182,16 @@ class FamilySignupForm(SignupForm):
             user.email = None
         
         # Save the user with all updates
-        user.save(update_fields=['first_name', 'last_name', 'birthdate', 'role', 'email'])
+        try:
+            user.save(update_fields=['first_name', 'last_name', 'birthdate', 'role', 'email'])
+        except Exception as e:
+            # If we get an IntegrityError about email being NOT NULL, the migration hasn't been run
+            if 'NOT NULL constraint failed: auth_user.email' in str(e) or ('email' in str(e).lower() and 'NOT NULL' in str(e)):
+                from django.core.exceptions import ValidationError
+                raise ValidationError(
+                    'Andmebaasi migratsioon pole veel rakendatud. Palun kontakteeru toega või oota mõni hetk.'
+                ) from e
+            raise
         
         # Delete any EmailAddress records that allauth might have created
         if is_child_without_email:
