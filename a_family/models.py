@@ -14,6 +14,9 @@ class User(AbstractUser):
         (ROLE_CHILD, 'Laps'),
     ]
 
+    # Override email field to make it nullable for children without email
+    email = models.EmailField(blank=True, max_length=254, null=True, verbose_name='email address')
+    
     role = models.CharField(max_length=12, choices=ROLE_CHOICES, default=ROLE_PARENT, db_index=True)
     points = models.PositiveIntegerField(default=0)
     birthdate = models.DateField(null=True, blank=True, db_index=True)
