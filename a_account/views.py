@@ -740,6 +740,7 @@ def subscription_settings(request):
                     success_url=success_url,
                     cancel_url=cancel_url,
                     locale='et',
+                    allow_promotion_codes=True,
                     metadata={
                         'user_id': str(user.id),
                         'family_id': str(family.id),
