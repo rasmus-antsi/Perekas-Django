@@ -1745,7 +1745,7 @@ body.modal-open {
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 60;
+  z-index: 10001;
   padding: 1rem;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -1760,7 +1760,7 @@ body.modal-open {
   inset: 0;
   background: rgba(3, 7, 18, 0.75);
   backdrop-filter: blur(8px);
-  z-index: 60;
+  z-index: 10001;
 }
 
 .confirm-modal-content {
@@ -1774,6 +1774,7 @@ body.modal-open {
   box-shadow: 0 30px 70px rgba(2, 6, 23, 0.7), 0 0 0 1px rgba(148, 163, 184, 0.15) inset;
   padding: 2rem;
   display: flex;
+  z-index: 10002;
   flex-direction: column;
   gap: 1.5rem;
   animation: confirmModalSlideIn 0.2s ease-out;

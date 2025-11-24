@@ -343,6 +343,121 @@ def resend_verification_email(request):
 
 
 @login_required
+def delete_family(request):
+    """Delete family - only for family owner"""
+    from django.urls import reverse
+    user = request.user
+    
+    if request.method != 'POST':
+        messages.error(request, "Midagi läks valesti.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Get the family
+    family = _get_family_for_user(user)
+    if not family:
+        messages.error(request, 'Sa ei kuulu ühelegi peresse.')
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Check if user is the family owner
+    if family.owner != user:
+        messages.error(request, 'Ainult pere omanik saab pere kustutada.')
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    family_name = family.name
+    
+    # Remove all members from the family first
+    # This ensures members keep their accounts but are no longer associated with the family
+    family.members.clear()
+    
+    # Delete subscriptions associated with the family owner
+    # Members keep their accounts, so their subscriptions stay if any
+    try:
+        from a_subscription.models import Subscription
+        subscriptions = Subscription.objects.filter(owner=user)
+        for subscription in subscriptions:
+            subscription.delete()
+    except Exception:
+        pass
+    
+    # Note: Tasks have CASCADE delete on family FK (family=models.ForeignKey(Family, on_delete=models.CASCADE))
+    # So they'll be deleted automatically when the family is deleted
+    # Shopping items, rewards, etc. are tied to users, not families, so they stay
+    
+    # Delete the family (this will CASCADE delete tasks)
+    family.delete()
+    
+    messages.success(request, f'Pere "{family_name}" kustutatud edukalt.')
+    return redirect('a_dashboard:dashboard')
+
+
+@login_required
+def delete_child_account(request):
+    """Delete child account - only for parents"""
+    user = request.user
+    
+    # Check if user is a parent
+    if user.role != User.ROLE_PARENT:
+        messages.error(request, 'Ainult lapsevanemad saavad laste kontosid kustutada.')
+        return redirect('a_dashboard:dashboard')
+    
+    if request.method != 'POST':
+        messages.error(request, "Midagi läks valesti.")
+        return redirect('a_family:index')
+    
+    child_id = request.POST.get('child_id')
+    if not child_id:
+        messages.error(request, "Lapse ID puudub.")
+        return redirect('a_family:index')
+    
+    try:
+        child_id = int(child_id)
+    except (ValueError, TypeError):
+        messages.error(request, "Vale lapse ID.")
+        return redirect('a_family:index')
+    
+    # Get the family
+    family = _get_family_for_user(user)
+    if not family:
+        messages.error(request, 'Sa ei kuulu ühelegi peresse.')
+        return redirect('a_family:onboarding')
+    
+    # Get the child
+    try:
+        child = User.objects.get(id=child_id, role=User.ROLE_CHILD)
+    except User.DoesNotExist:
+        messages.error(request, 'Last ei leitud.')
+        return redirect('a_family:index')
+    
+    # Check if child is in the family
+    if child not in family.members.all() and child != family.owner:
+        messages.error(request, 'See laps ei kuulu sinu peresse.')
+        return redirect('a_family:index')
+    
+    # Can't delete family owner
+    if child == family.owner:
+        messages.error(request, 'Pere omaniku kontot ei saa kustutada.')
+        return redirect('a_family:index')
+    
+    child_name = child.get_display_name()
+    
+    # Remove child from family
+    family.members.remove(child)
+    
+    # Delete EmailAddress records
+    try:
+        from allauth.account.models import EmailAddress
+        EmailAddress.objects.filter(user=child).delete()
+    except Exception:
+        pass
+    
+    # Delete child account
+    child.delete()
+    
+    messages.success(request, f'{child_name} konto kustutatud edukalt.')
+    return redirect('a_family:index')
+
+
+@login_required
 def manage_child_account(request, child_id):
     """Parent view to manage child account - edit profile, reset password, manage email"""
     user = request.user

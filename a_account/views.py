@@ -800,3 +800,49 @@ def subscription_settings(request):
     }
     return render(request, 'a_account/subscriptions.html', context)
 
+
+@login_required
+def delete_account(request):
+    """Delete user account - only for parents"""
+    user = request.user
+    
+    # Prevent children from deleting their accounts
+    if user.role == User.ROLE_CHILD:
+        messages.error(request, "Lapsed ei saa oma kontot kustutada.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    if request.method != 'POST':
+        messages.error(request, "Midagi läks valesti.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Get family before deleting user
+    family = _get_family_for_user(user)
+    is_family_owner = family and family.owner == user if family else False
+    
+    # Remove user from family if they're a member (but not owner - can't delete owner without handling family transfer)
+    if family:
+        if is_family_owner:
+            # Owner can't delete account without transferring ownership or deleting family first
+            messages.error(request, "Pere omanik ei saa oma kontot kustutada. Palun kustuta esmalt pere või üle kanna omaniku õigused teisele lapsevanemale.")
+            return redirect(f"{reverse('a_account:settings')}?section=general")
+        else:
+            # Remove user from family
+            family.members.remove(user)
+    
+    # Delete EmailAddress records
+    try:
+        from allauth.account.models import EmailAddress
+        EmailAddress.objects.filter(user=user).delete()
+    except Exception:
+        pass
+    
+    # Logout user before deleting
+    from django.contrib.auth import logout
+    logout(request)
+    
+    # Delete user account
+    user.delete()
+    
+    messages.success(request, "Konto kustutatud edukalt.")
+    return redirect('a_landing:landing_index')
+

@@ -102,6 +102,54 @@
       </div>
     </section>
 
+    <!-- Account Deletion Card (only for parents) -->
+    {% if is_parent %}
+    <section class="settings-card danger-zone" style="margin-top: 2rem; border: 1px solid rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; gap: 1.5rem;">
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Konto kustutamine</h3>
+          <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Konto kustutamine on pöördumatu. Kõik andmed kustutatakse jäädavalt.</p>
+        </div>
+        <form method="post" action="{% url 'a_account:delete_account' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid oma konto kustutada? See toiming on pöördumatu ja kõik sinu andmed kustutatakse jäädavalt.">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+            Kustuta konto
+          </button>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Family Deletion Card (only for family owner) -->
+    {% if family and family.owner == user %}
+    <section class="settings-card danger-zone" style="margin-top: 1rem; border: 1px solid rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));">
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; gap: 1.5rem;">
+        <div style="flex: 1;">
+          <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Pere kustutamine</h3>
+          <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Pere kustutamine on pöördumatu. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.</p>
+        </div>
+        <form method="post" action="{% url 'a_family:delete_family' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid pere '{{ family.name }}' kustutada? See toiming on pöördumatu. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            </svg>
+            Kustuta pere
+          </button>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+
     <!-- Password Change Modal -->
     <section class="settings-card" id="passwordModal" style="display: none; margin-top: 24px;" aria-hidden="true">
       <header class="settings-card-header card-header">
@@ -139,6 +187,19 @@
       </div>
     </section>
   </div>
+
+  <!-- Custom Confirmation Modal -->
+  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <h3 class="confirm-modal-title" id="confirm-modal-title">Kinnita toiming</h3>
+      <p class="confirm-modal-message" id="confirm-modal-message"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Tühista</button>
+        <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Kinnita</button>
+      </div>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -168,6 +229,127 @@
             passwordChangeForm.reset();
           }
         });
+      }
+
+      // Custom confirmation modal
+      const confirmModal = document.getElementById('confirm-modal');
+      if (confirmModal) {
+        const confirmTitle = document.getElementById('confirm-modal-title');
+        const confirmMessage = document.getElementById('confirm-modal-message');
+        const confirmButton = document.getElementById('confirm-modal-confirm');
+        const cancelButton = document.getElementById('confirm-modal-cancel');
+        const confirmOverlay = confirmModal.querySelector('.confirm-modal-overlay');
+        
+        if (confirmTitle && confirmMessage && confirmButton && cancelButton && confirmOverlay) {
+          let confirmResolve = null;
+          let pendingForm = null;
+          let formSubmitHandler = null;
+
+          function showConfirm(title, message) {
+            return new Promise((resolve) => {
+              confirmTitle.textContent = title;
+              confirmMessage.textContent = message;
+              document.body.classList.add('modal-open');
+              confirmModal.classList.add('is-visible');
+              setTimeout(() => {
+                confirmModal.scrollTop = 0;
+              }, 0);
+              confirmResolve = resolve;
+            });
+          }
+
+          function closeConfirm(result) {
+            confirmModal.classList.remove('is-visible');
+            document.body.classList.remove('modal-open');
+            if (confirmResolve) {
+              confirmResolve(result);
+              confirmResolve = null;
+            }
+            
+            if (result && pendingForm) {
+              pendingForm.removeAttribute('data-confirm');
+              
+              if (formSubmitHandler) {
+                pendingForm.removeEventListener('submit', formSubmitHandler);
+              }
+              
+              if (pendingForm.requestSubmit) {
+                pendingForm.requestSubmit();
+              } else {
+                const submitEvent = new Event('submit', {
+                  bubbles: true,
+                  cancelable: true
+                });
+                const submitted = pendingForm.dispatchEvent(submitEvent);
+                
+                if (submitted) {
+                  pendingForm.submit();
+                }
+              }
+              
+              setTimeout(() => {
+                if (pendingForm && formSubmitHandler) {
+                  pendingForm.setAttribute('data-confirm', pendingForm.dataset.originalConfirm || '');
+                  pendingForm.addEventListener('submit', formSubmitHandler);
+                }
+              }, 100);
+            }
+            
+            pendingForm = null;
+            formSubmitHandler = null;
+          }
+
+          confirmButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeConfirm(true);
+          });
+          
+          cancelButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeConfirm(false);
+          });
+          
+          confirmOverlay.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            closeConfirm(false);
+          });
+
+          document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && confirmModal.classList.contains('is-visible')) {
+              closeConfirm(false);
+            }
+          });
+
+          // Handle forms with data-confirm attribute
+          document.querySelectorAll('form[data-confirm]').forEach((form) => {
+            form.dataset.originalConfirm = form.getAttribute('data-confirm');
+            
+            const submitHandler = async function (e) {
+              if (!form.hasAttribute('data-confirm')) {
+                return;
+              }
+              
+              e.preventDefault();
+              e.stopPropagation();
+              const message = form.getAttribute('data-confirm');
+              const action = form.querySelector('input[name="action"]')?.value || 'toiming';
+              let title = 'Kinnita toiming';
+              
+              if (action === 'delete') {
+                title = 'Kinnita kustutamine';
+              }
+              
+              pendingForm = form;
+              formSubmitHandler = submitHandler;
+              await showConfirm(title, message);
+            };
+            
+            form.addEventListener('submit', submitHandler);
+          });
+        }
       }
     });
   </script>
