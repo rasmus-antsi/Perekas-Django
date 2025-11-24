@@ -149,6 +149,7 @@ def onboarding(request):
         'create_form': create_form,
         'join_form': join_form,
         'error_message': error_message,
+        'user_last_name': user.last_name or '',
     }
     return render(request, 'a_family/onboarding.html', context)
 
