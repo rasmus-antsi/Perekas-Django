@@ -301,14 +301,15 @@ def index(request):
         for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
             task.can_child_complete = is_child and (task.assigned_to_id is None or task.assigned_to_id == user.id)
 
-        family_members_qs = family.members.all()
+        # Only show children in the task assignment dropdown (not parents)
+        family_members_qs = family.members.filter(role=User.ROLE_CHILD)
         member_ids = set(family_members_qs.values_list("id", flat=True))
-        if family.owner_id not in member_ids:
-            from django.contrib.auth import get_user_model
-
-            UserModel = get_user_model()
-            owner_qs = UserModel.objects.filter(id=family.owner_id)
-            family_members = list(family_members_qs) + list(owner_qs)
+        # Also check owner if they're a child
+        if family.owner and family.owner.role == User.ROLE_CHILD:
+            if family.owner_id not in member_ids:
+                family_members = list(family_members_qs) + [family.owner]
+            else:
+                family_members = list(family_members_qs)
         else:
             family_members = list(family_members_qs)
     else:
