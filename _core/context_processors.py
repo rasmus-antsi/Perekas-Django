@@ -1,7 +1,16 @@
 """
 Context processors to provide common data to all templates
 """
+from django.conf import settings
+
 from a_subscription.utils import get_family_subscription, has_shopping_list_access
+
+
+def debug_context(request):
+    """Add DEBUG setting to template context"""
+    return {
+        'DEBUG': settings.DEBUG,
+    }
 
 
 def subscription_context(request):
