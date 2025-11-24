@@ -618,6 +618,11 @@
                 emailField.required = true;
                 emailField.setAttribute('required', 'required');
               }
+              // Update label
+              const emailLabel = emailContainer.querySelector('label');
+              if (emailLabel) {
+                emailLabel.textContent = 'E-posti aadress';
+              }
             }
           }
         });
@@ -627,6 +632,18 @@
           radio.dispatchEvent(new Event('change'));
         }
       });
+      
+      // Also update label on initial page load if parent is selected
+      const checkedRole = document.querySelector('input[name="role"]:checked');
+      if (checkedRole && checkedRole.value === 'parent') {
+        const emailContainer = document.getElementById('email-field-container');
+        if (emailContainer && emailContainer.style.display !== 'none') {
+          const emailLabel = emailContainer.querySelector('label');
+          if (emailLabel) {
+            emailLabel.textContent = 'E-posti aadress';
+          }
+        }
+      }
     }
 
     // Handle "has email" selection for children
@@ -643,6 +660,11 @@
             if (emailField) {
               emailField.required = true;
               emailField.setAttribute('required', 'required');
+              // Update label for children with email
+              const emailLabel = emailContainer.querySelector('label');
+              if (emailLabel) {
+                emailLabel.textContent = 'E-posti aadress';
+              }
               setTimeout(() => emailField.focus(), 100);
             }
           }
