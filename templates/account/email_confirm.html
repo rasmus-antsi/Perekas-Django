@@ -35,7 +35,11 @@
       {% else %}
         <p>See kinnituse link on aegunud või vigane.</p>
         <div class="auth-actions-minimal" style="margin-top: 1.5rem;">
-          <a href="{% url 'account_email' %}" class="landing-button primary">Küsi uus kinnitusmeil</a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'a_account:settings' %}" class="landing-button primary">Tagasi seadetesse</a>
+          {% else %}
+            <a href="{% url 'account_email' %}" class="landing-button primary">Küsi uus kinnitusmeil</a>
+          {% endif %}
         </div>
       {% endif %}
     </div>
