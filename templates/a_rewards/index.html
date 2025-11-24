@@ -259,6 +259,14 @@
           modal.classList.add('is-visible');
           document.body.classList.add('modal-open');
           form.reset();
+          // Ensure modal is visible by scrolling viewport to top
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const modalContent = modal.querySelector('.task-modal-content');
+            if (modalContent) {
+              modalContent.scrollTop = 0;
+            }
+          }, 10);
 
           if (mode === 'create') {
             actionInput.value = 'create';
@@ -344,13 +352,17 @@
         return new Promise((resolve) => {
           confirmTitle.textContent = title;
           confirmMessage.textContent = message;
-          // Prevent body scroll and ensure modal is centered
+          // Prevent body scroll and ensure modal is visible
           document.body.classList.add('modal-open');
           confirmModal.classList.add('is-visible');
-          // Ensure modal content is visible by scrolling container to top if needed
+          // Scroll window to top to ensure modal is visible
           setTimeout(() => {
-            confirmModal.scrollTop = 0;
-          }, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const modalContent = confirmModal.querySelector('.confirm-modal-content');
+            if (modalContent) {
+              modalContent.scrollTop = 0;
+            }
+          }, 10);
           confirmResolve = resolve;
         });
       }

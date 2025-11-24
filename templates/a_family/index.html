@@ -355,7 +355,16 @@
           
           // Show modal
           const modal = document.getElementById('childModal');
-          modal.style.display = 'flex';
+          modal.style.display = 'block';
+          document.body.classList.add('modal-open');
+          // Scroll window to top to ensure modal is visible
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const modalContent = modal.querySelector('.child-modal-content');
+            if (modalContent) {
+              modalContent.scrollTop = 0;
+            }
+          }, 10);
         })
         .catch(error => {
           console.error('Error loading child data:', error);
@@ -370,6 +379,7 @@
       const modal = document.getElementById('childModal');
       if (modal) {
         modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
         // Reset form
         const form = document.getElementById('childAccountForm');
         if (form) {
@@ -382,7 +392,7 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         const modal = document.getElementById('childModal');
-        if (modal && modal.style.display === 'flex') {
+        if (modal && (modal.style.display === 'block' || modal.style.display === 'flex')) {
           closeChildModal();
         }
       }
@@ -409,9 +419,14 @@
             confirmMessage.textContent = message;
             document.body.classList.add('modal-open');
             confirmModal.classList.add('is-visible');
+            // Scroll window to top to ensure modal is visible
             setTimeout(() => {
-              confirmModal.scrollTop = 0;
-            }, 0);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              const modalContent = confirmModal.querySelector('.confirm-modal-content');
+              if (modalContent) {
+                modalContent.scrollTop = 0;
+              }
+            }, 10);
             confirmResolve = resolve;
           });
         }
@@ -495,7 +510,7 @@
             
             // Close child modal if it's open (for delete child form)
             const childModal = document.getElementById('childModal');
-            if (childModal && childModal.style.display === 'flex') {
+            if (childModal && (childModal.style.display === 'block' || childModal.style.display === 'flex')) {
               childModal.style.display = 'none';
               // Wait a bit for modal close animation if any
               await new Promise(resolve => setTimeout(resolve, 100));

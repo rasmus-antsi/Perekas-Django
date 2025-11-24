@@ -1641,18 +1641,19 @@ body {
 
 .task-modal {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: none;
-  align-items: center;
-  justify-content: center;
   z-index: 50;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 1rem;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .task-modal.is-visible {
-  display: flex;
+  display: block;
 }
 
 .task-modal-overlay {
@@ -1663,10 +1664,12 @@ body {
 }
 
 .task-modal-content {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: min(560px, calc(100% - 2rem));
   max-width: 100%;
-  margin: auto;
   background: linear-gradient(135deg, rgba(17, 25, 45, 1), rgba(10, 15, 28, 1));
   backdrop-filter: none;
   border-radius: var(--radius-md);
@@ -1677,24 +1680,17 @@ body {
   flex-direction: column;
   gap: 1.25rem;
   z-index: 51;
-}
-
-/* Ensure modal content is centered on mobile when scrolled */
-.task-modal.is-visible {
-  display: flex;
+  max-height: calc(90vh - 2rem);
+  max-height: calc(90dvh - 2rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 768px) {
-  .task-modal {
-    align-items: center;
-    padding: 1rem;
-  }
-  
   .task-modal-content {
-    margin: auto;
+    width: calc(100% - 2rem);
     max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: calc(100dvh - 2rem);
   }
 }
 
@@ -1750,18 +1746,19 @@ body.modal-open {
 /* Confirmation Modal */
 .confirm-modal {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: none;
-  align-items: center;
-  justify-content: center;
   z-index: 10001;
-  padding: 1rem;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .confirm-modal.is-visible {
-  display: flex;
+  display: block;
 }
 
 .confirm-modal-overlay {
@@ -1773,10 +1770,12 @@ body.modal-open {
 }
 
 .confirm-modal-content {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: min(420px, calc(100% - 2rem));
   max-width: 100%;
-  margin: auto;
   background: linear-gradient(135deg, rgba(17, 25, 45, 1), rgba(10, 15, 28, 1));
   backdrop-filter: none;
   border-radius: var(--radius-md);
@@ -1789,19 +1788,15 @@ body.modal-open {
   gap: 1.5rem;
   animation: confirmModalSlideIn 0.2s ease-out;
   flex-shrink: 0;
-  max-height: calc(100vh - 2rem);
+  max-height: calc(90vh - 2rem);
+  max-height: calc(90dvh - 2rem);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Ensure confirmation modal is centered on mobile when scrolled */
 @media (max-width: 768px) {
-  .confirm-modal {
-    padding: 1rem;
-  }
-  
   .confirm-modal-content {
-    margin: auto;
+    width: calc(100% - 2rem);
     max-height: calc(100vh - 2rem);
     max-height: calc(100dvh - 2rem);
   }
@@ -1810,61 +1805,61 @@ body.modal-open {
 /* Generic modal-overlay and modal-content (used in onboarding, subscriptions, etc.) */
 .modal-overlay {
   position: fixed !important;
-  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   display: none;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 1rem;
   background: rgba(4, 8, 24, 0.85);
   backdrop-filter: blur(4px);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .modal-overlay[style*="display: flex"],
-.modal-overlay[style*="display:flex"] {
-  display: flex !important;
+.modal-overlay[style*="display:flex"],
+.modal-overlay[style*="display: block"],
+.modal-overlay[style*="display:block"] {
+  display: block !important;
 }
 
 .modal-content {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: min(900px, calc(100% - 2rem));
   max-width: 100%;
-  margin: auto;
   background: var(--color-surface);
   backdrop-filter: none;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(59, 72, 99, 0.4);
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-  max-height: calc(100vh - 2rem);
+  max-height: calc(90vh - 2rem);
+  max-height: calc(90dvh - 2rem);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure generic modals are centered on mobile when scrolled */
 @media (max-width: 768px) {
-  .modal-overlay {
-    align-items: flex-start;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-  }
-  
   .modal-content {
-    margin-top: auto;
-    margin-bottom: auto;
-    max-height: calc(100vh - 4rem);
+    width: calc(100% - 2rem);
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
   }
 }
 
 @keyframes confirmModalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.95);
+    transform: translate(-50%, -50%) translateY(-10px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, -50%) translateY(0) scale(1);
   }
 }
 
@@ -3498,23 +3493,27 @@ body.modal-open {
   background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(4px);
   z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  overflow-y: auto;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .child-modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: var(--color-surface);
   backdrop-filter: none;
   border-radius: var(--radius-md);
   border: 1px solid rgba(59, 72, 99, 0.4);
   box-shadow: 0 20px 45px rgba(2, 6, 23, 0.5);
   max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
+  width: calc(100% - 4rem);
+  max-height: calc(90vh - 2rem);
+  max-height: calc(90dvh - 2rem);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
 }

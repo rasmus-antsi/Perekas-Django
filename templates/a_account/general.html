@@ -214,9 +214,12 @@
       if (changePasswordBtn && passwordModal) {
         changePasswordBtn.addEventListener('click', function(e) {
           e.preventDefault();
-          passwordModal.style.display = 'flex';
+          passwordModal.style.display = 'block';
           passwordModal.setAttribute('aria-hidden', 'false');
-          passwordModal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Scroll to password modal
+          setTimeout(() => {
+            passwordModal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 10);
         });
       }
       
@@ -251,9 +254,14 @@
               confirmMessage.textContent = message;
               document.body.classList.add('modal-open');
               confirmModal.classList.add('is-visible');
+              // Scroll window to top to ensure modal is visible
               setTimeout(() => {
-                confirmModal.scrollTop = 0;
-              }, 0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const modalContent = confirmModal.querySelector('.confirm-modal-content');
+                if (modalContent) {
+                  modalContent.scrollTop = 0;
+                }
+              }, 10);
               confirmResolve = resolve;
             });
           }
