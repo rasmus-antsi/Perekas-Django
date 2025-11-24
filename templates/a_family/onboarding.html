@@ -473,7 +473,19 @@
         modal.style.display = 'flex';
         const nameInput = modal.querySelector('input[name="name"]');
         if (nameInput) {
+          // Pre-populate with "Perekond [lastname]" if last name exists
+          {% if user_last_name %}
+          const lastName = '{{ user_last_name|escapejs }}';
+          if (lastName && !nameInput.value) {
+            nameInput.value = 'Perekond ' + lastName;
+            // Select the text so user can easily edit it
+            nameInput.select();
+          } else {
+            setTimeout(() => nameInput.focus(), 100);
+          }
+          {% else %}
           setTimeout(() => nameInput.focus(), 100);
+          {% endif %}
         }
       }
     }

@@ -210,16 +210,16 @@ class CreateFamilyForm(forms.Form):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'auth-field-minimal',
-            'placeholder': 'Sisesta perekonna nimi',
+            'placeholder': 'Sisesta pere nimi',
             'autofocus': True,
         }),
-        label='Perekonna nimi',
+        label='Pere nimi',
     )
 
     def clean_name(self):
         name = self.cleaned_data.get('name', '').strip()
         if not name:
-            raise ValidationError('Perekonna nimi on kohustuslik.')
+            raise ValidationError('Pere nimi on kohustuslik.')
         return name
 
 
