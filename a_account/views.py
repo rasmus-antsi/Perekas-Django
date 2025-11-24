@@ -375,10 +375,20 @@ def subscription_settings(request):
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
             
             try:
+                # Build return URL - use STRIPE_BASE_URL if set, otherwise use request
+                base_url = django_settings.STRIPE_BASE_URL
+                if base_url:
+                    # Remove trailing slash if present
+                    base_url = base_url.rstrip('/')
+                    return_url = f"{base_url}/account/settings/?section=subscriptions"
+                else:
+                    # Use request-based URL (for local development)
+                    return_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
+                
                 # Create customer portal session for managing subscription
                 portal_params = {
                     'customer': subscription.stripe_customer_id,
-                    'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                    'return_url': return_url,
                     'locale': 'et',
                 }
                 
@@ -403,7 +413,7 @@ def subscription_settings(request):
                     try:
                         portal_params_no_config = {
                             'customer': subscription.stripe_customer_id,
-                            'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                            'return_url': return_url,
                             'locale': 'et',
                         }
                         portal_session = stripe.billing_portal.Session.create(**portal_params_no_config)
@@ -464,10 +474,20 @@ def subscription_settings(request):
                     messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                     return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
+                # Build return URL - use STRIPE_BASE_URL if set, otherwise use request
+                base_url = django_settings.STRIPE_BASE_URL
+                if base_url:
+                    # Remove trailing slash if present
+                    base_url = base_url.rstrip('/')
+                    return_url = f"{base_url}/account/settings/?section=subscriptions"
+                else:
+                    # Use request-based URL (for local development)
+                    return_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
+                
                 # Prepare portal parameters
                 portal_params = {
                     'customer': subscription.stripe_customer_id,
-                    'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                    'return_url': return_url,
                     'locale': 'et',
                 }
                 
@@ -498,7 +518,7 @@ def subscription_settings(request):
                     try:
                         portal_params_no_config = {
                             'customer': subscription.stripe_customer_id,
-                            'return_url': request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                            'return_url': return_url,
                             'locale': 'et',
                         }
                         portal_session = stripe.billing_portal.Session.create(**portal_params_no_config)
@@ -663,6 +683,20 @@ def subscription_settings(request):
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
                 # No active subscription - create new one via checkout
+                # Build URLs - use STRIPE_BASE_URL if set, otherwise use request
+                base_url = django_settings.STRIPE_BASE_URL
+                if base_url:
+                    # Remove trailing slash if present
+                    base_url = base_url.rstrip('/')
+                    success_url = f"{base_url}/subscription/success/?session_id={{CHECKOUT_SESSION_ID}}"
+                    cancel_url = f"{base_url}/account/settings/?section=subscriptions"
+                    return_url = f"{base_url}/account/settings/?section=subscriptions"
+                else:
+                    # Use request-based URLs (for local development)
+                    success_url = request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}'
+                    cancel_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
+                    return_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
+                
                 checkout_session = stripe.checkout.Session.create(
                     customer=customer_id,
                     payment_method_types=['card'],
@@ -671,8 +705,8 @@ def subscription_settings(request):
                         'quantity': 1,
                     }],
                     mode='subscription',
-                    success_url=request.build_absolute_uri('/subscription/success/') + '?session_id={CHECKOUT_SESSION_ID}',
-                    cancel_url=request.build_absolute_uri('/account/settings/?section=subscriptions'),
+                    success_url=success_url,
+                    cancel_url=cancel_url,
                     locale='et',
                     metadata={
                         'user_id': str(user.id),

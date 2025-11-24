@@ -275,6 +275,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Use environment variables if set, otherwise use test keys for development
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', None)
 
+# Stripe URL settings - use production URL if set, otherwise use request.build_absolute_uri()
+# Set STRIPE_BASE_URL in production (e.g., https://perekas.ee)
+# If not set, URLs will be built from request (useful for local development)
+STRIPE_BASE_URL = os.getenv('STRIPE_BASE_URL', None)
+
 
 # Stripe Price IDs
 STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HkQsG0t55')
