@@ -75,6 +75,7 @@ class FamilySignupForm(SignupForm):
             else:
                 # For parents, email is always required
                 self.fields['email'].required = True
+                self.fields['email'].label = 'E-posti aadress'
                 self.fields['email'].widget.attrs.update({
                     'placeholder': 'sinu@email.ee',
                 })
