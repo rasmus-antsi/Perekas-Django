@@ -5,30 +5,122 @@
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
       <h1>Kontrolli oma e-posti</h1>
-      <p>Saatsime sulle kinnituse lingi.</p>
+      {% if email %}
+        <p>Saatsime kinnituse lingi aadressile <strong>{{ email }}</strong></p>
+      {% else %}
+        <p>Sisesta oma e-posti aadress allpool</p>
+      {% endif %}
     </div>
 
     <div class="auth-content-minimal">
-      <p>Saatsime aadressile <strong>{{ email }}</strong> kirja, mis sisaldab konto kinnitamise linki.</p>
-      <p>Palun klõpsa kirjas oleval lingil, et registreerimine lõpuni viia. Link aegub 3 päeva pärast.</p>
-      
-      <div class="auth-info-box">
-        <p style="margin: 0 0 1rem; font-size: 0.875rem; color: rgba(148, 163, 184, 0.85);">
-          Ei saanud kirja kätte? Vaata rämpsposti või saada uus kiri alloleva nupuga.
+      {% if email %}
+        <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary); font-size: 0.9375rem;">
+          Klõpsa meilis lingil, et konto kinnitada. Link aegub 3 päeva pärast.
         </p>
+      {% endif %}
+
+      {% if user.is_authenticated %}
+        <!-- Toggle between resend and change email -->
+        <div style="margin-bottom: 1rem;">
+          <div class="verification-toggle" style="display: flex; gap: 0.5rem; background: rgba(15, 23, 42, 0.6); padding: 0.25rem; border-radius: 0.75rem; margin-bottom: 1rem;">
+            <button type="button" class="toggle-btn active" onclick="switchMode('resend')" style="flex: 1; padding: 0.625rem; border: none; background: transparent; color: var(--color-text-secondary); border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              Saada uuesti
+            </button>
+            <button type="button" class="toggle-btn" onclick="switchMode('change')" style="flex: 1; padding: 0.625rem; border: none; background: transparent; color: var(--color-text-secondary); border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s;">
+              Muuda e-posti
+            </button>
+          </div>
+
+          <!-- Resend Form -->
+          <form id="resend-form" method="post" action="{% url 'a_family:resend_verification' %}" style="margin: 0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="resend">
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="landing-button primary" style="width: 100%;">
+              Saada kinnitusmeil uuesti
+            </button>
+          </form>
+
+          <!-- Change Email Form -->
+          <form id="change-form" method="post" action="{% url 'a_family:resend_verification' %}" style="margin: 0; display: none;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_email">
+            <div class="auth-field-minimal" style="margin-bottom: 1rem;">
+              <input 
+                type="email" 
+                id="new_email" 
+                name="new_email" 
+                value="{{ email }}"
+                placeholder="sinu@email.ee"
+                required
+                class="auth-field-minimal"
+                style="width: 100%;"
+              >
+            </div>
+            <button type="submit" class="landing-button primary" style="width: 100%;">
+              Muuda ja saada uus kinnitusmeil
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <!-- Simple resend for unauthenticated users -->
         <form method="post" action="{% url 'a_family:resend_verification' %}" style="margin: 0;">
           {% csrf_token %}
+          <input type="hidden" name="action" value="resend">
           <input type="hidden" name="email" value="{{ email }}">
-          <button type="submit" class="landing-button primary" style="width: 100%; font-size: 0.875rem; padding: 0.75rem 1rem;">
-            Saada kinnituse kiri uuesti
+          <button type="submit" class="landing-button primary" style="width: 100%;">
+            Saada uuesti
           </button>
         </form>
-      </div>
+      {% endif %}
     </div>
 
-    <div class="auth-actions-minimal" style="margin-top: 2rem;">
-      <a href="{% url 'a_landing:landing_index' %}" class="landing-button ghost">Tagasi avalehele</a>
-    </div>
+    {% if user.is_authenticated %}
+      <div class="auth-actions-minimal" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(148, 163, 184, 0.1);">
+        <form method="post" action="{% url 'account_logout' %}" style="margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="landing-button ghost" style="width: 100%; font-size: 0.875rem;">Logi välja</button>
+        </form>
+      </div>
+    {% endif %}
   </div>
+
+  <script>
+    function switchMode(mode) {
+      const resendForm = document.getElementById('resend-form');
+      const changeForm = document.getElementById('change-form');
+      const toggleBtns = document.querySelectorAll('.toggle-btn');
+      
+      toggleBtns.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--color-text-secondary)';
+      });
+      
+      if (mode === 'resend') {
+        resendForm.style.display = 'block';
+        changeForm.style.display = 'none';
+        toggleBtns[0].classList.add('active');
+        toggleBtns[0].style.background = 'rgba(139, 92, 246, 0.2)';
+        toggleBtns[0].style.color = 'var(--color-text-primary)';
+      } else {
+        resendForm.style.display = 'none';
+        changeForm.style.display = 'block';
+        toggleBtns[1].classList.add('active');
+        toggleBtns[1].style.background = 'rgba(139, 92, 246, 0.2)';
+        toggleBtns[1].style.color = 'var(--color-text-primary)';
+      }
+    }
+  </script>
+
+  <style>
+    .toggle-btn.active {
+      background: rgba(139, 92, 246, 0.2) !important;
+      color: var(--color-text-primary) !important;
+    }
+    .toggle-btn:hover {
+      background: rgba(139, 92, 246, 0.1) !important;
+    }
+  </style>
 {% endblock %}
 

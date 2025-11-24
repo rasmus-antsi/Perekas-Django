@@ -36,10 +36,14 @@ def redirect_account_email_to_settings(request):
     from allauth.account.views import EmailView
     return EmailView.as_view()(request)
 
+from a_family import views as family_views
+
 urlpatterns = [
     path('W01-d8/', admin.site.urls),
     # Override account_email to redirect authenticated users to settings
     path('accounts/email/', redirect_account_email_to_settings, name='account_email'),
+    # Override account_verification_sent to use custom view
+    path('accounts/verification-sent/', family_views.verification_sent, name='account_verification_sent'),
     path('accounts/', include('allauth.urls')),
     path('family/', include('a_family.urls')),
     path('dashboard/', include('a_dashboard.urls')),
