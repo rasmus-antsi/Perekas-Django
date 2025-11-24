@@ -9,6 +9,8 @@ urlpatterns = [
     path('remove/<int:user_id>/', views.remove_member, name='remove_member'),
     path('resend-verification/', views.resend_verification_email, name='resend_verification'),
     path('manage-child/<int:child_id>/', views.manage_child_account, name='manage_child_account'),
+    path('delete-child-account/', views.delete_child_account, name='delete_child_account'),
+    path('delete-family/', views.delete_family, name='delete_family'),
     path('', views.index, name='index'),
 ]
 

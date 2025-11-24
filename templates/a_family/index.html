@@ -149,10 +149,46 @@
             <button type="button" class="btn btn-ghost" onclick="closeChildModal()">Loobu</button>
           </div>
         </form>
+        
+        <!-- Child Account Deletion -->
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(239, 68, 68, 0.2);">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div style="flex: 1;">
+              <h3 style="margin: 0 0 0.25rem; font-size: 1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Kustuta lapse konto</h3>
+              <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Konto kustutamine on pöördumatu. Kõik andmed kustutatakse jäädavalt.</p>
+            </div>
+            <form method="post" action="{% url 'a_family:delete_child_account' %}" style="margin: 0; flex-shrink: 0;" id="deleteChildForm" data-confirm="Kas oled kindel, et soovid selle lapse konto kustutada? See toiming on pöördumatu ja kõik lapse andmed kustutatakse jäädavalt.">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="child_id" id="deleteChildIdInput">
+              <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); font-size: 0.875rem; white-space: nowrap;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                </svg>
+                Kustuta konto
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>
   {% endif %}
+
+  <!-- Custom Confirmation Modal -->
+  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="confirm-modal-overlay"></div>
+    <div class="confirm-modal-content">
+      <h3 class="confirm-modal-title" id="confirm-modal-title">Kinnita toiming</h3>
+      <p class="confirm-modal-message" id="confirm-modal-message"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Tühista</button>
+        <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Kinnita</button>
+      </div>
+    </div>
+  </div>
 
   <style>
     .family-invite-section {
@@ -311,6 +347,12 @@
           // Update form action
           document.getElementById('childAccountForm').action = `/family/manage-child/${childId}/`;
           
+          // Update delete form child ID
+          const deleteChildIdInput = document.getElementById('deleteChildIdInput');
+          if (deleteChildIdInput) {
+            deleteChildIdInput.value = data.id;
+          }
+          
           // Show modal
           const modal = document.getElementById('childModal');
           modal.style.display = 'flex';
@@ -346,6 +388,136 @@
       }
     });
     {% endif %}
+
+    // Custom confirmation modal
+    const confirmModal = document.getElementById('confirm-modal');
+    if (confirmModal) {
+      const confirmTitle = document.getElementById('confirm-modal-title');
+      const confirmMessage = document.getElementById('confirm-modal-message');
+      const confirmButton = document.getElementById('confirm-modal-confirm');
+      const cancelButton = document.getElementById('confirm-modal-cancel');
+      const confirmOverlay = confirmModal.querySelector('.confirm-modal-overlay');
+      
+      if (confirmTitle && confirmMessage && confirmButton && cancelButton && confirmOverlay) {
+        let confirmResolve = null;
+        let pendingForm = null;
+        let formSubmitHandler = null;
+
+        function showConfirm(title, message) {
+          return new Promise((resolve) => {
+            confirmTitle.textContent = title;
+            confirmMessage.textContent = message;
+            document.body.classList.add('modal-open');
+            confirmModal.classList.add('is-visible');
+            setTimeout(() => {
+              confirmModal.scrollTop = 0;
+            }, 0);
+            confirmResolve = resolve;
+          });
+        }
+
+        function closeConfirm(result) {
+          confirmModal.classList.remove('is-visible');
+          document.body.classList.remove('modal-open');
+          if (confirmResolve) {
+            confirmResolve(result);
+            confirmResolve = null;
+          }
+          
+          if (result && pendingForm) {
+            pendingForm.removeAttribute('data-confirm');
+            
+            if (formSubmitHandler) {
+              pendingForm.removeEventListener('submit', formSubmitHandler);
+            }
+            
+            if (pendingForm.requestSubmit) {
+              pendingForm.requestSubmit();
+            } else {
+              const submitEvent = new Event('submit', {
+                bubbles: true,
+                cancelable: true
+              });
+              const submitted = pendingForm.dispatchEvent(submitEvent);
+              
+              if (submitted) {
+                pendingForm.submit();
+              }
+            }
+            
+            setTimeout(() => {
+              if (pendingForm && formSubmitHandler) {
+                pendingForm.setAttribute('data-confirm', pendingForm.dataset.originalConfirm || '');
+                pendingForm.addEventListener('submit', formSubmitHandler);
+              }
+            }, 100);
+          }
+          
+          pendingForm = null;
+          formSubmitHandler = null;
+        }
+
+        confirmButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeConfirm(true);
+        });
+        
+        cancelButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeConfirm(false);
+        });
+        
+        confirmOverlay.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          closeConfirm(false);
+        });
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key === 'Escape' && confirmModal.classList.contains('is-visible')) {
+            closeConfirm(false);
+          }
+        });
+
+        // Handle forms with data-confirm attribute
+        document.querySelectorAll('form[data-confirm]').forEach((form) => {
+          form.dataset.originalConfirm = form.getAttribute('data-confirm');
+          
+          const submitHandler = async function (e) {
+            if (!form.hasAttribute('data-confirm')) {
+              return;
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Close child modal if it's open (for delete child form)
+            const childModal = document.getElementById('childModal');
+            if (childModal && childModal.style.display === 'flex') {
+              childModal.style.display = 'none';
+              // Wait a bit for modal close animation if any
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            const message = form.getAttribute('data-confirm');
+            const action = form.querySelector('input[name="action"]')?.value || 'toiming';
+            let title = 'Kinnita toiming';
+            
+            if (action === 'delete') {
+              title = 'Kinnita kustutamine';
+            }
+            
+            pendingForm = form;
+            formSubmitHandler = submitHandler;
+            await showConfirm(title, message);
+          };
+          
+          form.addEventListener('submit', submitHandler);
+        });
+      }
+    }
   </script>
 {% endblock %}
 

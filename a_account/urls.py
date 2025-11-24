@@ -8,5 +8,6 @@ urlpatterns = [
     path('settings/general/', views.general_settings, name='general'),
     path('settings/notifications/', views.notification_settings, name='notifications'),
     path('settings/subscriptions/', views.subscription_settings, name='subscriptions'),
+    path('delete-account/', views.delete_account, name='delete_account'),
 ]
 
