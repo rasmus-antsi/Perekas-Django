@@ -4,30 +4,57 @@
 {% block email_title %}{% trans "Uus liige liitus" %}{% endblock %}
 {% block email_heading %}{% blocktrans %}{{ member_name }} liitus perega{% endblocktrans %}{% endblock %}
 {% block email_subheading %}
-  <p style="margin: 8px 0 0; color: #94a3b8; font-size: 16px; text-align: center;">{% blocktrans with family_name=family.name %}Pere "{{ family_name }}" on nüüd suurem.{% endblocktrans %}</p>
+  <p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #94a3b8; text-align: center;">
+    {% blocktrans with family_name=family.name %}Pere "{{ family_name }}" on nüüd suurem.{% endblocktrans %}
+  </p>
 {% endblock %}
 
 {% block email_content %}
-  <p style="margin: 0 0 16px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
-    {% blocktrans with family_name=family.name %}{{ member_name }} liitus perega {{ family_name }} rollis {{ member_role }}.{% endblocktrans %}
-  </p>
-  <p style="margin: 0 0 24px; font-size: 16px; line-height: 1.65; color: #f8fafc;">
-    {% trans "Vaata üle pere ülevaade, kinnita ülesanded või jaga tervitust." %}
-  </p>
-
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 24px 0;">
+  <!-- Main message -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
     <tr>
-      <td align="center">
-        <a href="{{ dashboard_url }}" style="display: inline-block; width: 100%; max-width: 360px; margin: 16px auto 0; padding: 0.75rem 1.4rem; border-radius: 0.9rem; text-decoration: none; font-weight: 600; font-size: 0.9375rem; letter-spacing: 0.02em; color: #fbfbff; background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(236, 72, 153, 0.9)); box-shadow: 0 18px 32px rgba(99, 102, 241, 0.35); text-align: center; border: 1px solid transparent;">{% trans "Ava ülevaade" %}</a>
+      <td style="padding: 0 0 16px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% blocktrans with family_name=family.name %}{{ member_name }} liitus perega {{ family_name }} rollis {{ member_role }}.{% endblocktrans %}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 0 24px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% trans "Vaata üle pere ülevaade, kinnita ülesanded või jaga tervitust." %}
+        </p>
       </td>
     </tr>
   </table>
 
-  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 24px; padding: 16px 18px; border-radius: 16px; border: 1px solid rgba(59, 72, 99, 0.4); background: rgba(22, 31, 56, 0.85);">
+  <!-- Button -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
     <tr>
-      <td style="font-size: 14px; line-height: 1.6; color: #f8fafc;">
-        <strong style="color: #f8fafc; display: block; margin-bottom: 8px;">{% trans "Kiire soovitus" %}</strong>
-        <p style="margin: 8px 0 0; color: #94a3b8;">{% trans "Määra uuele liikmele vähemalt üks ülesanne või preemia, et anda selge start." %}</p>
+      <td align="center" style="padding: 12px 0;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td align="center" style="background-color: #6366f1; border-radius: 10px; padding: 14px 28px;">
+              <a href="{{ dashboard_url }}" style="display: block; text-decoration: none; font-weight: 600; font-size: 15px; letter-spacing: 0.02em; color: #fbfbff; text-align: center;">
+                {% trans "Ava ülevaade" %}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Quick tip -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.6; color: #f8fafc;">
+          {% trans "Kiire soovitus" %}
+        </p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #94a3b8;">
+          {% trans "Määra uuele liikmele vähemalt üks ülesanne või preemia, et anda selge start." %}
+        </p>
       </td>
     </tr>
   </table>
