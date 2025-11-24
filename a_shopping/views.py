@@ -4,6 +4,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from a_family.models import Family
+from a_family.emails import send_shopping_item_added_notification
 from a_subscription.utils import has_shopping_list_access
 
 from .models import ShoppingListItem
@@ -48,11 +49,18 @@ def index(request):
         if family and action == "add":
             item_name = request.POST.get("name", "").strip()
             if item_name:
-                ShoppingListItem.objects.create(
+                item = ShoppingListItem.objects.create(
                     name=item_name,
                     family=family,
                     added_by=user,
                 )
+                # Send notification email
+                try:
+                    send_shopping_item_added_notification(request, item)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to send shopping item added notification: {e}", exc_info=True)
         elif family and action == "delete":
             item_id = request.POST.get("item_id")
             if item_id:

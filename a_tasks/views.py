@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 
 from a_family.models import Family, User
+from a_family.emails import send_task_completed_notification, send_task_approved_notification
 from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Task
@@ -168,6 +169,13 @@ def index(request):
                 task.approved_by = None
                 task.approved_at = None
                 task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
+                # Send notification email
+                try:
+                    send_task_completed_notification(request, task)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to send task completed notification: {e}", exc_info=True)
             elif task and task.assigned_to is None and not task.completed:
                 task.assigned_to = user
                 task.completed = True
@@ -177,6 +185,13 @@ def index(request):
                 task.approved_by = None
                 task.approved_at = None
                 task.save(update_fields=["assigned_to", "completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
+                # Send notification email
+                try:
+                    send_task_completed_notification(request, task)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"Failed to send task completed notification: {e}", exc_info=True)
 
         elif action == "reopen" and is_parent:
             task = _get_task()
@@ -234,6 +249,14 @@ def index(request):
                             assignee.points += task.points
                             assignee.save(update_fields=["points"])
                             messages.success(request, f"Ülesanne '{task.name}' kinnitatud. {task.points} punkti lisatud.")
+                            
+                            # Send notification email
+                            try:
+                                send_task_approved_notification(request, task)
+                            except Exception as e:
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.warning(f"Failed to send task approved notification: {e}", exc_info=True)
                 except Exception as e:
                     messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
 

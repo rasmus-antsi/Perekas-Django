@@ -25,65 +25,65 @@
           <input type="hidden" name="form_type" value="notifications">
           <ul class="notification-simple-list" data-notification-list>
             <li>
-              <label>
-                <div class="notification-row">
-                  <div>
+              <div class="notification-row">
+                <div>
                   <span class="notification-simple-title">Ülesannete tegevus</span>
                   <span class="notification-simple-description">Teated täidetud ja kinnitust ootavate ülesannete kohta.</span>
                 </div>
+                <label style="margin: 0; cursor: pointer;">
                   <button type="button" class="notification-switch-button {% if notification_preferences.task_updates %}is-active{% endif %}" data-toggle-button data-toggle-target="notify_tasks" aria-pressed="{% if notification_preferences.task_updates %}true{% else %}false{% endif %}">
                     <span class="notification-switch-handle"></span>
                   </button>
-                </div>
-                <input type="checkbox" name="notify_tasks" {% if notification_preferences.task_updates %}checked{% endif %} hidden data-toggle-input="notify_tasks">
-              </label>
+                  <input type="checkbox" name="notify_tasks" {% if notification_preferences.task_updates %}checked{% endif %} style="display: none; position: absolute; opacity: 0;" data-toggle-input="notify_tasks">
+                </label>
+              </div>
             </li>
             <li>
-              <label>
-                <div class="notification-row">
-                  <div>
+              <div class="notification-row">
+                <div>
                   <span class="notification-simple-title">Preemiate uuendused</span>
                   <span class="notification-simple-description">Teated, kui preemiad lisatakse või lunastatakse.</span>
                 </div>
+                <label style="margin: 0; cursor: pointer;">
                   <button type="button" class="notification-switch-button {% if notification_preferences.reward_updates %}is-active{% endif %}" data-toggle-button data-toggle-target="notify_rewards" aria-pressed="{% if notification_preferences.reward_updates %}true{% else %}false{% endif %}">
                     <span class="notification-switch-handle"></span>
                   </button>
-                </div>
-                <input type="checkbox" name="notify_rewards" {% if notification_preferences.reward_updates %}checked{% endif %} hidden data-toggle-input="notify_rewards">
-              </label>
+                  <input type="checkbox" name="notify_rewards" {% if notification_preferences.reward_updates %}checked{% endif %} style="display: none; position: absolute; opacity: 0;" data-toggle-input="notify_rewards">
+                </label>
+              </div>
             </li>
             <li>
-              <label>
-                <div class="notification-row">
-                  <div>
+              <div class="notification-row">
+                <div>
                   <span class="notification-simple-title">Ostunimekirja muudatused</span>
                   <span class="notification-simple-description">Püsi kursis uute esemete ja ostude olekuga.</span>
                 </div>
+                <label style="margin: 0; cursor: pointer;">
                   <button type="button" class="notification-switch-button {% if notification_preferences.shopping_updates %}is-active{% endif %}" data-toggle-button data-toggle-target="notify_shopping" aria-pressed="{% if notification_preferences.shopping_updates %}true{% else %}false{% endif %}">
                     <span class="notification-switch-handle"></span>
                   </button>
-                </div>
-                <input type="checkbox" name="notify_shopping" {% if notification_preferences.shopping_updates %}checked{% endif %} hidden data-toggle-input="notify_shopping">
-              </label>
+                  <input type="checkbox" name="notify_shopping" {% if notification_preferences.shopping_updates %}checked{% endif %} style="display: none; position: absolute; opacity: 0;" data-toggle-input="notify_shopping">
+                </label>
+              </div>
             </li>
             <li>
-              <label>
-                <div class="notification-row">
-                  <div>
+              <div class="notification-row">
+                <div>
                   <span class="notification-simple-title">Nädala kokkuvõte</span>
                   <span class="notification-simple-description">Saa kord nädalas ülevaade pere tegevustest.</span>
                 </div>
+                <label style="margin: 0; cursor: pointer;">
                   <button type="button" class="notification-switch-button {% if notification_preferences.weekly_summary %}is-active{% endif %}" data-toggle-button data-toggle-target="notify_summary" aria-pressed="{% if notification_preferences.weekly_summary %}true{% else %}false{% endif %}">
                     <span class="notification-switch-handle"></span>
                   </button>
-                </div>
-                <input type="checkbox" name="notify_summary" {% if notification_preferences.weekly_summary %}checked{% endif %} hidden data-toggle-input="notify_summary">
-              </label>
+                  <input type="checkbox" name="notify_summary" {% if notification_preferences.weekly_summary %}checked{% endif %} style="display: none; position: absolute; opacity: 0;" data-toggle-input="notify_summary">
+                </label>
+              </div>
             </li>
           </ul>
 
           <div class="notification-footer">
-            <p>Teavitused saadetakse nii mobiili kui ka e-posti peale (vastavalt sinu eelistustele).</p>
+            <p>Teavitused saadetakse teie e-posti aadressile</p>
             <button type="submit" class="landing-button primary cta-button-large">Uuenda teavitusi</button>
           </div>
         </form>
@@ -94,12 +94,21 @@
 
 {% block extra_scripts %}
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('[data-toggle-button]').forEach((button) => {
-        button.addEventListener('click', () => {
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize notification toggles
+      const buttons = document.querySelectorAll('[data-toggle-button]');
+      
+      buttons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
           const target = button.getAttribute('data-toggle-target');
-          const input = document.querySelector(`[data-toggle-input="${target}"]`);
-          if (!input) return;
+          const input = document.querySelector('[data-toggle-input="' + target + '"]');
+          
+          if (!input) {
+            return;
+          }
 
           input.checked = !input.checked;
           button.classList.toggle('is-active', input.checked);

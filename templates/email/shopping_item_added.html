@@ -1,0 +1,49 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Ostunimekirja lisatud" %}{% endblock %}
+{% block email_heading %}{% blocktrans with item_name=item.name %}Ostunimekirja lisatud: {{ item_name }}{% endblocktrans %}{% endblock %}
+{% block email_subheading %}
+  <p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #94a3b8; text-align: center;">
+    {% blocktrans with added_by_name=added_by_name %}{{ added_by_name }} lisas eseme ostunimekirja.{% endblocktrans %}
+  </p>
+{% endblock %}
+
+{% block email_content %}
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0 0 16px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% blocktrans with added_by_name=added_by_name item_name=item.name family_name=family.name %}
+            {{ added_by_name }} lisas pere "{{ family_name }}" ostunimekirja eseme "{{ item_name }}".
+          {% endblocktrans %}
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0 0 24px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #94a3b8;">
+          {% trans "Saad selle poes liigutada ostukorvi." %}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- CTA Button -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td align="center" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 12px;">
+              <a href="{{ shopping_url }}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; text-decoration: none; color: #ffffff; border-radius: 12px;">
+                {% trans "Vaata ostunimekirja" %}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+

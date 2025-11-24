@@ -29,7 +29,7 @@ def handler500(request):
     return render(request, '500.html', status=500)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('W01-d8/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('family/', include('a_family.urls')),
     path('dashboard/', include('a_dashboard.urls')),

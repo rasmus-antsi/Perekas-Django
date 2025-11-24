@@ -1,0 +1,51 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Preemia lunastatud" %}{% endblock %}
+{% block email_heading %}{% blocktrans with reward_name=reward.name %}Preemia lunastatud: {{ reward_name }}{% endblocktrans %}{% endblock %}
+{% block email_subheading %}
+  <p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #94a3b8; text-align: center;">
+    {% blocktrans with claimed_by_name=claimed_by_name %}{{ claimed_by_name }} lunastas preemia.{% endblocktrans %}
+  </p>
+{% endblock %}
+
+{% block email_content %}
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0 0 16px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% blocktrans with claimed_by_name=claimed_by_name reward_name=reward.name family_name=family.name %}
+            {{ claimed_by_name }} lunastas pere "{{ family_name }}" preemia "{{ reward_name }}".
+          {% endblocktrans %}
+        </p>
+      </td>
+    </tr>
+    {% if reward.points > 0 %}
+    <tr>
+      <td style="padding: 0 0 24px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #94a3b8;">
+          {% blocktrans with points=reward.points %}Preemia maksis {{ points }} punkti.{% endblocktrans %}
+        </p>
+      </td>
+    </tr>
+    {% endif %}
+  </table>
+
+  <!-- CTA Button -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td align="center" style="background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 12px;">
+              <a href="{{ rewards_url }}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; text-decoration: none; color: #ffffff; border-radius: 12px;">
+                {% trans "Vaata preemiaid" %}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+

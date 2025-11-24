@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from a_family.models import Family, User
+from a_family.emails import send_reward_claimed_notification
 from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Reward
@@ -79,7 +80,7 @@ def index(request):
                 except (TypeError, ValueError):
                     points_value = 0
 
-                Reward.objects.create(
+                reward = Reward.objects.create(
                     name=name,
                     description=description,
                     points=points_value,
@@ -88,6 +89,7 @@ def index(request):
                 )
                 # Increment usage counter
                 increment_usage(family, 'rewards', 1)
+                # Don't send notification when reward is created, only when claimed
 
         elif action == "update" and is_parent:
             reward = _get_reward()
@@ -166,6 +168,14 @@ def index(request):
                             user_refreshed.points = max(0, user_refreshed.points - reward_refreshed.points)
                             user_refreshed.save(update_fields=["points"])
                             messages.success(request, f"Preemia '{reward_refreshed.name}' lunastatud!")
+                            
+                            # Send notification email
+                            try:
+                                send_reward_claimed_notification(request, reward_refreshed)
+                            except Exception as e:
+                                import logging
+                                logger = logging.getLogger(__name__)
+                                logger.warning(f"Failed to send reward claimed notification: {e}", exc_info=True)
                 except User.DoesNotExist:
                     messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
                 except Reward.DoesNotExist:
