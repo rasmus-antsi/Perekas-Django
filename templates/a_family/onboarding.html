@@ -363,20 +363,24 @@
 
     .modal-overlay {
       position: fixed !important;
-      inset: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       background: rgba(3, 7, 18, 0.85);
       backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
       z-index: 1000;
-      padding: 1rem;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
 
     .modal-content {
-      position: relative;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: linear-gradient(135deg, rgba(17, 25, 45, 1), rgba(10, 15, 28, 1));
       backdrop-filter: none;
       border: 1px solid rgba(59, 72, 99, 0.45);
@@ -384,19 +388,15 @@
       padding: 2.5rem;
       width: min(560px, calc(100% - 2rem));
       max-width: 100%;
-      margin: auto;
-      max-height: calc(100vh - 2rem);
+      max-height: calc(90vh - 2rem);
+      max-height: calc(90dvh - 2rem);
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
     @media (max-width: 768px) {
-      .modal-overlay {
-        align-items: flex-start;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-      }
-      
       .modal-content {
+        width: calc(100% - 2rem);
         margin-top: auto;
         margin-bottom: auto;
         max-height: calc(100vh - 4rem);
@@ -470,7 +470,16 @@
     function openCreateModal() {
       const modal = document.getElementById('createFamilyModal');
       if (modal) {
-        modal.style.display = 'flex';
+        modal.style.display = 'block';
+        document.body.classList.add('modal-open');
+        // Scroll window to top to ensure modal is visible
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          const modalContent = modal.querySelector('.modal-content');
+          if (modalContent) {
+            modalContent.scrollTop = 0;
+          }
+        }, 10);
         const nameInput = modal.querySelector('input[name="name"]');
         if (nameInput) {
           // Pre-populate with "Perekond [lastname]" if last name exists
@@ -494,6 +503,7 @@
       const modal = document.getElementById('createFamilyModal');
       if (modal) {
         modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
       }
     }
 

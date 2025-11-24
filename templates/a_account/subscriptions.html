@@ -378,41 +378,40 @@
     .modal-overlay {
       display: none;
       position: fixed !important;
-      inset: 0 !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       background: rgba(4, 8, 24, 0.85);
       backdrop-filter: blur(12px);
       z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
     
     .modal-content {
-      position: relative;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       background: var(--color-surface);
       border-radius: var(--radius-lg);
       border: 1px solid rgba(59, 72, 99, 0.4);
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
       max-width: 900px;
-      width: 100%;
-      max-height: calc(100vh - 2rem);
+      width: calc(100% - 2rem);
+      max-height: calc(90vh - 2rem);
+      max-height: calc(90dvh - 2rem);
       overflow-y: auto;
-      margin: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
     @media (max-width: 768px) {
-      .modal-overlay {
-        align-items: flex-start;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-      }
-      
       .modal-content {
-        margin-top: auto;
-        margin-bottom: auto;
-        max-height: calc(100vh - 4rem);
+        width: calc(100% - 2rem);
+        max-height: calc(100vh - 2rem);
+        max-height: calc(100dvh - 2rem);
       }
     }
     
@@ -711,9 +710,14 @@
           confirmMessage.textContent = message;
           document.body.classList.add('modal-open');
           confirmModal.classList.add('is-visible');
+          // Scroll window to top to ensure modal is visible
           setTimeout(() => {
-            confirmModal.scrollTop = 0;
-          }, 0);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const modalContent = confirmModal.querySelector('.confirm-modal-content');
+            if (modalContent) {
+              modalContent.scrollTop = 0;
+            }
+          }, 10);
           confirmResolve = resolve;
         });
       }
