@@ -75,6 +75,11 @@ def settings_base(request):
     current_section = request.GET.get('section', 'general')
     if current_section not in ['general', 'notifications', 'subscriptions']:
         current_section = 'general'
+    
+    # Redirect notifications section to general if user has no email
+    if current_section == 'notifications' and not user.email:
+        messages.info(request, "Teavituste seadistamiseks peab teil olema e-posti aadress.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
 
     # Redirect to appropriate section view
     if current_section == 'general':
@@ -107,41 +112,127 @@ def general_settings(request):
             can_manage_subscription = False
 
     # Handle form submission
-    if request.method == 'POST' and request.POST.get('form_type') == 'profile':
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        email = request.POST.get('email', '').strip()
-        role = request.POST.get('role')
-        updated_fields = set()
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
         
-        # Update first and last name
-        if first_name != user.first_name:
-            user.first_name = first_name
-            updated_fields.add('first_name')
+        if form_type == 'profile':
+            from datetime import datetime
+            username = request.POST.get('username', '').strip()
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            birthdate_str = request.POST.get('birthdate', '').strip()
+            role = request.POST.get('role')
+            updated_fields = set()
+            
+            # Update username - check for uniqueness
+            if username and username != user.username:
+                # Check if username is already in use
+                if User.objects.filter(username=username).exclude(id=user.id).exists():
+                    messages.error(request, "See kasutajanimi on juba kasutusel.")
+                    return redirect(f"{reverse('a_account:settings')}?section=general")
+                
+                # Validate username format (Django username requirements)
+                if len(username) < 1:
+                    messages.error(request, "Kasutajanimi peab olema vähemalt 1 märk pikk.")
+                    return redirect(f"{reverse('a_account:settings')}?section=general")
+                
+                user.username = username
+                updated_fields.add('username')
+                messages.success(request, "Kasutajanimi uuendatud.")
+            
+            # Update first and last name
+            if first_name != user.first_name:
+                user.first_name = first_name
+                updated_fields.add('first_name')
 
-        if last_name != user.last_name:
-            user.last_name = last_name
-            updated_fields.add('last_name')
-        
-        # Update email
-        if email and email != user.email:
-            # Check if email is already in use
-            if User.objects.filter(email=email).exclude(id=user.id).exists():
-                messages.error(request, "See e-posti aadress on juba kasutusel.")
-            else:
-                user.email = email
-                updated_fields.add('email')
-                messages.success(request, "E-posti aadress uuendatud.")
-        
-        # Update role (only if user is parent and changing their own role)
-        if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
-            user.role = role
-            updated_fields.add('role')
+            if last_name != user.last_name:
+                user.last_name = last_name
+                updated_fields.add('last_name')
+            
+            # Update birthdate
+            if birthdate_str:
+                try:
+                    birthdate = datetime.strptime(birthdate_str, '%Y-%m-%d').date()
+                    if user.birthdate != birthdate:
+                        user.birthdate = birthdate
+                        updated_fields.add('birthdate')
+                except ValueError:
+                    messages.error(request, "Vale sünniaja vorming.")
+                    return redirect(f"{reverse('a_account:settings')}?section=general")
+            elif user.birthdate:
+                # Allow clearing birthdate
+                user.birthdate = None
+                updated_fields.add('birthdate')
+            
+            # Update email - only allow parents to change email
+            if is_parent:
+                email = request.POST.get('email', '').strip()
+                if email and email != user.email:
+                    # Check if email is already in use
+                    if User.objects.filter(email=email).exclude(id=user.id).exists():
+                        messages.error(request, "See e-posti aadress on juba kasutusel.")
+                    else:
+                        user.email = email
+                        updated_fields.add('email')
+                        messages.success(request, "E-posti aadress uuendatud.")
+                elif not email and user.email:
+                    # Allow clearing email only for parents
+                    user.email = None
+                    updated_fields.add('email')
+            # Children cannot change their email - ignore any email POST data
+            
+            # Update role (only if user is parent and changing their own role)
+            if role and is_parent and role in [User.ROLE_PARENT, User.ROLE_CHILD]:
+                user.role = role
+                updated_fields.add('role')
 
-        if updated_fields:
-            user.save(update_fields=list(updated_fields))
-            messages.success(request, "Profiil uuendatud.")
-        return redirect(f"{reverse('a_account:settings')}?section=general")
+            if updated_fields:
+                user.save(update_fields=list(updated_fields))
+                messages.success(request, "Profiil uuendatud.")
+            return redirect(f"{reverse('a_account:settings')}?section=general")
+        
+        elif form_type == 'password_change':
+            old_password = request.POST.get('old_password', '').strip()
+            new_password1 = request.POST.get('new_password1', '').strip()
+            new_password2 = request.POST.get('new_password2', '').strip()
+            
+            # Validate old password
+            if not old_password:
+                messages.error(request, "Palun sisesta praegune parool.")
+                return redirect(f"{reverse('a_account:settings')}?section=general")
+            
+            if not user.check_password(old_password):
+                messages.error(request, "Praegune parool on vale.")
+                return redirect(f"{reverse('a_account:settings')}?section=general")
+            
+            # Validate new password
+            if not new_password1 or not new_password2:
+                messages.error(request, "Palun sisesta uus parool mõlemasse välja.")
+                return redirect(f"{reverse('a_account:settings')}?section=general")
+            
+            if new_password1 != new_password2:
+                messages.error(request, "Uued paroolid ei kattu.")
+                return redirect(f"{reverse('a_account:settings')}?section=general")
+            
+            # Validate password using the same validator as signup
+            from a_family.validators import SimplePasswordValidator
+            validator = SimplePasswordValidator(
+                min_length=8,
+                require_number=True,
+                require_uppercase=True,
+            )
+            
+            try:
+                validator.validate(new_password1, user=user)
+            except Exception as e:
+                messages.error(request, str(e))
+                return redirect(f"{reverse('a_account:settings')}?section=general")
+            
+            # Change password
+            user.set_password(new_password1)
+            user.save(update_fields=['password'])
+            messages.success(request, "Parool muudetud edukalt!")
+            return redirect(f"{reverse('a_account:settings')}?section=general")
 
     # Only family owner can manage subscription
     can_manage_subscription = False
@@ -151,6 +242,8 @@ def general_settings(request):
         except (AttributeError, ValueError):
             can_manage_subscription = False
 
+    from datetime import date
+    
     context = {
         "family": family,
         "is_parent": is_parent,
@@ -161,6 +254,8 @@ def general_settings(request):
         "current_section": "general",
         "can_manage_subscription": can_manage_subscription,
         "user": user,
+        "today": date.today(),
+        "has_email": bool(user.email),
     }
     return render(request, 'a_account/general.html', context)
 
@@ -170,6 +265,11 @@ def notification_settings(request):
     """Notification preferences settings"""
     user = request.user
     family = _get_family_for_user(user)
+
+    # Redirect users without email - they can't receive notifications
+    if not user.email:
+        messages.info(request, "Teavituste seadistamiseks peab teil olema e-posti aadress.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
 
     # Only family owner can manage subscription
     can_manage_subscription = False
@@ -181,10 +281,11 @@ def notification_settings(request):
 
     # Handle form submission
     if request.method == 'POST' and request.POST.get('form_type') == 'notifications':
-        notify_tasks = request.POST.get('notify_tasks') == 'on'
-        notify_rewards = request.POST.get('notify_rewards') == 'on'
-        notify_shopping = request.POST.get('notify_shopping') == 'on'
-        notify_summary = request.POST.get('notify_summary') == 'on'
+        # Checkboxes only send 'on' when checked, otherwise they're not in POST
+        notify_tasks = 'notify_tasks' in request.POST and request.POST.get('notify_tasks') == 'on'
+        notify_rewards = 'notify_rewards' in request.POST and request.POST.get('notify_rewards') == 'on'
+        notify_shopping = 'notify_shopping' in request.POST and request.POST.get('notify_shopping') == 'on'
+        notify_summary = 'notify_summary' in request.POST and request.POST.get('notify_summary') == 'on'
         
         # Store notification preferences
         prefs = {
@@ -212,6 +313,7 @@ def notification_settings(request):
         "current_section": "notifications",
         "can_manage_subscription": can_manage_subscription,
         "user": user,
+        "has_email": bool(user.email),
     }
     return render(request, 'a_account/notifications.html', context)
 
@@ -628,6 +730,7 @@ def subscription_settings(request):
         "current_section": "subscriptions",
         "family": family,
         "user": user,
+        "has_email": bool(user.email),
     }
     return render(request, 'a_account/subscriptions.html', context)
 

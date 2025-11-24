@@ -25,21 +25,38 @@
           <input type="hidden" name="form_type" value="profile">
           <div class="form-grid form-grid-single">
             <label class="form-field">
+              <span class="field-label">Kasutajanimi</span>
+              <input type="text" name="username" value="{{ settings_user.username|default_if_none:'' }}" placeholder="kasutajanimi" required>
+            </label>
+            <label class="form-field">
               <span class="field-label">Eesnimi</span>
-              <input type="text" name="first_name" value="{{ settings_user.first_name|default_if_none:'' }}" placeholder="Eesnimi">
+              <input type="text" name="first_name" value="{{ settings_user.first_name|default_if_none:'' }}" placeholder="Eesnimi" required>
             </label>
             <label class="form-field">
               <span class="field-label">Perekonnanimi</span>
-              <input type="text" name="last_name" value="{{ settings_user.last_name|default_if_none:'' }}" placeholder="Perekonnanimi">
+              <input type="text" name="last_name" value="{{ settings_user.last_name|default_if_none:'' }}" placeholder="Perekonnanimi" required>
+            </label>
+            <label class="form-field">
+              <span class="field-label">Sünniaeg</span>
+              <input type="date" name="birthdate" value="{% if settings_user.birthdate %}{{ settings_user.birthdate|date:'Y-m-d' }}{% endif %}" max="{{ today|date:'Y-m-d' }}" placeholder="Sünniaeg">
             </label>
             {% if is_parent or settings_user.email %}
             <label class="form-field">
               <span class="field-label">E-posti aadress</span>
-              <input type="email" name="email" value="{{ settings_user.email|default_if_none:'' }}" placeholder="name@email.com">
-              {% if not is_parent and not settings_user.email %}
-                <span class="field-hint">Lapsel ei ole e-posti aadressi.</span>
+              {% if is_parent %}
+                <input type="email" name="email" value="{{ settings_user.email|default_if_none:'' }}" placeholder="name@email.com" required>
+              {% else %}
+                <input type="email" name="email" value="{{ settings_user.email|default_if_none:'' }}" placeholder="name@email.com" disabled>
+                <span class="field-hint">Lapsed ei saa oma e-posti aadressi muuta.</span>
               {% endif %}
             </label>
+            {% else %}
+              <div class="form-field">
+                <span class="field-label">E-posti aadress</span>
+                <div style="padding: 0.85rem 1rem; border-radius: 0.85rem; border: 1px solid rgba(148, 163, 184, 0.35); background: rgba(15, 23, 42, 0.65); color: rgba(148, 163, 184, 0.7); font-size: 0.98rem;">
+                  Lapsel ei ole e-posti aadressi
+                </div>
+              </div>
             {% endif %}
           </div>
           <label class="form-field">
@@ -57,11 +74,82 @@
 
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Salvesta muudatused</button>
-            <button type="button" class="btn btn-ghost">Muuda parooli</button>
+            <button type="button" class="btn btn-ghost" id="changePasswordBtn">Muuda parooli</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Password Change Modal -->
+    <section class="settings-card" id="passwordModal" style="display: none; margin-top: 24px;" aria-hidden="true">
+      <header class="settings-card-header card-header">
+        <div class="card-title-wrap">
+          <span class="card-icon icon-purple"></span>
+          <div>
+            <h2>Muuda parooli</h2>
+            <p>Uuenda oma konto parooli.</p>
+          </div>
+        </div>
+      </header>
+      <div class="settings-card-body">
+        <form method="post" class="settings-form" id="passwordChangeForm">
+          {% csrf_token %}
+          <input type="hidden" name="form_type" value="password_change">
+          <div class="form-grid form-grid-single">
+            <label class="form-field">
+              <span class="field-label">Praegune parool</span>
+              <input type="password" name="old_password" placeholder="Sisesta praegune parool" required>
+            </label>
+            <label class="form-field">
+              <span class="field-label">Uus parool</span>
+              <input type="password" name="new_password1" placeholder="Vähemalt 8 märki, 1 number ja suurtäht" required>
+            </label>
+            <label class="form-field">
+              <span class="field-label">Korda uut parooli</span>
+              <input type="password" name="new_password2" placeholder="Korda uut parooli" required>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Muuda parooli</button>
+            <button type="button" class="btn btn-ghost" id="hidePasswordBtn">Loobu</button>
           </div>
         </form>
       </div>
     </section>
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Password change modal
+      const changePasswordBtn = document.getElementById('changePasswordBtn');
+      const passwordModal = document.getElementById('passwordModal');
+      const passwordChangeForm = document.getElementById('passwordChangeForm');
+      const hidePasswordBtn = passwordModal ? passwordModal.querySelector('[onclick="hidePasswordModal()"]') : null;
+      
+      if (changePasswordBtn && passwordModal) {
+        changePasswordBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          passwordModal.style.display = 'flex';
+          passwordModal.setAttribute('aria-hidden', 'false');
+          passwordModal.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+      }
+      
+      if (hidePasswordBtn) {
+        hidePasswordBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (passwordModal) {
+            passwordModal.style.display = 'none';
+            passwordModal.setAttribute('aria-hidden', 'true');
+          }
+          if (passwordChangeForm) {
+            passwordChangeForm.reset();
+          }
+        });
+      }
+    });
+  </script>
 {% endblock %}
 

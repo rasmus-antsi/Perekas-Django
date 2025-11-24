@@ -612,6 +612,8 @@ body {
 
 .settings-card input[type="text"],
 .settings-card input[type="email"],
+.settings-card input[type="password"],
+.settings-card input[type="date"],
 .settings-card input[type="number"],
 .settings-card select {
   width: 100%;
@@ -620,17 +622,21 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.35);
   background: rgba(15, 23, 42, 0.65);
   color: var(--color-text-primary);
+  color: var(--color-text-primary);
   font-size: 0.98rem;
   transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
 .settings-card input[type="text"]::placeholder,
-.settings-card input[type="email"]::placeholder {
+.settings-card input[type="email"]::placeholder,
+.settings-card input[type="password"]::placeholder {
   color: rgba(148, 163, 184, 0.65);
 }
 
 .settings-card input[type="text"]:focus,
 .settings-card input[type="email"]:focus,
+.settings-card input[type="password"]:focus,
+.settings-card input[type="date"]:focus,
 .settings-card input[type="number"]:focus,
 .settings-card select:focus {
   outline: none;
@@ -890,18 +896,21 @@ body {
   position: relative;
   transition: all 0.2s ease;
   padding: 0;
+  display: flex;
+  align-items: center;
 }
 
 .notification-switch-handle {
   position: absolute;
-  top: 3px;
-  left: 3px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background: rgba(226, 232, 240, 0.95);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
 }
 
 .notification-switch-button.is-active {
@@ -911,7 +920,7 @@ body {
 }
 
 .notification-switch-button.is-active .notification-switch-handle {
-  transform: translateX(20px);
+  transform: translateY(-50%) translateX(22px);
 }
 
 .notification-switch-button:focus-visible {

@@ -8,6 +8,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags
 
+from a_family.models import User
+
 
 logger = logging.getLogger(__name__)
 
@@ -110,5 +112,180 @@ def send_admin_family_created_notification(request, family):
         template_name='email/admin_family_created.html',
         context=context,
         recipients=[admin_email],
+    )
+
+
+def _get_users_to_notify(family, preference_key):
+    """
+    Get list of users in the family who have email and have the specified notification preference enabled.
+    
+    Args:
+        family: Family instance
+        preference_key: Key from notification_preferences (e.g., 'task_updates', 'reward_updates')
+    
+    Returns:
+        List of email addresses to notify
+    """
+    recipients = []
+    all_members = list(family.members.all()) + [family.owner]
+    
+    for user in all_members:
+        if not user.email:
+            continue
+        
+        # Check notification preferences (default to True if not set)
+        prefs = user.notification_preferences or {}
+        if prefs.get(preference_key, True):  # Default to True if not set
+            recipients.append(user.email)
+    
+    return recipients
+
+
+def send_task_completed_notification(request, task):
+    """
+    Send notification email when a task is completed and needs approval.
+    Notifies only parents in the family who have task_updates enabled.
+    """
+    if not task.family:
+        return
+    
+    # Get only parents (owners) in the family who have email and task_updates enabled
+    recipients = []
+    all_members = list(task.family.members.all()) + [task.family.owner]
+    
+    for user in all_members:
+        # Only notify parents
+        if user.role != User.ROLE_PARENT:
+            continue
+        
+        if not user.email:
+            continue
+        
+        # Check notification preferences (default to True if not set)
+        prefs = user.notification_preferences or {}
+        if prefs.get('task_updates', True):  # Default to True if not set
+            recipients.append(user.email)
+    
+    if not recipients:
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    tasks_url = request.build_absolute_uri(reverse('a_tasks:index'))
+    
+    context = {
+        'task': task,
+        'family': task.family,
+        'completed_by': task.completed_by,
+        'completed_by_name': task.completed_by.get_display_name() if task.completed_by else 'Keegi',
+        'dashboard_url': dashboard_url,
+        'tasks_url': tasks_url,
+    }
+    
+    _send_branded_email(
+        subject=f"Ülesanne täidetud: {task.name}",
+        template_name='email/task_completed.html',
+        context=context,
+        recipients=recipients,
+    )
+
+
+def send_task_approved_notification(request, task):
+    """
+    Send notification email when a task is approved.
+    Notifies the assignee if they have task_updates enabled.
+    """
+    assignee = task.assigned_to or task.completed_by
+    if not assignee or not assignee.email:
+        return
+    
+    prefs = assignee.notification_preferences or {}
+    if not prefs.get('task_updates', True):  # Default to True
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    tasks_url = request.build_absolute_uri(reverse('a_tasks:index'))
+    
+    context = {
+        'task': task,
+        'family': task.family,
+        'assignee': assignee,
+        'approved_by': task.approved_by,
+        'approved_by_name': task.approved_by.get_display_name() if task.approved_by else 'Keegi',
+        'dashboard_url': dashboard_url,
+        'tasks_url': tasks_url,
+    }
+    
+    _send_branded_email(
+        subject=f"Ülesanne kinnitatud: {task.name}",
+        template_name='email/task_approved.html',
+        context=context,
+        recipients=[assignee.email],
+    )
+
+
+# Removed send_reward_created_notification - we only notify when rewards are claimed/taken
+
+
+def send_reward_claimed_notification(request, reward):
+    """
+    Send notification email when a reward is claimed.
+    Notifies all family members who have reward_updates enabled.
+    """
+    if not reward.family:
+        return
+    
+    recipients = _get_users_to_notify(reward.family, 'reward_updates')
+    if not recipients:
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    rewards_url = request.build_absolute_uri(reverse('a_rewards:index'))
+    
+    context = {
+        'reward': reward,
+        'family': reward.family,
+        'claimed_by': reward.claimed_by,
+        'claimed_by_name': reward.claimed_by.get_display_name() if reward.claimed_by else 'Keegi',
+        'dashboard_url': dashboard_url,
+        'rewards_url': rewards_url,
+    }
+    
+    _send_branded_email(
+        subject=f"Preemia lunastatud: {reward.name}",
+        template_name='email/reward_claimed.html',
+        context=context,
+        recipients=recipients,
+    )
+
+
+def send_shopping_item_added_notification(request, item):
+    """
+    Send notification email when a shopping list item is added.
+    Notifies all family members who have shopping_updates enabled.
+    """
+    if not item.family:
+        return
+    
+    recipients = _get_users_to_notify(item.family, 'shopping_updates')
+    if not recipients:
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    shopping_url = request.build_absolute_uri(reverse('a_shopping:index'))
+    
+    context = {
+        'item': item,
+        'family': item.family,
+        'added_by': item.added_by,
+        'added_by_name': item.added_by.get_display_name() if item.added_by else 'Keegi',
+        'dashboard_url': dashboard_url,
+        'shopping_url': shopping_url,
+    }
+    
+    _send_branded_email(
+        subject=f"Ostunimekirja lisatud: {item.name}",
+        template_name='email/shopping_item_added.html',
+        context=context,
+        recipients=recipients,
     )
 
