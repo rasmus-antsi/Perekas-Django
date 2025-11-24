@@ -193,6 +193,7 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
             "activate_url": activate_url,
             "key": emailconfirmation.key,
             "request": request,
+            "logo_url": request.build_absolute_uri('/static/logos/perekas-logo.png'),
         }
         
         # Ensure user display name is in context
