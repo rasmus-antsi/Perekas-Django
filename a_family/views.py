@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from allauth.account.adapter import get_adapter
 
-from .emails import send_family_created_email, send_family_member_joined_email
+from .emails import send_family_created_email, send_family_member_joined_email, send_admin_family_created_notification
 from .forms import CreateFamilyForm, JoinFamilyForm
 from .models import Family, User
 
@@ -67,6 +67,13 @@ def onboarding(request):
                 except Exception as email_error:
                     logging.getLogger(__name__).warning(
                         "Unable to send family created email: %s", email_error, exc_info=True
+                    )
+                # Send admin notification about new family
+                try:
+                    send_admin_family_created_notification(request, family)
+                except Exception as email_error:
+                    logging.getLogger(__name__).warning(
+                        "Unable to send admin family created notification: %s", email_error, exc_info=True
                     )
                 return redirect('a_dashboard:dashboard')
         

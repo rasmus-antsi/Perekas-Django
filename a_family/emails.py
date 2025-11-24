@@ -79,3 +79,36 @@ def send_family_member_joined_email(request, family, member):
             recipients=[owner_email],
         )
 
+
+def send_admin_family_created_notification(request, family):
+    """
+    Send notification email to info@perekas.ee when a new family is created.
+    This helps track how many families are using the app.
+    """
+    admin_email = 'info@perekas.ee'
+    
+    # Get family statistics
+    owner = family.owner
+    member_count = family.members.count()
+    total_users = member_count + 1  # owner + members
+    
+    context = {
+        'family': family,
+        'owner': owner,
+        'owner_name': owner.get_display_name(),
+        'owner_email': owner.email if owner.email else 'Pole e-posti aadressi',
+        'owner_role': owner.get_role_display() if hasattr(owner, 'get_role_display') else '',
+        'member_count': member_count,
+        'total_users': total_users,
+        'join_code': family.join_code,
+        'created_at': family.created_at,
+        'family_url': request.build_absolute_uri(reverse('a_dashboard:dashboard')),
+    }
+    
+    _send_branded_email(
+        subject=f"[Perekas] Uus pere loodud: {family.name}",
+        template_name='email/admin_family_created.html',
+        context=context,
+        recipients=[admin_email],
+    )
+
