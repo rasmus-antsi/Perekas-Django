@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="et">
   <head>
+    {% if not DEBUG %}
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-EE45M236XG"></script>
     <script>
@@ -10,6 +11,7 @@
       gtag('js', new Date());
       gtag('config', 'G-EE45M236XG');
     </script>
+    {% endif %}
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
