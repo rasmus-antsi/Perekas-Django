@@ -3467,6 +3467,206 @@ body.modal-open {
   gap: 0.75rem;
 }
 
+/* Child Account Management Modal Styles */
+.member-card-clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.member-card-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.child-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.child-modal-content {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(59, 72, 99, 0.4);
+  box-shadow: 0 20px 45px rgba(2, 6, 23, 0.35);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.child-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 1px solid rgba(59, 72, 99, 0.4);
+}
+
+.child-modal-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #f8fafc;
+}
+
+.child-modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.child-modal-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: rgba(248, 113, 113, 0.95);
+}
+
+.child-modal-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.child-modal-body {
+  padding: 2rem;
+}
+
+.child-modal-body .form-grid {
+  margin-bottom: 1.5rem;
+}
+
+.child-modal-body .form-field {
+  margin-bottom: 0;
+}
+
+/* Child modal input styles - match settings card inputs */
+.child-modal-body input[type="text"],
+.child-modal-body input[type="email"],
+.child-modal-body input[type="password"],
+.child-modal-body input[type="date"],
+.child-modal-body input[type="number"],
+.child-modal-body select {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.65);
+  color: #f8fafc;
+  font-size: 0.98rem;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  font-family: inherit;
+}
+
+.child-modal-body input[type="text"]::placeholder,
+.child-modal-body input[type="email"]::placeholder,
+.child-modal-body input[type="password"]::placeholder,
+.child-modal-body input[type="date"]::placeholder {
+  color: rgba(148, 163, 184, 0.65);
+}
+
+.child-modal-body input[type="text"]:focus,
+.child-modal-body input[type="email"]:focus,
+.child-modal-body input[type="password"]:focus,
+.child-modal-body input[type="date"]:focus,
+.child-modal-body input[type="number"]:focus,
+.child-modal-body select:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.child-modal-body input[disabled],
+.child-modal-body select[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.child-modal-body .field-label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f8fafc;
+  margin-bottom: 0.5rem;
+}
+
+.child-modal-body .field-hint {
+  font-size: 0.85rem;
+  color: rgba(148, 163, 184, 0.85);
+  margin-top: 0.25rem;
+}
+
+.child-modal-body .form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+/* Email Verification Banner */
+.email-verification-banner {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15));
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+}
+
+.email-verification-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.email-verification-content svg {
+  color: rgba(251, 191, 36, 0.95);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.email-verification-content strong {
+  display: block;
+  color: rgba(251, 191, 36, 0.95);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.email-verification-content p {
+  margin: 0;
+  color: rgba(251, 191, 36, 0.85);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.email-verification-content .btn {
+  white-space: nowrap;
+}
+
 .hero-dashboard-icon-wrapper {
   width: 40px;
   height: 40px;

@@ -167,18 +167,44 @@ def general_settings(request):
             # Update email - only allow parents to change email
             if is_parent:
                 email = request.POST.get('email', '').strip()
+                
                 if email and email != user.email:
                     # Check if email is already in use
                     if User.objects.filter(email=email).exclude(id=user.id).exists():
                         messages.error(request, "See e-posti aadress on juba kasutusel.")
                     else:
+                        # Update email
                         user.email = email
                         updated_fields.add('email')
-                        messages.success(request, "E-posti aadress uuendatud.")
+                        
+                        # Update EmailAddress records
+                        try:
+                            from allauth.account.models import EmailAddress
+                            # Remove old email address if exists
+                            if user.email:
+                                EmailAddress.objects.filter(email=user.email, user=user).exclude(email=email).delete()
+                            # Create or update EmailAddress
+                            email_address, created = EmailAddress.objects.get_or_create(
+                                email=email,
+                                user=user,
+                                defaults={'primary': True, 'verified': True}
+                            )
+                            if not created:
+                                email_address.primary = True
+                                email_address.verified = True
+                                email_address.save()
+                        except Exception:
+                            pass
                 elif not email and user.email:
                     # Allow clearing email only for parents
                     user.email = None
                     updated_fields.add('email')
+                    # Remove email address records
+                    try:
+                        from allauth.account.models import EmailAddress
+                        EmailAddress.objects.filter(user=user).delete()
+                    except Exception:
+                        pass
             # Children cannot change their email - ignore any email POST data
             
             # Update role (only if user is parent and changing their own role)
@@ -186,8 +212,13 @@ def general_settings(request):
                 user.role = role
                 updated_fields.add('role')
 
-            if updated_fields:
-                user.save(update_fields=list(updated_fields))
+            # Save remaining fields (email might already be saved above)
+            remaining_fields = [f for f in updated_fields if f != 'email']
+            if remaining_fields:
+                user.save(update_fields=remaining_fields)
+                messages.success(request, "Profiil uuendatud.")
+            elif updated_fields and 'email' not in updated_fields:
+                # Only show message if we saved something other than email
                 messages.success(request, "Profiil uuendatud.")
             return redirect(f"{reverse('a_account:settings')}?section=general")
         
@@ -243,6 +274,7 @@ def general_settings(request):
             can_manage_subscription = False
 
     from datetime import date
+    
     
     context = {
         "family": family,

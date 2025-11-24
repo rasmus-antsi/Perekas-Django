@@ -9,7 +9,7 @@ class Subscription(models.Model):
     TIER_PRO = 'PRO'
     TIER_CHOICES = [
         (TIER_FREE, 'Tasuta'),
-        (TIER_STARTER, 'Algtase'),
+        (TIER_STARTER, 'Alustaja'),
         (TIER_PRO, 'Pro'),
     ]
 

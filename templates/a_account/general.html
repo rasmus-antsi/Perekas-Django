@@ -8,6 +8,28 @@
     </div>
   </section>
 
+  {% if email_needs_verification and settings_user.email %}
+  <div class="email-verification-banner">
+    <div class="email-verification-content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px; flex-shrink: 0;">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <path d="M9 12l2 2 4-4"></path>
+      </svg>
+      <div>
+        <strong>E-posti aadress vajab kinnitust</strong>
+        <p>Sinu e-posti aadress {{ settings_user.email }} pole veel kinnitatud. Palun kontrolli oma e-posti ja kliki kinnituslingil.</p>
+      </div>
+      <form method="post" action="{% url 'a_family:resend_verification' %}" style="margin-left: auto;">
+        {% csrf_token %}
+        <input type="hidden" name="email" value="{{ settings_user.email }}">
+        <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+          Saada uuesti
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="settings-grid settings-grid-single">
     <section class="settings-card">
       <header class="settings-card-header card-header">
@@ -126,7 +148,7 @@
       const changePasswordBtn = document.getElementById('changePasswordBtn');
       const passwordModal = document.getElementById('passwordModal');
       const passwordChangeForm = document.getElementById('passwordChangeForm');
-      const hidePasswordBtn = passwordModal ? passwordModal.querySelector('[onclick="hidePasswordModal()"]') : null;
+      const hidePasswordBtn = document.getElementById('hidePasswordBtn');
       
       if (changePasswordBtn && passwordModal) {
         changePasswordBtn.addEventListener('click', function(e) {
@@ -137,13 +159,11 @@
         });
       }
       
-      if (hidePasswordBtn) {
+      if (hidePasswordBtn && passwordModal) {
         hidePasswordBtn.addEventListener('click', function(e) {
           e.preventDefault();
-          if (passwordModal) {
-            passwordModal.style.display = 'none';
-            passwordModal.setAttribute('aria-hidden', 'true');
-          }
+          passwordModal.style.display = 'none';
+          passwordModal.setAttribute('aria-hidden', 'true');
           if (passwordChangeForm) {
             passwordChangeForm.reset();
           }

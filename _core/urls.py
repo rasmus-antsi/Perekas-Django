@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -28,8 +28,18 @@ def handler500(request):
     """Custom 500 error handler"""
     return render(request, '500.html', status=500)
 
+def redirect_account_email_to_settings(request):
+    """Redirect authenticated users from /accounts/email to settings"""
+    if request.user.is_authenticated:
+        return redirect('a_account:settings')
+    # For unauthenticated users, use the default allauth email view
+    from allauth.account.views import EmailView
+    return EmailView.as_view()(request)
+
 urlpatterns = [
     path('W01-d8/', admin.site.urls),
+    # Override account_email to redirect authenticated users to settings
+    path('accounts/email/', redirect_account_email_to_settings, name='account_email'),
     path('accounts/', include('allauth.urls')),
     path('family/', include('a_family.urls')),
     path('dashboard/', include('a_dashboard.urls')),

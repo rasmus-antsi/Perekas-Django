@@ -1,0 +1,149 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% block title %}E-posti aadressid | Perekas{% endblock %}
+{% block content %}
+  <div class="auth-card-minimal">
+    <div class="auth-header-minimal">
+      <h1>E-posti aadressid</h1>
+      <p>Halda oma e-posti aadresse ja kinnitusi.</p>
+    </div>
+
+    <div class="auth-content-minimal">
+      {% if user.emailaddress_set.all %}
+        <div class="email-list-section">
+          <p style="margin: 0 0 1.5rem; color: rgba(148, 163, 184, 0.85); font-size: 0.9375rem;">Teie e-posti aadressid:</p>
+          <form action="{% url 'account_email' %}" class="email_list" method="post">
+            {% csrf_token %}
+            <fieldset class="blockLabels" style="border: none; padding: 0; margin: 0;">
+              {% for emailaddress in user.emailaddress_set.all %}
+                <div class="email-item" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 1rem; padding: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem;">
+                  <div style="flex: 1;">
+                    <label for="email_radio_{{forloop.counter}}" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; margin: 0;">
+                      <input 
+                        id="email_radio_{{forloop.counter}}" 
+                        type="radio" 
+                        name="email" 
+                        {% if emailaddress.primary or user.emailaddress_set.count == 1 %}checked="checked"{%endif %} 
+                        value="{{emailaddress.email}}"
+                        style="width: 18px; height: 18px; cursor: pointer; accent-color: rgba(139, 92, 246, 0.8);"
+                      />
+                      <div style="flex: 1;">
+                        <div style="font-weight: 500; color: #f8fafc; font-size: 0.9375rem;">{{ emailaddress.email }}</div>
+                        <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                          {% if emailaddress.verified %}
+                            <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: rgba(34, 197, 94, 0.95); font-size: 0.8125rem; font-weight: 500;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 14px; height: 14px;">
+                                <path d="M20 6L9 17l-5-5"></path>
+                              </svg>
+                              Kinnitatud
+                            </span>
+                          {% else %}
+                            <span style="display: inline-flex; align-items: center; gap: 0.35rem; color: rgba(251, 191, 36, 0.95); font-size: 0.8125rem; font-weight: 500;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 14px; height: 14px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                              </svg>
+                              Kinnitamata
+                            </span>
+                          {% endif %}
+                          {% if emailaddress.primary %}
+                            <span style="display: inline-flex; align-items: center; color: rgba(139, 92, 246, 0.95); font-size: 0.8125rem; font-weight: 500;">(Peamine)</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              {% endfor %}
+
+              <div class="email-actions" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <button class="landing-button secondary" type="submit" name="action_primary" style="flex: 1; min-width: 140px;">Teha peamiseks</button>
+                <button class="landing-button secondary" type="submit" name="action_send" style="flex: 1; min-width: 140px;">Saada kinnituse kiri</button>
+                <button class="landing-button danger" type="submit" name="action_remove" style="flex: 1; min-width: 140px;">Eemalda</button>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      {% else %}
+        <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 1rem; padding: 1.25rem; margin-bottom: 2rem;">
+          <p style="margin: 0; color: rgba(251, 191, 36, 0.95); font-size: 0.9375rem; line-height: 1.5;">
+            <strong>Hoiatus:</strong> Teil pole hetkel määratud e-posti aadressi. Soovitame lisada e-posti aadressi, et saaksite parooli lähtestada ja saada teavitusi.
+          </p>
+        </div>
+      {% endif %}
+
+      {% if can_add_email %}
+        <div style="border-top: 1px solid rgba(148, 163, 184, 0.15); padding-top: 2rem; margin-top: 2rem;">
+          <h2 style="margin: 0 0 1.25rem; font-size: 1.125rem; font-weight: 600; color: #f8fafc;">Lisa e-posti aadress</h2>
+          <form method="post" action="{% url 'account_email' %}" class="add_email auth-form-minimal">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="auth-error-minimal" style="margin-bottom: 1rem;">{{ form.non_field_errors|join:", " }}</div>
+            {% endif %}
+            
+            <div class="auth-field-minimal{% if form.email.errors %} has-error{% endif %}">
+              <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+              {{ form.email }}
+              {% for error in form.email.errors %}
+                <span class="auth-field-error-minimal">{{ error }}</span>
+              {% endfor %}
+            </div>
+            
+            <div class="auth-actions-minimal" style="margin-top: 1rem;">
+              <button name="action_add" type="submit" class="landing-button primary">Lisa e-posti aadress</button>
+            </div>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="auth-actions-minimal" style="margin-top: 2rem;">
+      {% if user.is_authenticated %}
+        <a href="{% url 'a_account:settings' %}" class="landing-button ghost">Tagasi seadetesse</a>
+      {% else %}
+        <a href="{% url 'account_login' %}" class="landing-button ghost">Tagasi sisselogimisele</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <style>
+    .email-item label {
+      width: 100%;
+    }
+    
+    .email-item input[type="radio"] {
+      margin: 0;
+    }
+    
+    .email-actions button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .auth-field-minimal input {
+      background: rgba(3, 8, 22, 0.6) !important;
+      color: #f8fafc !important;
+    }
+    
+    .auth-field-minimal input:focus {
+      outline: none;
+      border-color: rgba(139, 92, 246, 0.55);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+  </style>
+
+  <script type="text/javascript">
+    (function() {
+      var message = "{% trans 'Do you really want to remove the selected e-mail address?' %}";
+      var actions = document.getElementsByName('action_remove');
+      if (actions.length) {
+        actions[0].addEventListener("click", function(e) {
+          if (! confirm(message)) {
+            e.preventDefault();
+          }
+        });
+      }
+    })();
+  </script>
+{% endblock %}
