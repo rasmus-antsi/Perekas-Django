@@ -52,8 +52,14 @@
                 <!-- Logo -->
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td align="center" style="width: 56px; height: 56px; background: linear-gradient(135deg, #8b5cf6, #ec4899 60%, #38bdf8 120%); border-radius: 14px; font-weight: 700; font-size: 18px; color: #f9fafb; text-align: center; line-height: 56px;">
-                      PE
+                    <td align="center">
+                      {% if logo_url %}
+                        <img src="{{ logo_url }}" alt="Perekas" style="width: 56px; height: 56px; border-radius: 14px; display: block;" />
+                      {% else %}
+                        <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #8b5cf6, #ec4899 60%, #38bdf8 120%); border-radius: 14px; font-weight: 700; font-size: 18px; color: #f9fafb; text-align: center; line-height: 56px;">
+                          PE
+                        </div>
+                      {% endif %}
                     </td>
                   </tr>
                 </table>

@@ -14,6 +14,11 @@ from a_family.models import User
 logger = logging.getLogger(__name__)
 
 
+def _get_logo_url(request):
+    """Generate absolute URL for the logo image."""
+    return request.build_absolute_uri('/static/logos/perekas-logo.png')
+
+
 def _send_branded_email(subject: str, template_name: str, context: dict, recipients: list[str]) -> None:
     """
     Render and send a rich email with HTML + plaintext fallback.
@@ -54,6 +59,7 @@ def send_family_created_email(request, user, family):
         'user': user,
         'family': family,
         'onboarding_url': onboarding_url,
+        'logo_url': _get_logo_url(request),
     }
     _send_branded_email(
         subject="Sinu pere on loodud",
@@ -71,6 +77,7 @@ def send_family_member_joined_email(request, family, member):
         'member_name': member.get_display_name(),
         'member_role': member.get_role_display() if hasattr(member, 'get_role_display') else '',
         'dashboard_url': dashboard_url,
+        'logo_url': _get_logo_url(request),
     }
     owner_email = family.owner.email if family.owner and family.owner.email else None
     if owner_email:
@@ -105,6 +112,7 @@ def send_admin_family_created_notification(request, family):
         'join_code': family.join_code,
         'created_at': family.created_at,
         'family_url': request.build_absolute_uri(reverse('a_dashboard:dashboard')),
+        'logo_url': _get_logo_url(request),
     }
     
     _send_branded_email(
@@ -179,6 +187,7 @@ def send_task_completed_notification(request, task):
         'completed_by_name': task.completed_by.get_display_name() if task.completed_by else 'Keegi',
         'dashboard_url': dashboard_url,
         'tasks_url': tasks_url,
+        'logo_url': _get_logo_url(request),
     }
     
     _send_branded_email(
@@ -213,6 +222,7 @@ def send_task_approved_notification(request, task):
         'approved_by_name': task.approved_by.get_display_name() if task.approved_by else 'Keegi',
         'dashboard_url': dashboard_url,
         'tasks_url': tasks_url,
+        'logo_url': _get_logo_url(request),
     }
     
     _send_branded_email(
@@ -248,6 +258,7 @@ def send_reward_claimed_notification(request, reward):
         'claimed_by_name': reward.claimed_by.get_display_name() if reward.claimed_by else 'Keegi',
         'dashboard_url': dashboard_url,
         'rewards_url': rewards_url,
+        'logo_url': _get_logo_url(request),
     }
     
     _send_branded_email(
@@ -280,6 +291,7 @@ def send_shopping_item_added_notification(request, item):
         'added_by_name': item.added_by.get_display_name() if item.added_by else 'Keegi',
         'dashboard_url': dashboard_url,
         'shopping_url': shopping_url,
+        'logo_url': _get_logo_url(request),
     }
     
     _send_branded_email(
