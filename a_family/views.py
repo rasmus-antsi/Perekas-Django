@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from allauth.account.adapter import get_adapter
+from allauth.account.models import EmailAddress
 
 from .emails import send_family_created_email, send_family_member_joined_email, send_admin_family_created_notification
 from .forms import CreateFamilyForm, JoinFamilyForm
@@ -30,6 +31,27 @@ def _get_family_for_user(user):
 def onboarding(request):
     """Family onboarding page - create or join a family"""
     user = request.user
+    
+    # Check email verification - block access until verified
+    if user.email:
+        try:
+            email_address = EmailAddress.objects.filter(
+                user=user,
+                email=user.email,
+                primary=True
+            ).first()
+            
+            if email_address and not email_address.verified:
+                # Email not verified - redirect to verification page
+                messages.error(
+                    request,
+                    'Perekonna loomiseks või liitumiseks peab e-posti aadress olema kinnitatud. '
+                    'Palun kinnita oma e-post ja proovi uuesti.'
+                )
+                return redirect('account_verification_sent')
+        except Exception:
+            # If there's an error checking, allow access
+            pass
     
     try:
         # If user already has a family, redirect to dashboard
@@ -147,22 +169,19 @@ def index(request):
         messages.info(request, 'Pere haldamine on lubatud ainult lapsevanematele.')
         return redirect('a_dashboard:dashboard')
     
-    # Get all family members
-    all_members = [family.owner]
-    all_members.extend(family.members.all())
-    # Remove duplicates
-    all_members = list(dict.fromkeys(all_members))
-    
-    is_owner = family.owner == user
     is_parent = user.role == User.ROLE_PARENT
+    is_owner = family.owner == user
     
+    from django.utils import timezone
     from datetime import date
     
     context = {
         'family': family,
-        'members': all_members,
-        'is_owner': is_owner,
+        'join_code': family.join_code,
+        'members': family.members.all(),
+        'owner': family.owner,
         'is_parent': is_parent,
+        'is_owner': is_owner,
         'today': date.today(),
     }
     return render(request, 'a_family/index.html', context)
@@ -170,237 +189,232 @@ def index(request):
 
 @login_required
 def remove_member(request, user_id):
-    """Remove a member from the family - only owner can do this"""
-    if request.method != 'POST':
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
-        return redirect('a_family:index')
-    
+    """Remove a member from the family"""
     user = request.user
     family = _get_family_for_user(user)
     
-    # Redirect if no family
-    if not family:
-        return redirect('a_family:onboarding')
-    
-    # Only owner can remove members
-    if family.owner != user:
+    # Check if user is the owner
+    if not family or family.owner != user:
         messages.error(request, 'Ainult pere omanik saab liikmeid eemaldada.')
         return redirect('a_family:index')
     
+    # Get the member to remove
     try:
         member_to_remove = User.objects.get(id=user_id)
-        
-        # Can't remove the owner
-        if member_to_remove == family.owner:
-            messages.error(request, 'Pere omanikku ei saa eemaldada.')
-            return redirect('a_family:index')
-        
-        # Remove from members
-        if member_to_remove in family.members.all():
-            family.members.remove(member_to_remove)
-            messages.success(request, f'{member_to_remove.get_display_name()} eemaldati perest.')
-        else:
-            messages.info(request, 'See kasutaja ei kuulu sinu perre.')
     except User.DoesNotExist:
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        messages.error(request, 'Liiget ei leitud.')
+        return redirect('a_family:index')
+    
+    # Can't remove yourself or the owner
+    if member_to_remove == user:
+        messages.error(request, 'Sa ei saa end eemaldada.')
+        return redirect('a_family:index')
+    
+    # Remove the member
+    family.members.remove(member_to_remove)
+    messages.success(request, f'{member_to_remove.get_display_name()} eemaldati perest.')
     
     return redirect('a_family:index')
 
 
+@login_required
+def verification_sent(request):
+    """
+    Custom view for email verification sent page.
+    Allows users to resend verification email or change their email address.
+    """
+    user = request.user
+    
+    # Get current email
+    current_email = user.email if user.email else ''
+    
+    # Get email address record
+    email_address = None
+    if current_email:
+        try:
+            email_address = EmailAddress.objects.filter(
+                user=user,
+                email=current_email,
+                primary=True
+            ).first()
+        except Exception:
+            pass
+    
+    context = {
+        'email': current_email,
+        'email_verified': email_address.verified if email_address else False,
+        'user': user,
+    }
+    
+    return render(request, 'account/verification_sent.html', context)
+
+
 def resend_verification_email(request):
-    """Resend email verification email - works for both authenticated and unauthenticated users"""
+    """Resend email verification email or change email - works for both authenticated and unauthenticated users"""
     logger = logging.getLogger(__name__)
     
     if request.method == 'POST':
-        email = request.POST.get('email')
+        action = request.POST.get('action', 'resend')
+        email = request.POST.get('email', '').strip()
+        new_email = request.POST.get('new_email', '').strip()
+        
+        # Handle email change
+        if action == 'change_email' and new_email:
+            if not request.user.is_authenticated:
+                messages.error(request, 'E-posti muutmiseks pead olema sisse logitud.')
+                return redirect('account_login')
+            
+            user = request.user
+            
+            # Validate new email
+            if not new_email:
+                messages.error(request, 'Palun sisesta uus e-posti aadress.')
+                return redirect('account_verification_sent')
+            
+            # Check if email is already in use
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                messages.error(request, 'See e-posti aadress on juba kasutusel.')
+                return redirect('account_verification_sent')
+            
+            # Update user email
+            user.email = new_email
+            user.save()
+            
+            # Delete old email address records
+            EmailAddress.objects.filter(user=user).delete()
+            
+            # Create new EmailAddress record
+            email_address = EmailAddress.objects.create(
+                email=new_email,
+                user=user,
+                primary=True,
+                verified=False
+            )
+            
+            # Use allauth's send_confirmation method which handles both HMAC and database confirmations
+            # send_confirmation() creates the confirmation AND sends the email internally
+            # This ensures we use the same confirmation method as during signup
+            email_address.send_confirmation(request, signup=False)
+            
+            messages.success(
+                request,
+                f'E-posti aadress muudetud. Saatsime kinnituse kirja aadressile {new_email}. '
+                'Palun kontrolli oma e-posti ja klõpsa kinnituse lingil.'
+            )
+            return redirect('account_verification_sent')
+        
+        # Handle resend verification
+        if not email:
+            email = request.user.email if request.user.is_authenticated else ''
+        
         if not email:
             messages.error(request, 'Palun sisesta e-posti aadress.')
-            # Always redirect to settings for authenticated users
-            if request.user.is_authenticated:
-                return redirect('a_account:settings')
-            # For unauthenticated users, redirect back to verification sent page with email
-            from django.shortcuts import render
-            return render(request, 'account/verification_sent.html', {'email': ''})
+            return redirect('account_verification_sent')
         
         try:
-            from allauth.account.models import EmailAddress
             from allauth.account.adapter import DefaultAccountAdapter
-            from django.shortcuts import redirect
             
             email_address = EmailAddress.objects.get(email=email)
             if email_address.verified:
                 messages.info(request, 'See e-posti aadress on juba kinnitatud.')
-                # Always redirect to settings for authenticated users
                 if request.user.is_authenticated:
-                    return redirect('a_account:settings')
-                # For unauthenticated users, redirect back to verification sent page
-                from django.shortcuts import render
-                return render(request, 'account/verification_sent.html', {'email': email})
+                    return redirect('a_dashboard:dashboard')
+                return redirect('account_login')
             
-            # Resend verification email synchronously
-            # Manually create confirmation and send email to bypass async adapter
-            from allauth.account.models import EmailConfirmation
-            from allauth.account.adapter import DefaultAccountAdapter
-            from django.utils import timezone
-            
-            sync_adapter = DefaultAccountAdapter()
-            
-            # Delete ALL existing confirmations for this email address to ensure only one valid link
-            # This prevents confusion from multiple valid confirmation links
-            EmailConfirmation.objects.filter(email_address=email_address).delete()
-            
-            # Create new email confirmation - create() returns and saves the object
-            confirmation = EmailConfirmation.create(email_address)
-            confirmation.sent = timezone.now()
-            confirmation.save()
-            
-            # Refresh from database to ensure it's properly saved
-            confirmation.refresh_from_db()
-            
-            # Build context
-            activate_url = sync_adapter.get_email_confirmation_url(request, confirmation)
-            ctx = {
-                "user": email_address.user,
-                "activate_url": activate_url,
-                "key": confirmation.key,
-                "request": request,
-            }
-            
-            # Ensure user display name is in context
-            if 'user' in ctx and ctx['user']:
-                if not hasattr(ctx['user'], 'display_name'):
-                    try:
-                        ctx['user_display_name'] = ctx['user'].get_display_name()
-                    except Exception:
-                        ctx['user_display_name'] = ctx['user'].username or 'Perekas kasutaja'
-            
-            # Send email synchronously using parent's send_mail method
-            # This bypasses our async adapter
-            template_prefix = "account/email/email_confirmation"
-            DefaultAccountAdapter.send_mail(sync_adapter, template_prefix, email, ctx)
+            # Resend verification email - use allauth's method which handles HMAC vs database confirmations
+            # send_confirmation() creates the confirmation AND sends the email internally
+            # This ensures we use the same confirmation method as during signup
+            email_address.send_confirmation(request, signup=False)
             
             logger.info(f"Email verification resent synchronously to {email} for user {email_address.user_id}")
             messages.success(request, 'Kinnituse kiri saadeti uuesti. Palun kontrolli oma e-posti.')
             
-            # Always redirect to settings for authenticated users
-            if request.user.is_authenticated:
-                return redirect('a_account:settings')
-            # For unauthenticated users, render the verification sent page with email
-            from django.shortcuts import render
-            return render(request, 'account/verification_sent.html', {'email': email})
+            return redirect('account_verification_sent')
         except EmailAddress.DoesNotExist:
             messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
-            if request.user.is_authenticated:
-                return redirect('a_account:settings')
-            from django.shortcuts import render
-            return render(request, 'account/verification_sent.html', {'email': email or ''})
+            return redirect('account_verification_sent')
         except Exception as e:
             logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
             messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
-            if request.user.is_authenticated:
-                return redirect('a_account:settings')
-            from django.shortcuts import render
-            return render(request, 'account/verification_sent.html', {'email': email or ''})
+            return redirect('account_verification_sent')
     
-    # GET request - redirect to settings for authenticated users
-    if request.user.is_authenticated:
-        return redirect('a_account:settings')
-    from django.shortcuts import render
-    return render(request, 'account/verification_sent.html', {'email': ''})
+    # GET request - show verification sent page
+    return redirect('account_verification_sent')
 
 
 @login_required
 def manage_child_account(request, child_id):
-    """Manage child account - only parents can do this"""
-    parent = request.user
-    family = _get_family_for_user(parent)
+    """Parent view to manage child account - edit profile, reset password, manage email"""
+    user = request.user
     
-    # Only parents can manage child accounts
-    if parent.role != User.ROLE_PARENT:
+    # Check if user is a parent
+    if user.role != User.ROLE_PARENT:
         messages.error(request, 'Ainult lapsevanemad saavad laste kontosid hallata.')
-        return redirect('a_family:index')
+        return redirect('a_dashboard:dashboard')
     
-    # Must be family owner or member
+    # Get the family
+    family = _get_family_for_user(user)
     if not family:
-        messages.error(request, 'Pere puudub.')
+        messages.error(request, 'Sa ei kuulu ühelegi peresse.')
         return redirect('a_family:onboarding')
     
-    # Must be family owner to manage child accounts
-    if family.owner != parent:
-        messages.error(request, 'Ainult pere omanik saab laste kontosid hallata.')
-        return redirect('a_family:index')
-    
+    # Get the child
     try:
-        child = User.objects.get(id=child_id)
+        child = User.objects.get(id=child_id, role=User.ROLE_CHILD)
     except User.DoesNotExist:
-        messages.error(request, 'Lapse konto ei leitud.')
+        messages.error(request, 'Last ei leitud.')
         return redirect('a_family:index')
     
-    # Verify child belongs to this family
-    if child != family.owner and child not in family.members.all():
-        messages.error(request, 'See laps ei kuulu sinu perre.')
+    # Check if child is in the family
+    if child not in family.members.all() and child != family.owner:
+        messages.error(request, 'See laps ei kuulu sinu peresse.')
         return redirect('a_family:index')
     
-    # Verify child is actually a child
-    if child.role != User.ROLE_CHILD:
-        messages.error(request, 'Seda funktsiooni saab kasutada ainult laste kontode jaoks.')
-        return redirect('a_family:index')
-    
-    # Return JSON for modal load
-    if request.GET.get('format') == 'json':
-        from django.http import JsonResponse
-        return JsonResponse({
-            'id': child.id,
-            'username': child.username,
-            'first_name': child.first_name or '',
-            'last_name': child.last_name or '',
-            'birthdate': child.birthdate.strftime('%Y-%m-%d') if child.birthdate else '',
-            'email': child.email or '',
-        })
-    
-    # Handle form submission
-    if request.method == 'POST' and request.POST.get('form_type') == 'child_account':
-        from datetime import datetime
+    if request.method == 'POST':
+        # Handle AJAX request for child data
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({
+                'id': child.id,
+                'username': child.username,
+                'first_name': child.first_name,
+                'last_name': child.last_name,
+                'email': child.email or '',
+                'birthdate': child.birthdate.isoformat() if child.birthdate else '',
+            })
         
+        # Handle form submission
         username = request.POST.get('username', '').strip()
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
-        birthdate_str = request.POST.get('birthdate', '').strip()
         email = request.POST.get('email', '').strip()
-        new_password = request.POST.get('new_password', '').strip()
+        password = request.POST.get('password', '').strip()
         
         updated_fields = set()
         
-        # Update username (with uniqueness check)
+        # Update username
         if username and username != child.username:
+            # Check if username is already in use
             if User.objects.filter(username=username).exclude(id=child.id).exists():
                 messages.error(request, "See kasutajanimi on juba kasutusel.")
                 return redirect('a_family:index')
             child.username = username
             updated_fields.add('username')
         
-        # Update first and last name
-        if first_name != child.first_name:
+        # Update first name
+        if first_name and first_name != child.first_name:
             child.first_name = first_name
             updated_fields.add('first_name')
         
-        if last_name != child.last_name:
+        # Update last name
+        if last_name and last_name != child.last_name:
             child.last_name = last_name
             updated_fields.add('last_name')
         
-        # Update birthdate
-        if birthdate_str:
-            try:
-                birthdate = datetime.strptime(birthdate_str, '%Y-%m-%d').date()
-                if child.birthdate != birthdate:
-                    child.birthdate = birthdate
-                    updated_fields.add('birthdate')
-            except ValueError:
-                messages.error(request, "Vale sünniaja vorming.")
-                return redirect('a_family:index')
-        elif child.birthdate:
-            child.birthdate = None
-            updated_fields.add('birthdate')
+        # Update password
+        if password:
+            child.set_password(password)
+            updated_fields.add('password')
         
         # Update email
         if email != (child.email or ''):
@@ -414,9 +428,8 @@ def manage_child_account(request, child_id):
                 child.email = email
                 updated_fields.add('email')
                 
-                # Create/update EmailAddress records (not verified)
+                # Update EmailAddress records
                 try:
-                    from allauth.account.models import EmailAddress
                     # Remove old email addresses
                     EmailAddress.objects.filter(user=child).exclude(email=email).delete()
                     # Create or update EmailAddress
@@ -437,33 +450,32 @@ def manage_child_account(request, child_id):
                 updated_fields.add('email')
                 # Remove email address records
                 try:
-                    from allauth.account.models import EmailAddress
                     EmailAddress.objects.filter(user=child).delete()
                 except Exception:
                     pass
         
-        # Update password (if provided - no old password required for parents)
-        if new_password:
-            # Validate password using Django's password validators
-            from django.contrib.auth.password_validation import validate_password
-            from django.core.exceptions import ValidationError
-            
-            try:
-                validate_password(new_password, user=child)
-                child.set_password(new_password)
-                updated_fields.add('password')
-                messages.success(request, "Parool muudetud edukalt!")
-            except ValidationError as e:
-                error_messages = e.messages
-                messages.error(request, f"Parooli valideerimine ebaõnnestus: {', '.join(error_messages)}")
-                return redirect('a_family:index')
-        
         # Save updates
         if updated_fields:
-            child.save(update_fields=list(updated_fields))
-            messages.success(request, f"Lapse '{child.get_display_name()}' andmed uuendatud.")
+            try:
+                logger = logging.getLogger(__name__)
+                child.save(update_fields=list(updated_fields))
+                messages.success(request, f'{child.get_display_name()} andmed uuendatud.')
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error updating child {child.id}: {str(e)}", exc_info=True)
+                messages.error(request, "Midagi läks valesti andmete uuendamisel.")
+        else:
+            messages.info(request, 'Muudatusi ei tehtud.')
         
         return redirect('a_family:index')
     
-    # Default redirect
-    return redirect('a_family:index')
+    # GET request - return child data as JSON
+    from django.http import JsonResponse
+    return JsonResponse({
+        'id': child.id,
+        'username': child.username,
+        'first_name': child.first_name,
+        'last_name': child.last_name,
+        'email': child.email or '',
+        'birthdate': child.birthdate.isoformat() if child.birthdate else '',
+    })

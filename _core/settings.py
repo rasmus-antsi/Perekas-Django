@@ -114,6 +114,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'a_family.middleware.EmailVerificationMiddleware',  # Check email verification
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -150,9 +151,11 @@ SITE_ID = 1
 
 LOGIN_REDIRECT_URL = 'a_family:onboarding'
 LOGIN_URL = 'account_login'
+LOGOUT_REDIRECT_URL = 'a_landing:landing_index'
 ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = 'a_family:onboarding'
 ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = 'account_login'
 ACCOUNT_SIGNUP_REDIRECT_URL = 'a_family:onboarding'
+ACCOUNT_LOGOUT_REDIRECT_URL = 'a_landing:landing_index'
 
 # Email verification - skip for children without email (handled in adapter)
 # Set to 'optional' since children may not have email, but we'll require it for parents in the form

@@ -6,41 +6,53 @@
   <div class="auth-card-minimal">
     <div class="auth-header-minimal">
       <h1>Kinnita e-posti aadress</h1>
-      <p>Kinnita oma e-post, et konto aktiveerida.</p>
+      {% if confirmation and can_confirm %}
+        <p>Kinnita oma e-post, et konto aktiveerida.</p>
+      {% elif confirmation %}
+        <p>See e-posti aadress on juba kinnitatud.</p>
+      {% else %}
+        <p>See kinnituse link on aegunud või vigane.</p>
+      {% endif %}
     </div>
 
     <div class="auth-content-minimal">
       {% if confirmation %}
         {% user_display confirmation.email_address.user as user_display %}
         {% if can_confirm %}
-          <p>{% blocktrans with confirmation.email_address.email as email %}Palun kinnita, et <strong>{{ email }}</strong> kuulub kasutajale {{ user_display }}.{% endblocktrans %}</p>
+          <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary); font-size: 0.9375rem;">
+            Palun kinnita, et <strong>{{ confirmation.email_address.email }}</strong> kuulub kontole {{ user_display }}.
+          </p>
           
-          <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" class="auth-form-minimal">
+          <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" style="margin: 0;">
             {% csrf_token %}
             {% if redirect_field_value %}
               <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
             {% endif %}
-            <div class="auth-actions-minimal">
-              <button type="submit" class="landing-button primary">Kinnita</button>
-            </div>
+            <button type="submit" class="landing-button primary" style="width: 100%;">
+              Kinnita e-post
+            </button>
           </form>
         {% else %}
-          <div class="auth-error-minimal">
-            <p>{% blocktrans %}Ei saa aadressi {{ email }} kinnitada, sest selle on juba kinnitanud teine konto.{% endblocktrans %}</p>
-          </div>
-          <div class="auth-actions-minimal" style="margin-top: 1.5rem;">
-            <a href="{% url 'account_login' %}" class="landing-button ghost">Logi sisse</a>
-          </div>
+          <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary); font-size: 0.9375rem;">
+            See e-posti aadress on juba kasutusel teise kontoga.
+          </p>
+          <a href="{% url 'account_login' %}" class="landing-button primary" style="width: 100%;">
+            Logi sisse
+          </a>
         {% endif %}
       {% else %}
-        <p>See kinnituse link on aegunud või vigane.</p>
-        <div class="auth-actions-minimal" style="margin-top: 1.5rem;">
-          {% if user.is_authenticated %}
-            <a href="{% url 'a_account:settings' %}" class="landing-button primary">Tagasi seadetesse</a>
-          {% else %}
-            <a href="{% url 'account_email' %}" class="landing-button primary">Küsi uus kinnitusmeil</a>
-          {% endif %}
-        </div>
+        <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary); font-size: 0.9375rem;">
+          Kinnituse link ei tööta enam. Palun küsi uus kinnitusmeil.
+        </p>
+        {% if user.is_authenticated %}
+          <a href="{% url 'account_verification_sent' %}" class="landing-button primary" style="width: 100%;">
+            Küsi uus kinnitusmeil
+          </a>
+        {% else %}
+          <a href="{% url 'account_verification_sent' %}" class="landing-button primary" style="width: 100%;">
+            Küsi uus kinnitusmeil
+          </a>
+        {% endif %}
       {% endif %}
     </div>
   </div>

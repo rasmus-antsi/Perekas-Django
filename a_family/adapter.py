@@ -16,7 +16,9 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
     """
 
     def send_mail(self, template_prefix, email, context):
-        """Send email - skip if email is None (for children without email)"""
+        """Send email - skip if email is None (for children without email)
+        Send confirmation emails synchronously, others asynchronously.
+        """
         if not email:
             logger.info("Skipping email send for user without email")
             return
@@ -32,6 +34,26 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
                 except Exception:
                     context['user_display_name'] = user.username or 'Perekas kasutaja'
         
+        # Send confirmation emails synchronously to ensure confirmation is properly saved
+        # before the email is sent (critical for verification links to work)
+        # Check for both template prefix patterns that allauth uses
+        is_confirmation_email = (
+            'email_confirmation' in template_prefix or 
+            'email/email_confirmation' in template_prefix or
+            template_prefix == 'account/email/email_confirmation' or
+            '/email_confirmation' in template_prefix
+        )
+        if is_confirmation_email:
+            try:
+                # Log for debugging
+                logger.info(f"Sending confirmation email synchronously to {email}, template: {template_prefix}")
+                super(AsyncAccountAdapter, self).send_mail(template_prefix, email, context)
+                logger.info(f"Confirmation email sent successfully to {email}")
+            except Exception:
+                logger.exception("Failed to send confirmation email to %s", email)
+            return
+        
+        # For other emails, send asynchronously
         def _runner():
             try:
                 super(AsyncAccountAdapter, self).send_mail(template_prefix, email, context)
@@ -121,4 +143,73 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
     def is_open_for_signup(self, request):
         """Allow signup for all users, including children without email"""
         return True
+    
+    def send_confirmation_mail(self, request, emailconfirmation, signup):
+        """
+        Send confirmation email synchronously to ensure confirmation is saved
+        before the email is sent. This is critical for verification links to work.
+        Handles both HMAC-based confirmations (virtual) and database-backed confirmations.
+        """
+        if not emailconfirmation.email_address.email:
+            logger.info("Skipping confirmation email send for user without email")
+            return
+        
+        # Check if this is an HMAC confirmation (virtual, no pk) or database confirmation
+        is_hmac = not hasattr(emailconfirmation, 'pk') or emailconfirmation.pk is None
+        
+        # Ensure EmailAddress is saved first
+        if hasattr(emailconfirmation.email_address, 'pk') and not emailconfirmation.email_address.pk:
+            emailconfirmation.email_address.save()
+            logger.info(f"Saved EmailAddress {emailconfirmation.email_address.id} for {emailconfirmation.email_address.email}")
+        
+        # For database confirmations, ensure it's saved
+        if not is_hmac:
+            if not emailconfirmation.pk:
+                emailconfirmation.save()
+                logger.info(f"Saved EmailConfirmation {emailconfirmation.id} with key {emailconfirmation.key[:30]}...")
+            # Refresh to ensure we have the latest data
+            emailconfirmation.refresh_from_db()
+        
+        # Verify the confirmation can be found by key BEFORE sending email
+        try:
+            from allauth.account.models import EmailConfirmation
+            test_found = EmailConfirmation.from_key(emailconfirmation.key)
+            if not is_hmac and hasattr(test_found, 'id'):
+                if test_found.id != emailconfirmation.id:
+                    logger.error(f"WARNING: Confirmation key lookup returned different ID! Expected {emailconfirmation.id}, got {test_found.id}")
+                else:
+                    logger.info(f"Verified confirmation {emailconfirmation.id} can be found by key before sending email")
+            else:
+                logger.info(f"Verified HMAC confirmation can be found by key before sending email")
+        except Exception as e:
+            logger.error(f"ERROR: Cannot find confirmation by key before sending email! Key: {emailconfirmation.key[:30]}..., Error: {e}")
+        
+        # Build context - use self to get URL (respects site settings)
+        activate_url = self.get_email_confirmation_url(request, emailconfirmation)
+        logger.info(f"Generated confirmation URL: {activate_url}")
+        
+        ctx = {
+            "user": emailconfirmation.email_address.user,
+            "activate_url": activate_url,
+            "key": emailconfirmation.key,
+            "request": request,
+        }
+        
+        # Ensure user display name is in context
+        if 'user' in ctx and ctx['user']:
+            if not hasattr(ctx['user'], 'display_name'):
+                try:
+                    ctx['user_display_name'] = ctx['user'].get_display_name()
+                except Exception:
+                    ctx['user_display_name'] = ctx['user'].username or 'Perekas kasutaja'
+        
+        # Send email synchronously using parent's send_mail (not async)
+        # This ensures the confirmation is fully saved before email is sent
+        template_prefix = "account/email/email_confirmation"
+        try:
+            # Use parent's send_mail directly to bypass async behavior
+            super(AsyncAccountAdapter, self).send_mail(template_prefix, emailconfirmation.email_address.email, ctx)
+            logger.info(f"Confirmation email sent synchronously to {emailconfirmation.email_address.email} for user {emailconfirmation.email_address.user_id}, key: {emailconfirmation.key[:30]}...")
+        except Exception:
+            logger.exception("Failed to send confirmation email to %s", emailconfirmation.email_address.email)
 
