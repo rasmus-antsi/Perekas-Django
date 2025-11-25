@@ -603,7 +603,7 @@ body {
 }
 
 .form-grid-single {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 280px));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .form-field {
@@ -679,6 +679,27 @@ body {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 2.5rem;
+}
+
+@media (max-width: 640px) {
+  .form-grid,
+  .form-grid-single {
+    grid-template-columns: 1fr;
+  }
+
+  .danger-zone > div {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .danger-zone form[data-confirm] {
+    width: 100%;
+  }
+
+  .danger-zone form[data-confirm] .btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .field-hint {
