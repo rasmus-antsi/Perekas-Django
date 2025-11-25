@@ -275,6 +275,11 @@ def general_settings(request):
 
     from datetime import date
     
+    # Get other parents in family for ownership transfer (only if user is owner)
+    other_parents = []
+    if family and family.owner == user:
+        # Get all members who are parents (excluding the current owner)
+        other_parents = family.members.filter(role=User.ROLE_PARENT).exclude(id=user.id)
     
     context = {
         "family": family,
@@ -288,6 +293,8 @@ def general_settings(request):
         "user": user,
         "today": date.today(),
         "has_email": bool(user.email),
+        "other_parents": other_parents,
+        "is_family_owner": family and family.owner == user if family else False,
     }
     return render(request, 'a_account/general.html', context)
 
@@ -803,6 +810,68 @@ def subscription_settings(request):
 
 
 @login_required
+def transfer_ownership(request):
+    """Transfer family ownership to another parent"""
+    user = request.user
+    
+    if request.method != 'POST':
+        messages.error(request, "Midagi läks valesti.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Get family
+    family = _get_family_for_user(user)
+    if not family:
+        messages.error(request, "Sa ei kuulu ühelegi peresse.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Check if user is the family owner
+    if family.owner != user:
+        messages.error(request, "Ainult pere omanik saab omaniku õigused üle kanda.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Get new owner ID
+    new_owner_id = request.POST.get('new_owner_id')
+    if not new_owner_id:
+        messages.error(request, "Uue omaniku ID puudub.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    try:
+        new_owner_id = int(new_owner_id)
+    except (ValueError, TypeError):
+        messages.error(request, "Vale omaniku ID.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Get new owner
+    try:
+        new_owner = User.objects.get(id=new_owner_id, role=User.ROLE_PARENT)
+    except User.DoesNotExist:
+        messages.error(request, "Uut omanikku ei leitud või ta ei ole lapsevanem.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Check if new owner is in the family
+    if new_owner not in family.members.all():
+        messages.error(request, "Uus omanik peab olema pere liige.")
+        return redirect(f"{reverse('a_account:settings')}?section=general")
+    
+    # Transfer ownership
+    old_owner = family.owner
+    family.owner = new_owner
+    family.save()
+    
+    # Transfer subscription ownership if exists
+    try:
+        subscriptions = Subscription.objects.filter(owner=old_owner)
+        for subscription in subscriptions:
+            subscription.owner = new_owner
+            subscription.save(update_fields=['owner'])
+    except Exception:
+        pass
+    
+    messages.success(request, f"Omaniku õigused üle antud {new_owner.get_display_name()}le.")
+    return redirect(f"{reverse('a_account:settings')}?section=general")
+
+
+@login_required
 def delete_account(request):
     """Delete user account - only for parents"""
     user = request.user
@@ -820,15 +889,48 @@ def delete_account(request):
     family = _get_family_for_user(user)
     is_family_owner = family and family.owner == user if family else False
     
-    # Remove user from family if they're a member (but not owner - can't delete owner without handling family transfer)
-    if family:
-        if is_family_owner:
-            # Owner can't delete account without transferring ownership or deleting family first
-            messages.error(request, "Pere omanik ei saa oma kontot kustutada. Palun kustuta esmalt pere või üle kanna omaniku õigused teisele lapsevanemale.")
-            return redirect(f"{reverse('a_account:settings')}?section=general")
-        else:
-            # Remove user from family
-            family.members.remove(user)
+    # Check for active subscription if user is owner
+    if is_family_owner:
+        active_subscription = Subscription.objects.filter(
+            owner=user,
+            tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+        ).first()
+        
+        if active_subscription and active_subscription.is_active():
+            messages.error(request, "Enne konto kustutamist pead tühistama aktiivse tellimuse. Palun mine tellimuste seadistustesse ja tühista tellimus.")
+            return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
+    
+    # Handle family owner deletion
+    if family and is_family_owner:
+        # Get all child accounts in the family
+        child_accounts = family.members.filter(role=User.ROLE_CHILD)
+        child_count = child_accounts.count()
+        
+        # Delete all child accounts
+        for child in child_accounts:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.filter(user=child).delete()
+            except Exception:
+                pass
+            child.delete()
+        
+        # Delete subscriptions
+        try:
+            subscriptions = Subscription.objects.filter(owner=user)
+            for subscription in subscriptions:
+                subscription.delete()
+        except Exception:
+            pass
+        
+        # Remove all members from family
+        family.members.clear()
+        
+        # Delete the family (this will CASCADE delete tasks)
+        family.delete()
+    elif family:
+        # Remove user from family if they're a member
+        family.members.remove(user)
     
     # Delete EmailAddress records
     try:
