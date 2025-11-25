@@ -61,7 +61,7 @@ def dashboard(request):
     }
     family_members = []
     recent_tasks = []
-    quick_actions = [
+    quick_actions_parent = [
         {
             "label": "Halda ülesandeid",
             "description": "Loo ja määra perele uued ülesanded",
@@ -75,17 +75,44 @@ def dashboard(request):
             "icon": "trophy",
         },
     ]
+    quick_actions_child = [
+        {
+            "label": "Minu ülesanded",
+            "description": "Vaata ja märgi oma töid",
+            "url": "a_tasks:index",
+            "icon": "tasks",
+        },
+        {
+            "label": "Preemiad",
+            "description": "Vali siht ja lunasta",
+            "url": "a_rewards:index",
+            "icon": "trophy",
+        },
+    ]
     
-    # Add shopping list action for all users if subscription allows it
+    # Add shopping list action if subscription allows it
     if family and has_shopping_list_access(family):
-        quick_actions.append({
+        quick_actions_parent.append({
             "label": "Ostunimekiri",
             "description": "Halda pere sisseoste ja vajalikke tooteid",
             "url": "a_shopping:index",
             "icon": "cart",
         })
+        quick_actions_child.append({
+            "label": "Ostunimekiri",
+            "description": "Lisa asju, mida vajad",
+            "url": "a_shopping:index",
+            "icon": "cart",
+        })
+
+    role_view = 'parent' if is_parent else 'child'
+    child_context = None
+
+    parent_stat_cards = []
 
     if family:
+        today = timezone.localdate()
+        now = timezone.now()
         tasks_qs = Task.objects.filter(family=family)
         stats["active_tasks"] = tasks_qs.filter(completed=False).count()
 
@@ -144,6 +171,107 @@ def dashboard(request):
             .order_by("-completed_at")[:5]
         )
 
+        if is_parent:
+            pending_approvals_count = tasks_qs.filter(completed=True, approved=False).count()
+            due_today_count = tasks_qs.filter(completed=False, due_date=today).count()
+            weekly_points = tasks_qs.filter(
+                approved=True,
+                approved_at__gte=now - timezone.timedelta(days=7)
+            ).aggregate(total=Sum("points"))["total"] or 0
+            claimable_now = rewards_qs.filter(claimed=False, points__lte=child_users.aggregate(total=Sum("points"))["total"] or 0).count()
+            parent_stat_cards = [
+                {
+                    "label": "Aktiivsed ülesanded",
+                    "value": stats["active_tasks"],
+                    "change": f"{pending_approvals_count} ootab kinnitamist",
+                    "icon": "icon-purple",
+                    "url": "a_tasks:index",
+                },
+                {
+                    "label": "Tänased tähtajad",
+                    "value": due_today_count,
+                    "change": "Vaata ja planeri päev",
+                    "icon": "icon-green",
+                    "url": "a_tasks:index",
+                },
+                {
+                    "label": "Punktid sel nädalal",
+                    "value": weekly_points,
+                    "change": f"{stats['points_earned']} kokku lastel",
+                    "icon": "icon-orange",
+                    "url": "a_rewards:index",
+                },
+                {
+                    "label": "Ostunimekiri",
+                    "value": stats["shopping_needed"],
+                    "change": f"{stats['shopping_items'] - stats['shopping_needed']} korvis",
+                    "icon": "icon-teal",
+                    "url": "a_shopping:index" if has_shopping_list_access(family) else "a_tasks:index",
+                },
+            ]
+
+        if is_child:
+            today = timezone.localdate()
+            # Include tasks assigned to this user OR assigned to all (None)
+            child_tasks = tasks_qs.filter(
+                Q(assigned_to=user) | Q(assigned_to__isnull=True)
+            ).filter(completed=False)
+            # Today's tasks: due today, overdue (past), or no due date
+            today_tasks = list(
+                child_tasks.filter(
+                    Q(due_date__lte=today) | Q(due_date__isnull=True)
+                ).order_by("-priority", "due_date")[:5]
+            )
+            upcoming_tasks = list(
+                child_tasks.filter(due_date__gt=today)
+                .order_by("due_date")[:5]
+            )
+            pending_reviews = list(
+                tasks_qs.filter(completed=True, approved=False, completed_by=user)
+                .order_by("-completed_at")[:4]
+            )
+            recent_child_activity = list(
+                tasks_qs.filter(completed_by=user)
+                .order_by("-completed_at")[:5]
+            )
+            rewards_qs = list(
+                Reward.objects.filter(family=family, claimed=False)
+                .order_by("points")[:4]
+            )
+            next_reward = None
+            for reward in rewards_qs:
+                if reward.points > user.points:
+                    next_reward = reward
+                    break
+            weekly_points = tasks_qs.filter(
+                completed_by=user,
+                approved=True,
+                approved_at__gte=timezone.now() - timezone.timedelta(days=7)
+            ).aggregate(total=Sum("points"))["total"] or 0
+            rewards_available = []
+            for reward in rewards_qs:
+                rewards_available.append({
+                    "id": reward.id,
+                    "name": reward.name,
+                    "points": reward.points,
+                    "is_goal": next_reward and reward.id == next_reward.id,
+                    "available_now": reward.points <= user.points,
+                    "shortfall": max(reward.points - user.points, 0),
+                })
+
+            child_context = {
+                "today_tasks": today_tasks,
+                "upcoming_tasks": upcoming_tasks,
+                "pending_reviews": pending_reviews,
+                "recent_activity": recent_child_activity,
+                "rewards_available": rewards_available,
+                "next_reward": next_reward,
+                "points_total": user.points,
+                "points_week": weekly_points,
+                "points_needed": (next_reward.points - user.points) if next_reward else 0,
+                "quick_actions": quick_actions_child,
+            }
+
     context = {
         "family": family,
         "is_parent": is_parent,
@@ -151,7 +279,10 @@ def dashboard(request):
         "stats": stats,
         "family_members": family_members,
         "recent_tasks": recent_tasks,
-        "quick_actions": quick_actions,
+        "quick_actions": quick_actions_parent,
+        "parent_stat_cards": parent_stat_cards,
+        "role_view": role_view,
+        "child_context": child_context,
     }
     return render(request, 'a_dashboard/dashboard.html', context)
 

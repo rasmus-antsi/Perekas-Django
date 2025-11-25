@@ -236,7 +236,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'et'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Tallinn'
 
 USE_I18N = True
 
