@@ -89,7 +89,6 @@ def index(request):
         in_cart_items = ShoppingListItem.objects.none()
 
     context = {
-        'family_name': family.name if family else 'Sinu pere',
         'to_buy_items': to_buy_items,
         'in_cart_items': in_cart_items,
         'to_buy_count': to_buy_items.count(),

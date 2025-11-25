@@ -73,9 +73,9 @@
                         Halda
                       </button>
                     {% endif %}
-                    <form method="post" action="{% url 'a_family:remove_member' member.id %}" style="{% if is_parent and member.role == 'child' %}flex: 1;{% endif %}">
+                    <form method="post" action="{% url 'a_family:remove_member' member.id %}" style="{% if is_parent and member.role == 'child' %}flex: 1;{% endif %}" data-confirm="Kas soovid {{ member.display_name }} perest eemaldada? Liige kaotab juurdepääsu pere andmetele, kuid tema konto jääb alles.">
                       {% csrf_token %}
-                      <button type="submit" class="btn btn-ghost" onclick="event.stopPropagation(); return confirm('Kas eemaldada {{ member.display_name }} perest?');" style="color: rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 0.3); width: 100%;">
+                      <button type="submit" class="btn btn-ghost" onclick="event.stopPropagation();" style="color: rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 0.3); width: 100%;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
                           <path d="M3 6h18"></path>
                           <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
@@ -157,7 +157,7 @@
               <h3 style="margin: 0 0 0.25rem; font-size: 1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Kustuta lapse konto</h3>
               <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Konto kustutamine on pöördumatu. Kõik andmed kustutatakse jäädavalt.</p>
             </div>
-            <form method="post" action="{% url 'a_family:delete_child_account' %}" style="margin: 0; flex-shrink: 0;" id="deleteChildForm" data-confirm="Kas oled kindel, et soovid selle lapse konto kustutada? See toiming on pöördumatu ja kõik lapse andmed kustutatakse jäädavalt.">
+            <form method="post" action="{% url 'a_family:delete_child_account' %}" style="margin: 0; flex-shrink: 0;" id="deleteChildForm" data-confirm="Kas oled kindel, et soovid selle lapse konto kustutada? Seda ei saa tagasi võtta ja kõik lapse andmed kustutatakse jäädavalt.">
               {% csrf_token %}
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="child_id" id="deleteChildIdInput">
@@ -518,10 +518,13 @@
             
             const message = form.getAttribute('data-confirm');
             const action = form.querySelector('input[name="action"]')?.value || 'toiming';
+            const formAction = form.getAttribute('action') || '';
             let title = 'Kinnita toiming';
             
             if (action === 'delete') {
               title = 'Kinnita kustutamine';
+            } else if (formAction.includes('remove_member')) {
+              title = 'Kinnita eemaldamine';
             }
             
             pendingForm = form;

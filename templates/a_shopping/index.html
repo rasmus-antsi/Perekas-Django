@@ -13,7 +13,6 @@
           {{ to_buy_count }} eset nimekirjas, {{ in_cart_count }} korvis
         </p>
       </div>
-      <button class="pill-button" type="button">{{ family_name }}</button>
     </header>
 
     <form method="post" class="add-item-card">
@@ -60,7 +59,7 @@
                     </svg>
                   </button>
                 </form>
-                <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid eseme '{{ item.name }}' kustutada? See toiming on pöördumatu.">
+                <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid eseme '{{ item.name }}' kustutada? Seda ei saa tagasi võtta.">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="item_id" value="{{ item.id }}">
@@ -109,7 +108,7 @@
                     </svg>
                   </button>
                 </form>
-                <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid eseme '{{ item.name }}' kustutada? See toiming on pöördumatu.">
+                <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid eseme '{{ item.name }}' kustutada? Seda ei saa tagasi võtta.">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="delete">
                   <input type="hidden" name="item_id" value="{{ item.id }}">

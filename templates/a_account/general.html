@@ -110,7 +110,7 @@
           <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Konto kustutamine</h3>
           <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Konto kustutamine on pöördumatu. Kõik andmed kustutatakse jäädavalt.</p>
         </div>
-        <form method="post" action="{% url 'a_account:delete_account' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid oma konto kustutada? See toiming on pöördumatu ja kõik sinu andmed kustutatakse jäädavalt.">
+        <form method="post" action="{% url 'a_account:delete_account' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid oma konto kustutada? Seda ei saa tagasi võtta ja kõik sinu andmed kustutatakse jäädavalt.">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;">
@@ -134,7 +134,7 @@
           <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Pere kustutamine</h3>
           <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Pere kustutamine on pöördumatu. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.</p>
         </div>
-        <form method="post" action="{% url 'a_family:delete_family' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid pere '{{ family.name }}' kustutada? See toiming on pöördumatu. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.">
+        <form method="post" action="{% url 'a_family:delete_family' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid pere '{{ family.name }}' kustutada? Seda ei saa tagasi võtta. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete">
           <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;">
