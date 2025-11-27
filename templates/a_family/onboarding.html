@@ -1,89 +1,161 @@
-{% extends "account/base.html" %}
+{% extends "base.html" %}
 {% load static %}
-{% block title %}Liitu või loo pere | Perekas{% endblock %}
-{% block content %}
-  <div class="auth-card-minimal onboarding-journey">
-    <div class="signup-progress">
-      <div class="progress-steps">
-        <div class="progress-step completed" data-step="1">
-          <div class="step-number">1</div>
-          <div class="step-label">Põhiinfo</div>
-        </div>
-        <div class="progress-line completed"></div>
-        <div class="progress-step completed" data-step="2">
-          <div class="step-number">2</div>
-          <div class="step-label">Profiil</div>
-        </div>
-        <div class="progress-line completed"></div>
-        <div class="progress-step completed" data-step="3">
-          <div class="step-number">3</div>
-          <div class="step-label">Turvalisus</div>
-        </div>
-        <div class="progress-line completed"></div>
-        <div class="progress-step active" data-step="4">
-          <div class="step-number">4</div>
-          <div class="step-label">Pere</div>
-        </div>
-      </div>
-    </div>
 
-    <div class="signup-header">
-      <h1>Viimane samm!</h1>
-      <p>Loo või liitu perega, et alustada</p>
-    </div>
+{% block title %}Liitu või loo pere | Perekas{% endblock %}
+
+{% block sidebar_nav %}
+<nav class="sidebar-nav">
+  <a class="nav-link{% block nav_onboarding_active %} active{% endblock %}" href="{% url 'a_family:onboarding' %}">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+    </svg>
+    <span>Liitu</span>
+  </a>
+</nav>
+{% endblock %}
+
+{% block sidebar_nav_bottom %}
+<nav class="sidebar-nav sidebar-nav-bottom">
+  <a class="nav-link nav-link-settings{% block nav_settings_active %}{% endblock %}" href="{% url 'a_account:settings' %}?section=general">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"></path>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+    <span>Seaded</span>
+  </a>
+</nav>
+<div class="sidebar-footer">
+  <div class="sidebar-footer-title">{{user.first_name}} {{user.last_name}} - {{user.points}} pkt</div>
+  <form method="post" action="{% url 'account_logout' %}">
+    {% csrf_token %}
+    <button type="submit" class="sidebar-logout">Logi välja</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block content %}
+  <div class="page-container">
+    <section class="page-header">
+      <div>
+        <h1 class="page-title">Liitu või loo pere</h1>
+        <p class="page-subtitle">Alusta Perekas kasutamist perega liitumise või uue pere loomisega.</p>
+      </div>
+    </section>
 
     {% if error_message %}
-      <div class="auth-error-minimal">{{ error_message }}</div>
+      <div class="onboarding-alert">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ error_message }}</span>
+      </div>
     {% endif %}
 
-    <div class="onboarding-options">
+    <div class="onboarding-grid">
       {% if is_parent %}
         <!-- Create Family Option (Parents Only) -->
-        <div class="onboarding-card">
-          <div class="onboarding-card-header">
+        <div class="onboarding-card onboarding-card-create">
+          <header class="onboarding-card-header">
             <div class="onboarding-icon-wrapper icon-purple">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
               </svg>
             </div>
-            <h2>Loo pere</h2>
-            <p>Käivita uus pererühm ja kutsu liikmed liituma.</p>
+            <div class="onboarding-card-title-group">
+              <h2>Loo pere</h2>
+              <p>Käivita uus pererühm ja kutsu liikmed liituma.</p>
+            </div>
+          </header>
+          
+          <div class="onboarding-card-body">
+            <ul class="onboarding-features">
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Loo oma pere</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Halda pereliikmeid</span>
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Jaga kutsekoodi</span>
+              </li>
+            </ul>
           </div>
           
-          <div class="auth-actions-minimal">
-            <button type="button" class="landing-button primary" onclick="openCreateModal()">Loo pere</button>
+          <div class="onboarding-card-actions">
+            <button type="button" class="btn btn-primary btn-large" onclick="openCreateModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span>Loo pere</span>
+            </button>
           </div>
         </div>
       {% endif %}
 
       <!-- Join Family Option (All Users) -->
-      <div class="onboarding-card">
-        <div class="onboarding-card-header">
+      <div class="onboarding-card onboarding-card-join">
+        <header class="onboarding-card-header">
           <div class="onboarding-icon-wrapper icon-teal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
             </svg>
           </div>
-          <h2>Liitu perega</h2>
-          <p>Sisesta pere kood, et liituda olemasoleva perega.</p>
-        </div>
+          <div class="onboarding-card-title-group">
+            <h2>Liitu perega</h2>
+            <p>Sisesta pere kood, et liituda olemasoleva perega.</p>
+          </div>
+        </header>
         
-        <form method="post" action="{% url 'a_family:onboarding' %}" class="auth-form-minimal">
+        <form method="post" action="{% url 'a_family:onboarding' %}" class="onboarding-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="join">
           
-          <div class="auth-field-minimal{% if join_form.join_code.errors %} has-error{% endif %}">
-            <label for="{{ join_form.join_code.id_for_label }}">{{ join_form.join_code.label }}</label>
-            {{ join_form.join_code }}
-            {% for error in join_form.join_code.errors %}
-              <span class="auth-field-error-minimal">{{ error }}</span>
-            {% endfor %}
+          <div class="onboarding-card-body">
+            <div class="form-field">
+              <label for="{{ join_form.join_code.id_for_label }}">
+                {{ join_form.join_code.label }}
+                <span class="field-hint">8-kohaline kood</span>
+              </label>
+              <div class="join-code-input-wrapper">
+                {{ join_form.join_code }}
+                <div class="join-code-hint">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <span>Kood on suurtähtedega</span>
+                </div>
+              </div>
+              {% for error in join_form.join_code.errors %}
+                <span class="field-error">{{ error }}</span>
+              {% endfor %}
+            </div>
           </div>
 
-          <div class="auth-actions-minimal">
-            <button type="submit" class="landing-button primary">Liitu perega</button>
+          <div class="onboarding-card-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              <span>Liitu perega</span>
+            </button>
           </div>
         </form>
       </div>
@@ -91,33 +163,30 @@
 
     <!-- Create Family Modal -->
     {% if is_parent %}
-      <div id="createFamilyModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h2>Loo pere</h2>
-            <button type="button" class="modal-close" onclick="closeCreateModal()" aria-label="Sulge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
+      <div id="createFamilyModal" class="destructive-modal" aria-hidden="true">
+        <div class="destructive-modal-overlay" data-close-modal="createFamilyModal"></div>
+        <div class="destructive-modal-content">
+          <button type="button" class="destructive-modal-close" data-close-modal="createFamilyModal" aria-label="Sulge">
+            ✕
+          </button>
+          <h3>Loo pere</h3>
+          <p class="destructive-modal-subtitle">Sisesta pere nimi, et alustada.</p>
           
-          <form method="post" action="{% url 'a_family:onboarding' %}" class="auth-form-minimal">
+          <form method="post" action="{% url 'a_family:onboarding' %}" style="margin: 0;">
             {% csrf_token %}
             <input type="hidden" name="action" value="create">
             
-            <div class="auth-field-minimal{% if create_form.name.errors %} has-error{% endif %}">
+            <div class="form-field">
               <label for="{{ create_form.name.id_for_label }}">{{ create_form.name.label }}</label>
               {{ create_form.name }}
               {% for error in create_form.name.errors %}
-                <span class="auth-field-error-minimal">{{ error }}</span>
+                <span class="field-error">{{ error }}</span>
               {% endfor %}
             </div>
 
-            <div class="auth-actions-minimal">
-              <button type="submit" class="landing-button primary">Loo pere</button>
-              <button type="button" class="landing-button ghost" onclick="closeCreateModal()">Loobu</button>
+            <div class="destructive-modal-actions">
+              <button type="button" class="btn btn-ghost" data-close-modal="createFamilyModal">Loobu</button>
+              <button type="submit" class="btn btn-primary">Loo pere</button>
             </div>
           </form>
         </div>
@@ -126,173 +195,89 @@
   </div>
 
   <style>
-    /* Override container width for onboarding */
-    .auth-container {
-      max-width: 900px !important;
-    }
-
-    .onboarding-journey {
-      max-width: 900px;
-    }
-
-    .signup-progress {
-      margin-bottom: 2.5rem;
-    }
-
-    .progress-steps {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-    }
-
-    .progress-step {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      flex: 1;
-      opacity: 0.4;
-      transition: opacity 0.3s ease;
-    }
-
-    .progress-step.active {
-      opacity: 1;
-    }
-
-    .progress-step.completed .step-number {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: #22c55e;
-      color: #22c55e;
-    }
-
-
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(148, 163, 184, 0.15);
-      border: 2px solid rgba(148, 163, 184, 0.3);
-      display: grid;
-      place-items: center;
-      font-weight: 600;
-      font-size: 0.9375rem;
-      color: rgba(148, 163, 184, 0.8);
-      transition: all 0.3s ease;
-    }
-
-    .progress-step.active .step-number {
-      background: rgba(139, 92, 246, 0.2);
-      border-color: #8b5cf6;
-      color: #8b5cf6;
-      transform: scale(1.1);
-    }
-
-    .step-label {
-      font-size: 0.75rem;
-      color: rgba(148, 163, 184, 0.7);
-      text-align: center;
-      font-weight: 500;
-    }
-
-    .progress-step.active .step-label {
-      color: rgba(148, 163, 184, 0.9);
-    }
-
-    .progress-line {
-      flex: 1;
-      height: 2px;
-      background: rgba(148, 163, 184, 0.2);
-      margin: 0 0.5rem;
-      margin-top: -1.5rem;
-      transition: background 0.3s ease;
-    }
-
-    .progress-line.completed {
-      background: #22c55e;
-    }
-
-    .signup-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-
-    .signup-header h1 {
-      margin: 0 0 0.5rem;
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #f8fafc;
-    }
-
-    .signup-header p {
-      margin: 0;
-      color: rgba(148, 163, 184, 0.8);
-      font-size: 0.9375rem;
-    }
-
-    @media (max-width: 640px) {
-      .step-label {
-        display: none;
-      }
-
-      .progress-steps {
-        gap: 0.25rem;
-      }
-
-      .progress-line {
-        margin: 0 0.25rem;
-      }
-    }
-
-    .onboarding-options {
+    .onboarding-grid {
       display: grid;
       gap: 2rem;
       margin-top: 2.5rem;
     }
 
     @media (min-width: 768px) {
-      .onboarding-options {
+      .onboarding-grid {
         grid-template-columns: {% if is_parent %}1fr 1fr{% else %}1fr{% endif %};
         gap: 2.5rem;
+        max-width: 1200px;
       }
     }
 
     .onboarding-card {
-      background: rgba(7, 12, 28, 0.4);
-      backdrop-filter: blur(24px);
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      border-radius: 1.5rem;
-      padding: 2.5rem;
-      box-shadow: 0 20px 45px rgba(4, 8, 24, 0.35);
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      background: linear-gradient(135deg, rgba(12, 18, 35, 0.98), rgba(16, 24, 46, 0.95));
+      border: 1px solid rgba(59, 72, 99, 0.4);
+      border-radius: var(--radius-md);
+      padding: 0;
+      box-shadow: var(--shadow-soft);
       display: flex;
       flex-direction: column;
-      height: 100%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .onboarding-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     .onboarding-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(148, 163, 184, 0.25);
+      transform: translateY(-4px);
+      border-color: rgba(59, 72, 99, 0.6);
+      box-shadow: 0 25px 50px rgba(2, 6, 23, 0.45);
+    }
+
+    .onboarding-card:hover::before {
+      opacity: 1;
+    }
+
+    .onboarding-card-create::before {
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.6), transparent);
+    }
+
+    .onboarding-card-join::before {
+      background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.6), transparent);
     }
 
     .onboarding-card-header {
+      padding: 2.5rem 2.5rem 1.5rem;
       text-align: center;
-      margin-bottom: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
     }
 
     .onboarding-icon-wrapper {
-      width: 64px;
-      height: 64px;
-      border-radius: 18px;
+      width: 72px;
+      height: 72px;
+      border-radius: 20px;
       display: grid;
       place-items: center;
-      margin: 0 auto 1.25rem;
-      box-shadow: 0 12px 28px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 12px 32px rgba(79, 70, 229, 0.35);
+      transition: transform 0.3s ease;
+    }
+
+    .onboarding-card:hover .onboarding-icon-wrapper {
+      transform: scale(1.05);
     }
 
     .onboarding-icon-wrapper svg {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       stroke: currentColor;
       stroke-width: 2;
       fill: none;
@@ -300,155 +285,325 @@
     }
 
     .onboarding-icon-wrapper.icon-purple {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(59, 130, 246, 0.35));
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.4));
     }
 
     .onboarding-icon-wrapper.icon-teal {
-      background: linear-gradient(135deg, rgba(45, 212, 191, 0.28), rgba(74, 222, 128, 0.32));
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.32), rgba(74, 222, 128, 0.38));
     }
 
-    .onboarding-card-header h2 {
-      margin: 0 0 0.75rem;
-      font-size: 1.5rem;
+    .onboarding-card-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .onboarding-card-title-group h2 {
+      margin: 0;
+      font-size: 1.75rem;
       font-weight: 700;
       color: #f8fafc;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
     }
 
-    .onboarding-card-header p {
+    .onboarding-card-title-group p {
       margin: 0;
-      color: rgba(148, 163, 184, 0.85);
-      font-size: 0.9375rem;
+      color: var(--color-text-secondary);
+      font-size: 0.95rem;
       line-height: 1.5;
     }
 
-    .onboarding-card .auth-form-minimal {
+    .onboarding-card-body {
+      padding: 0 2.5rem 1.5rem;
+      flex: 1;
+    }
+
+    .onboarding-features {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+    }
+
+    .onboarding-features li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--color-text-secondary);
+      font-size: 0.9375rem;
+    }
+
+    .onboarding-features li svg {
+      width: 18px;
+      height: 18px;
+      stroke: rgba(139, 92, 246, 0.8);
+      flex-shrink: 0;
+    }
+
+    .onboarding-form {
       display: flex;
       flex-direction: column;
       flex-grow: 1;
     }
 
-    .onboarding-card .auth-actions-minimal {
+    .onboarding-card-actions {
+      padding: 1.5rem 2.5rem 2.5rem;
       margin-top: auto;
+      border-top: 1px solid rgba(59, 72, 99, 0.2);
     }
 
-    .auth-messages {
-      margin-bottom: 1.5rem;
-    }
-
-    .auth-message {
-      padding: 0.875rem 1rem;
-      border-radius: 0.75rem;
-      font-size: 0.875rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .auth-message-success {
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      color: #4ade80;
-    }
-
-    .auth-message-error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-    }
-
-    .auth-message-info {
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      color: #60a5fa;
-    }
-
-    .modal-overlay {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      background: rgba(3, 7, 18, 0.85);
-      backdrop-filter: blur(4px);
-      display: block;
-      z-index: 1000;
-      height: 100vh;
-      height: 100dvh;
-      overflow: hidden;
-    }
-
-    .modal-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: linear-gradient(135deg, rgba(17, 25, 45, 1), rgba(10, 15, 28, 1));
-      backdrop-filter: none;
-      border: 1px solid rgba(59, 72, 99, 0.45);
-      border-radius: 1.5rem;
-      padding: 2.5rem;
-      width: min(560px, calc(100% - 2rem));
-      max-width: 100%;
-      max-height: calc(90vh - 2rem);
-      max-height: calc(90dvh - 2rem);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    @media (max-width: 768px) {
-      .modal-content {
-        width: calc(100% - 2rem);
-        margin-top: auto;
-        margin-bottom: auto;
-        max-height: calc(100vh - 4rem);
-      }
-    }
-      max-width: 480px;
+    .btn-large {
       width: 100%;
-      box-shadow: 0 30px 70px rgba(2, 6, 23, 0.6), 0 0 0 1px rgba(148, 163, 184, 0.15) inset;
-    }
-
-    .modal-header {
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.75rem;
-    }
-
-    .modal-header h2 {
-      margin: 0;
-      font-size: 1.6rem;
-      font-weight: 600;
-      color: #f8fafc;
-      letter-spacing: -0.01em;
-    }
-
-    .modal-close {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      border-radius: 50%;
-      color: rgba(148, 163, 184, 0.9);
-      cursor: pointer;
-      padding: 0;
-      width: 36px;
-      height: 36px;
-      display: grid;
-      place-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      border-radius: var(--radius-sm);
       transition: all 0.2s ease;
     }
 
-    .modal-close svg {
-      width: 18px;
-      height: 18px;
+    .btn-large svg {
+      width: 20px;
+      height: 20px;
       stroke: currentColor;
       stroke-width: 2;
-      stroke-linecap: round;
     }
 
-    .modal-close:hover {
-      background: rgba(148, 163, 184, 0.15);
-      border-color: rgba(148, 163, 184, 0.4);
-      color: #f8fafc;
-      transform: rotate(90deg);
+    .btn-large:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .onboarding-form .form-field {
+      margin-bottom: 0;
+    }
+
+    .onboarding-form .form-field label,
+    .onboarding-form .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+    }
+
+    .field-hint {
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .join-code-input-wrapper {
+      position: relative;
+    }
+
+    .join-code-input-wrapper input[type="text"],
+    .join-code-input-wrapper input {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--color-text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-align: center;
+      text-transform: uppercase;
+      font-family: 'Courier New', monospace;
+      transition: all 0.2s ease;
+    }
+
+    .join-code-input-wrapper input[type="text"]:focus,
+    .join-code-input-wrapper input:focus {
+      outline: none;
+      border-color: rgba(45, 212, 191, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+    }
+
+    .join-code-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      padding: 0.625rem 0.875rem;
+      background: rgba(45, 212, 191, 0.1);
+      border: 1px solid rgba(45, 212, 191, 0.2);
+      border-radius: var(--radius-sm);
+      color: rgba(45, 212, 191, 0.9);
+      font-size: 0.8125rem;
+    }
+
+    .join-code-hint svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    .onboarding-form .field-error {
+      color: #f87171;
+      font-size: 0.875rem;
+      margin-top: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .onboarding-alert {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 1.125rem 1.5rem;
+      border-radius: var(--radius-sm);
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      font-size: 0.9375rem;
+      margin-bottom: 2rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    .onboarding-alert svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+      flex-shrink: 0;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .destructive-modal-content {
+      max-width: 500px;
+    }
+
+    .destructive-modal-content h3 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .destructive-modal-content .destructive-modal-subtitle {
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .destructive-modal-content .form-field {
+      margin-bottom: 1.5rem;
+    }
+
+    .destructive-modal-content .field-label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      font-size: 0.9375rem;
+    }
+
+    .destructive-modal-content input[type="text"],
+    .destructive-modal-content input[type="email"] {
+      width: 100%;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--color-text-primary);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .destructive-modal-content input[type="text"]:focus,
+    .destructive-modal-content input[type="email"]:focus {
+      outline: none;
+      border-color: rgba(139, 92, 246, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .destructive-modal-content .field-error {
+      color: #f87171;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: block;
+    }
+
+    .destructive-modal-actions {
+      gap: 0.875rem;
+    }
+
+    .destructive-modal-actions .btn {
+      padding: 0.875rem 1.5rem;
+      font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+      .onboarding-card-header {
+        padding: 2rem 1.5rem 1.25rem;
+      }
+
+      .onboarding-card-body {
+        padding: 0 1.5rem 1.25rem;
+      }
+
+      .onboarding-card-actions {
+        padding: 1.25rem 1.5rem 2rem;
+      }
+
+      .onboarding-card-title-group h2 {
+        font-size: 1.5rem;
+      }
+
+      .onboarding-icon-wrapper {
+        width: 64px;
+        height: 64px;
+      }
+
+      .onboarding-icon-wrapper svg {
+        width: 32px;
+        height: 32px;
+      }
+
+      .onboarding-grid {
+        gap: 1.5rem;
+      }
+
+      .destructive-modal-content {
+        width: calc(100% - 2rem);
+        padding: 1.75rem;
+      }
+
+      .destructive-modal-content h3 {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .page-subtitle {
+        font-size: 0.95rem;
+      }
     }
   </style>
 
@@ -467,60 +622,69 @@
     }
 
     // Modal functions
-    function openCreateModal() {
-      const modal = document.getElementById('createFamilyModal');
-      if (modal) {
-        modal.style.display = 'block';
+    function toggleModal(id, show) {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+      if (show) {
         document.body.classList.add('modal-open');
-        // Scroll window to top to ensure modal is visible
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
-          const modalContent = modal.querySelector('.modal-content');
+          const modalContent = modal.querySelector('.destructive-modal-content');
           if (modalContent) {
             modalContent.scrollTop = 0;
           }
         }, 10);
-        const nameInput = modal.querySelector('input[name="name"]');
-        if (nameInput) {
-          // Pre-populate with "Perekond [lastname]" if last name exists
-          {% if user_last_name %}
-          const lastName = '{{ user_last_name|escapejs }}';
-          if (lastName && !nameInput.value) {
-            nameInput.value = 'Perekond ' + lastName;
-            // Select the text so user can easily edit it
-            nameInput.select();
-          } else {
-            setTimeout(() => nameInput.focus(), 100);
-          }
-          {% else %}
-          setTimeout(() => nameInput.focus(), 100);
-          {% endif %}
-        }
-      }
-    }
-
-    function closeCreateModal() {
-      const modal = document.getElementById('createFamilyModal');
-      if (modal) {
-        modal.style.display = 'none';
+      } else {
         document.body.classList.remove('modal-open');
       }
     }
 
-    // Close modal on overlay click
-    document.addEventListener('click', function(e) {
-      const modal = document.getElementById('createFamilyModal');
-      if (modal && e.target === modal) {
-        closeCreateModal();
+    function openCreateModal() {
+      toggleModal('createFamilyModal', true);
+      const nameInput = document.querySelector('#createFamilyModal input[name="name"]');
+      if (nameInput) {
+        {% if user_last_name %}
+        const lastName = '{{ user_last_name|escapejs }}';
+        if (lastName && !nameInput.value) {
+          nameInput.value = 'Perekond ' + lastName;
+          nameInput.select();
+        } else {
+          setTimeout(() => nameInput.focus(), 100);
+        }
+        {% else %}
+        setTimeout(() => nameInput.focus(), 100);
+        {% endif %}
       }
+    }
+
+    function closeCreateModal() {
+      toggleModal('createFamilyModal', false);
+    }
+
+    // Close modal handlers
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-close-modal');
+        toggleModal(target, false);
+      });
+    });
+
+    document.querySelectorAll('.destructive-modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', () => {
+        const target = overlay.getAttribute('data-close-modal');
+        toggleModal(target, false);
+      });
     });
 
     // Close modal on Escape key
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        closeCreateModal();
+        const modal = document.getElementById('createFamilyModal');
+        if (modal && modal.getAttribute('aria-hidden') === 'false') {
+          closeCreateModal();
+        }
       }
     });
   </script>
 {% endblock %}
-
