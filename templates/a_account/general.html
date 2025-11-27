@@ -102,68 +102,23 @@
       </div>
     </section>
 
-    <!-- Transfer Ownership Card (only for family owner with other parents) -->
-    {% if is_family_owner and other_parents %}
-    <section class="settings-card" style="margin-top: 2rem; border: 1px solid rgba(234, 179, 8, 0.3); background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), rgba(202, 138, 4, 0.05));">
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; gap: 1.5rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 200px;">
-          <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(234, 179, 8, 0.95);">Üle kanna omaniku õigused</h3>
-          <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Enne konto kustutamist pead üle kandma omaniku õigused teisele lapsevanemale.</p>
-        </div>
-        <form method="post" action="{% url 'a_account:transfer_ownership' %}" style="margin: 0; flex-shrink: 0; display: flex; align-items: center; gap: 0.75rem;" id="transferOwnershipForm" data-confirm="Kas oled kindel, et soovid omaniku õigused üle kanda? Pärast seda ei saa sa enam pere haldamist.">
-          {% csrf_token %}
-          <input type="hidden" name="new_owner_id" id="newOwnerId">
-          <div style="position: relative;">
-            <select id="newOwnerSelect" required style="padding: 0.625rem 1.25rem; padding-right: 2.5rem; border-radius: 0.85rem; border: 1px solid rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.15); color: rgba(234, 179, 8, 0.95); font-size: 0.875rem; appearance: none; cursor: pointer; white-space: nowrap; min-width: 180px;">
-              <option value="">Vali uus omanik...</option>
-              {% for parent in other_parents %}
-                <option value="{{ parent.id }}">{{ parent.get_display_name }}</option>
-              {% endfor %}
-            </select>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; pointer-events: none; color: rgba(234, 179, 8, 0.7);">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-          <button type="submit" class="btn" id="transferOwnershipBtn" disabled style="padding: 0.625rem 1.25rem; background: rgba(234, 179, 8, 0.15); border-color: rgba(234, 179, 8, 0.4); color: rgba(234, 179, 8, 0.95); white-space: nowrap; font-size: 0.875rem; opacity: 0.5; cursor: not-allowed;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
-              <path d="M17 8l4 4-4 4"></path>
-              <path d="M21 12H3"></path>
-            </svg>
-            Üle kanna
-          </button>
-        </form>
-      </div>
-    </section>
-    {% endif %}
-
     <!-- Account Deletion Card (only for parents) -->
     {% if is_parent %}
     <section class="settings-card danger-zone" style="margin-top: 2rem; border: 1px solid rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));">
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; gap: 1.5rem;">
-        <div style="flex: 1;">
+      <div class="destructive-card">
+        <div>
           <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Konto kustutamine</h3>
           <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">
-            {% if is_family_owner and other_parents %}
-              Enne konto kustutamist pead üle kandma omaniku õigused. See kustutab ka pere ja kõik laste kontod.
+            {% if not family %}
+              Sa ei kuulu praegu ühtegi peresse. Konto kustutamine eemaldab sinu andmed Perekasest.
             {% elif is_family_owner %}
-              Konto kustutamine kustutab ka pere ja kõik laste kontod. Seda ei saa tagasi võtta.
+              Konto kustutamine kustutab ka pere ja peatab ligipääsu kõigile pereliikmetele.
             {% else %}
-              Konto kustutamine on pöördumatu. Kõik andmed kustutatakse jäädavalt.
+              Konto kustutamine on pöördumatu. Kõik sinu andmed eemaldatakse.
             {% endif %}
           </p>
         </div>
-        <form method="post" action="{% url 'a_account:delete_account' %}" style="margin: 0; flex-shrink: 0;" data-confirm="{% if is_family_owner %}Kas oled kindel, et soovid oma konto kustutada? See kustutab ka pere ja kõik laste kontod. Seda ei saa tagasi võtta.{% else %}Kas oled kindel, et soovid oma konto kustutada? Seda ei saa tagasi võtta ja kõik sinu andmed kustutatakse jäädavalt.{% endif %}">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete">
-          <button type="submit" class="btn" {% if is_family_owner and other_parents %}disabled style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem; opacity: 0.5; cursor: not-allowed;"{% else %}style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;"{% endif %}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-            Kustuta konto
-          </button>
-        </form>
+        <button type="button" class="btn btn-danger-outline" id="openAccountDeleteModal">Kustuta konto</button>
       </div>
     </section>
     {% endif %}
@@ -171,23 +126,12 @@
     <!-- Family Deletion Card (only for family owner) -->
     {% if family and family.owner == user %}
     <section class="settings-card danger-zone" style="margin-top: 1rem; border: 1px solid rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(220, 38, 38, 0.05));">
-      <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; gap: 1.5rem;">
-        <div style="flex: 1;">
+      <div class="destructive-card">
+        <div>
           <h3 style="margin: 0 0 0.25rem; font-size: 1.1rem; font-weight: 600; color: rgba(239, 68, 68, 0.95);">Pere kustutamine</h3>
-          <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Pere kustutamine on pöördumatu. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.</p>
+          <p style="margin: 0; color: var(--color-text-secondary); font-size: 0.875rem;">Pere kustutamine eemaldab kõik ülesanded, preemiad ja ajaloo. Täiskasvanute kontod ja tasuline tellimus jäävad alles, et saaksite soovi korral kohe uue pere luua.</p>
         </div>
-        <form method="post" action="{% url 'a_family:delete_family' %}" style="margin: 0; flex-shrink: 0;" data-confirm="Kas oled kindel, et soovid pere '{{ family.name }}' kustutada? Seda ei saa tagasi võtta. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt. Liikmed saavad oma kontot alles hoida.">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete">
-          <button type="submit" class="btn" style="padding: 0.625rem 1.25rem; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: rgba(239, 68, 68, 0.95); white-space: nowrap; font-size: 0.875rem;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 0.5rem;">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-            </svg>
-            Kustuta pere
-          </button>
-        </form>
+        <button type="button" class="btn btn-danger-outline" id="openFamilyDeleteModal">Kustuta pere</button>
       </div>
     </section>
     {% endif %}
@@ -230,53 +174,138 @@
     </section>
   </div>
 
-  <!-- Custom Confirmation Modal -->
-  <div class="confirm-modal" id="confirm-modal" aria-hidden="true" role="dialog" aria-modal="true">
-    <div class="confirm-modal-overlay"></div>
-    <div class="confirm-modal-content">
-      <h3 class="confirm-modal-title" id="confirm-modal-title">Kinnita toiming</h3>
-      <p class="confirm-modal-message" id="confirm-modal-message"></p>
-      <div class="confirm-modal-actions">
-        <button type="button" class="confirm-modal-cancel" id="confirm-modal-cancel">Tühista</button>
-        <button type="button" class="confirm-modal-confirm" id="confirm-modal-confirm">Kinnita</button>
-      </div>
+  <!-- Account Deletion Modal -->
+  {% if is_parent %}
+  <div class="destructive-modal" id="accountDeleteModal" aria-hidden="true">
+    <div class="destructive-modal-overlay" data-close-modal="accountDeleteModal"></div>
+    <div class="destructive-modal-content">
+      <button type="button" class="destructive-modal-close" data-close-modal="accountDeleteModal" aria-label="Sulge">
+        ✕
+      </button>
+      <h3>Konto kustutamine</h3>
+      <p class="destructive-modal-subtitle">
+        {% if not family %}
+          Sa ei kuulu praegu ühtegi peresse. Konto kustutamine eemaldab sinu andmed Perekasest.
+        {% elif is_family_owner %}
+          Konto kustutamine kustutab ka pere ja peatab ligipääsu kõigile pereliikmetele.
+        {% else %}
+          Konto kustutamine on pöördumatu. Kõik sinu andmed eemaldatakse.
+        {% endif %}
+      </p>
+      {% if is_family_owner %}
+      <ol class="delete-steps">
+        <li>
+          <div>
+            <strong>1. Tühista aktiivne tellimus</strong>
+            <p>Tellimus tuleb lõpetada enne konto kustutamist.</p>
+          </div>
+          {% if has_active_subscription %}
+            <a href="{% url 'a_account:settings' %}?section=subscriptions" class="status-chip danger" style="text-decoration: none;">Tellimus aktiivne</a>
+          {% else %}
+            <span class="status-chip success">Tellimus puudub</span>
+          {% endif %}
+        </li>
+        {% if children_count > 0 %}
+        <li>
+          <div>
+            <strong>2. Vali, mida teha laste kontodega</strong>
+            <p>Saad laste kontod alles jätta, et nad saaksid hiljem uue perega liituda.</p>
+          </div>
+        </li>
+        {% endif %}
+        <li>
+          <div>
+            <strong>3. Kinnita kustutamine</strong>
+            <p>Pärast kinnitamist ei saa seda toimingut tagasi võtta.</p>
+          </div>
+        </li>
+      </ol>
+      {% endif %}
+      <form method="post" action="{% url 'a_account:delete_account' %}" style="margin: 0;" data-confirm="{% if is_family_owner %}Kas oled kindel, et soovid oma konto kustutada? See eemaldab ka pere ja kõik sellega seotud andmed.{% else %}Kas oled kindel, et soovid oma konto kustutada? Seda ei saa tagasi võtta ja kõik sinu andmed kustutatakse jäädavalt.{% endif %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        {% if is_family_owner and children_count > 0 %}
+        <div class="child-delete-options">
+          <label>
+            <input type="radio" name="delete_children" value="delete" checked>
+            Kustuta kõik laste kontod
+          </label>
+          <label>
+            <input type="radio" name="delete_children" value="keep">
+            Hoia laste kontod alles (nad saavad hiljem uue perega liituda)
+          </label>
+        </div>
+        {% else %}
+          <input type="hidden" name="delete_children" value="delete">
+        {% endif %}
+        <div class="destructive-modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal="accountDeleteModal">Loobu</button>
+          <button type="submit" class="btn btn-danger">
+            Kustuta konto
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+  {% endif %}
+
+  {% if family and family.owner == user %}
+  <div class="destructive-modal" id="familyDeleteModal" aria-hidden="true">
+    <div class="destructive-modal-overlay" data-close-modal="familyDeleteModal"></div>
+    <div class="destructive-modal-content">
+      <button type="button" class="destructive-modal-close" data-close-modal="familyDeleteModal" aria-label="Sulge">
+        ✕
+      </button>
+      <h3>Pere kustutamine</h3>
+      <p class="destructive-modal-subtitle">Pere kustutamine eemaldab kõik ülesanded, preemiad ja ajaloo. Täiskasvanute kontod ja tasuline tellimus jäävad alles, et saaksite soovi korral kohe uue pere luua.</p>
+      <ol class="delete-steps">
+        {% if children_count > 0 %}
+        <li>
+          <div>
+            <strong>1. Vali, mida teha laste kontodega</strong>
+            <p>Laste kontosid saab soovi korral alles jätta.</p>
+          </div>
+        </li>
+        {% endif %}
+        <li>
+          <div>
+            <strong>2. Kinnita kustutamine</strong>
+            <p>Pärast kinnitamist ei saa pere enam taastada.</p>
+          </div>
+        </li>
+      </ol>
+      <form method="post" action="{% url 'a_family:delete_family' %}" style="margin: 0;" data-confirm="Kas oled kindel, et soovid pere '{{ family.name }}' kustutada? Seda ei saa tagasi võtta. Kõik pere andmed, ülesanded ja ajalugu kustutatakse jäädavalt.">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        {% if children_count > 0 %}
+        <div class="child-delete-options">
+          <label>
+            <input type="radio" name="delete_children" value="delete" checked>
+            Kustuta kõik laste kontod
+          </label>
+          <label>
+            <input type="radio" name="delete_children" value="keep">
+            Hoia laste kontod alles
+          </label>
+        </div>
+        {% else %}
+          <input type="hidden" name="delete_children" value="delete">
+        {% endif %}
+        <div class="destructive-modal-actions">
+          <button type="button" class="btn btn-ghost" data-close-modal="familyDeleteModal">Loobu</button>
+          <button type="submit" class="btn btn-danger">
+            Kustuta pere
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Transfer ownership form handling
-      const transferOwnershipForm = document.getElementById('transferOwnershipForm');
-      const newOwnerSelect = document.getElementById('newOwnerSelect');
-      const newOwnerIdInput = document.getElementById('newOwnerId');
-      const transferOwnershipBtn = document.getElementById('transferOwnershipBtn');
-      
-      if (transferOwnershipForm && newOwnerSelect && newOwnerIdInput && transferOwnershipBtn) {
-        newOwnerSelect.addEventListener('change', function() {
-          if (this.value) {
-            newOwnerIdInput.value = this.value;
-            transferOwnershipBtn.disabled = false;
-            transferOwnershipBtn.style.opacity = '1';
-            transferOwnershipBtn.style.cursor = 'pointer';
-          } else {
-            newOwnerIdInput.value = '';
-            transferOwnershipBtn.disabled = true;
-            transferOwnershipBtn.style.opacity = '0.5';
-            transferOwnershipBtn.style.cursor = 'not-allowed';
-          }
-        });
-        
-        // Prevent form submission if no owner selected
-        transferOwnershipForm.addEventListener('submit', function(e) {
-          if (!newOwnerIdInput.value) {
-            e.preventDefault();
-            return false;
-          }
-        });
-      }
-      
       // Password change modal
       const changePasswordBtn = document.getElementById('changePasswordBtn');
       const passwordModal = document.getElementById('passwordModal');
@@ -288,7 +317,6 @@
           e.preventDefault();
           passwordModal.style.display = 'block';
           passwordModal.setAttribute('aria-hidden', 'false');
-          // Scroll to password modal
           setTimeout(() => {
             passwordModal.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 10);
@@ -305,6 +333,48 @@
           }
         });
       }
+      
+      function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.setAttribute('aria-hidden', show ? 'false' : 'true');
+        if (show) {
+          document.body.classList.add('modal-open');
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const modalContent = modal.querySelector('.destructive-modal-content');
+            if (modalContent) {
+              modalContent.scrollTop = 0;
+            }
+          }, 10);
+        } else {
+          document.body.classList.remove('modal-open');
+        }
+      }
+      
+      const accountDeleteBtn = document.getElementById('openAccountDeleteModal');
+      if (accountDeleteBtn) {
+        accountDeleteBtn.addEventListener('click', () => toggleModal('accountDeleteModal', true));
+      }
+      
+      const familyDeleteBtn = document.getElementById('openFamilyDeleteModal');
+      if (familyDeleteBtn) {
+        familyDeleteBtn.addEventListener('click', () => toggleModal('familyDeleteModal', true));
+      }
+      
+      document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.getAttribute('data-close-modal');
+          toggleModal(target, false);
+        });
+      });
+      
+      document.querySelectorAll('.destructive-modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', () => {
+          const target = overlay.getAttribute('data-close-modal');
+          toggleModal(target, false);
+        });
+      });
 
       // Custom confirmation modal
       const confirmModal = document.getElementById('confirm-modal');

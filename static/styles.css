@@ -2344,36 +2344,49 @@ body.modal-open {
 
 .destructive-modal {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: none;
-  align-items: center;
-  justify-content: center;
   z-index: 3000;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 .destructive-modal[aria-hidden="false"] {
-  display: flex;
+  display: block;
 }
 
 .destructive-modal-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(8, 12, 24, 0.8);
   backdrop-filter: blur(4px);
+  z-index: 3000;
 }
 
 .destructive-modal-content {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   background: rgba(6, 11, 26, 0.98);
   border: 1px solid rgba(59, 72, 99, 0.4);
   border-radius: 1.25rem;
   padding: 2rem;
-  width: min(640px, 90%);
+  width: min(640px, calc(100% - 2rem));
+  max-width: 100%;
   box-shadow: 0 30px 80px rgba(2, 6, 23, 0.65);
-  z-index: 1;
+  z-index: 3001;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  max-height: calc(90vh - 2rem);
+  max-height: calc(90dvh - 2rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .destructive-modal-content h3 {
@@ -2403,6 +2416,14 @@ body.modal-open {
   color: var(--color-text-secondary);
   font-size: 1.1rem;
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .destructive-modal-content {
+    width: calc(100% - 2rem);
+    max-height: calc(100vh - 2rem);
+    max-height: calc(100dvh - 2rem);
+  }
 }
 
 .stat-label {
