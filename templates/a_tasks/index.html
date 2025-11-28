@@ -40,21 +40,29 @@
         <div class="task-grid">
           {% if active_tasks %}
             {% for task in active_tasks %}
-              <article class="task-card priority-{{ task.priority }}">
+              <article class="task-card priority-{{ task.priority }}{% if task.is_in_progress %} in-progress{% endif %}">
                 <div class="task-card-header">
                   <div>
                     <h3 class="task-name">{{ task.name }}</h3>
                     <p class="task-assigned">
                       {% if is_child %}
-                        {% if task.assigned_to == user %}
+                        {% if task.is_in_progress %}
+                          {% if task.assigned_to == user %}
+                            Teeb: Sina
+                          {% else %}
+                            Teeb: {{ task.assigned_to.display_name }}
+                          {% endif %}
+                        {% elif task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          {{ task.assigned_to.display_name }}
+                          Määratud: {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
                       {% else %}
-                        {% if task.assigned_to %}
+                        {% if task.is_in_progress %}
+                          Teeb: {{ task.assigned_to.display_name }}
+                        {% elif task.assigned_to %}
                           Määratud: {{ task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõigile
@@ -90,6 +98,18 @@
                   {% endif %}
                 </div>
                 <div class="task-actions">
+                  {% if task.can_child_start %}
+                    <form method="post" class="icon-form" data-confirm="Kas soovid ülesande '{{ task.name }}' alustada?">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="start">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button primary" aria-label="Alusta {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
                   {% if task.can_child_complete %}
                     <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' täita? See märgib ülesande lõpetatuks ja ootab kinnitust.">
                       {% csrf_token %}
@@ -98,6 +118,19 @@
                       <button type="submit" class="icon-button success" aria-label="Märgi {{ task.name }} tehtuks">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                           <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
+                  {% if task.can_child_cancel %}
+                    <form method="post" class="icon-form" data-confirm="Kas soovid ülesande '{{ task.name }}' tühistada?">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="cancel">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button" aria-label="Tühista {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
                         </svg>
                       </button>
                     </form>

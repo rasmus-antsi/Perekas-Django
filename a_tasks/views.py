@@ -118,13 +118,22 @@ def index(request):
                 task.description = request.POST.get("description", task.description).strip()
 
                 assigned_id = request.POST.get("assigned_to")
+                assignment_changed = False
                 if assigned_id:
                     new_assigned = family.members.filter(id=assigned_id).first()
                     if not new_assigned and str(family.owner_id) == str(assigned_id):
                         new_assigned = family.owner
+                    if task.assigned_to_id != (new_assigned.id if new_assigned else None):
+                        assignment_changed = True
                     task.assigned_to = new_assigned
                 else:
+                    if task.assigned_to is not None:
+                        assignment_changed = True
                     task.assigned_to = None
+
+                # Clear started_at if assignment changed
+                if assignment_changed:
+                    task.started_at = None
 
                 due = parse_date(request.POST.get("due_date") or "")
                 task.due_date = due
@@ -139,7 +148,10 @@ def index(request):
                 except (TypeError, ValueError):
                     pass
 
-                task.save()
+                update_fields = ["name", "description", "assigned_to", "due_date", "priority", "points"]
+                if assignment_changed:
+                    update_fields.append("started_at")
+                task.save(update_fields=update_fields)
 
                 if task.approved:
                     if previous_assigned:
@@ -159,32 +171,53 @@ def index(request):
             if task:
                 task.delete()
 
+        elif action == "start" and is_child:
+            task = _get_task()
+            if not task:
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            elif task.completed:
+                messages.warning(request, "See ülesanne on juba täidetud.")
+            elif task.is_in_progress:
+                messages.warning(request, "See ülesanne on juba teise lapse poolt alustatud.")
+            elif task.assigned_to and task.assigned_to_id != user.id:
+                messages.warning(request, "See ülesanne on määratud teisele lapsele.")
+            else:
+                task.assigned_to = user
+                task.started_at = timezone.now()
+                task.save(update_fields=["assigned_to", "started_at"])
+                messages.success(request, f"Ülesanne '{task.name}' alustatud!")
+
+        elif action == "cancel" and is_child:
+            task = _get_task()
+            if not task:
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            elif task.completed:
+                messages.warning(request, "See ülesanne on juba täidetud.")
+            elif not task.is_in_progress or task.assigned_to_id != user.id:
+                messages.warning(request, "Sa saad tühistada ainult enda alustatud ülesandeid.")
+            else:
+                task.assigned_to = None
+                task.started_at = None
+                task.save(update_fields=["assigned_to", "started_at"])
+                messages.success(request, f"Ülesanne '{task.name}' tühistatud.")
+
         elif action == "complete" and is_child:
             task = _get_task()
-            if task and task.assigned_to_id == user.id and not task.completed:
+            if not task:
+                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            elif task.completed:
+                messages.warning(request, "See ülesanne on juba täidetud.")
+            elif not task.is_in_progress or task.assigned_to_id != user.id:
+                messages.warning(request, "Sa saad täita ainult enda alustatud ülesandeid.")
+            else:
                 task.completed = True
                 task.completed_by = user
                 task.completed_at = timezone.now()
                 task.approved = False
                 task.approved_by = None
                 task.approved_at = None
+                # Keep started_at for history, but task is no longer in progress
                 task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
-                # Send notification email
-                try:
-                    send_task_completed_notification(request, task)
-                except Exception as e:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"Failed to send task completed notification: {e}", exc_info=True)
-            elif task and task.assigned_to is None and not task.completed:
-                task.assigned_to = user
-                task.completed = True
-                task.completed_by = user
-                task.completed_at = timezone.now()
-                task.approved = False
-                task.approved_by = None
-                task.approved_at = None
-                task.save(update_fields=["assigned_to", "completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
                 # Send notification email
                 try:
                     send_task_completed_notification(request, task)
@@ -217,7 +250,9 @@ def index(request):
                         task.approved = False
                         task.approved_by = None
                         task.approved_at = None
-                        task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at"])
+                        task.started_at = None
+                        task.assigned_to = None
+                        task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at", "started_at", "assigned_to"])
                         messages.success(request, f"Ülesanne '{task.name}' avatud uuesti.")
                 except Exception as e:
                     messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
@@ -299,7 +334,21 @@ def index(request):
         approved_tasks = list(tasks_qs.filter(approved=True))
 
         for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
-            task.can_child_complete = is_child and (task.assigned_to_id is None or task.assigned_to_id == user.id)
+            if is_child:
+                # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
+                task.can_child_start = (
+                    not task.completed and
+                    not task.is_in_progress and
+                    (task.assigned_to is None or task.assigned_to_id == user.id)
+                )
+                # Can complete if: in progress and assigned to this user
+                task.can_child_complete = task.is_in_progress and task.assigned_to_id == user.id
+                # Can cancel if: in progress and assigned to this user
+                task.can_child_cancel = task.is_in_progress and task.assigned_to_id == user.id
+            else:
+                task.can_child_start = False
+                task.can_child_complete = False
+                task.can_child_cancel = False
 
         # Only show children in the task assignment dropdown (not parents)
         family_members_qs = family.members.filter(role=User.ROLE_CHILD)
