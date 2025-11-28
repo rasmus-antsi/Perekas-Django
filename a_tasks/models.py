@@ -48,6 +48,7 @@ class Task(models.Model):
     points = models.PositiveIntegerField(default=0)
     completed_at = models.DateTimeField(null=True, blank=True, db_index=True)
     approved_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -61,6 +62,11 @@ class Task(models.Model):
             models.Index(fields=['family', 'approved']),
             models.Index(fields=['assigned_to', 'completed']),
         ]
+
+    @property
+    def is_in_progress(self):
+        """Check if task is currently in progress (started but not completed)"""
+        return self.started_at is not None and not self.completed
 
     def __str__(self):
         return self.name
