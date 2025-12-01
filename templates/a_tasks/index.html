@@ -17,14 +17,6 @@
           <p class="page-subtitle">Loo või liitu perega, et hakata ülesandeid jagama.</p>
         {% endif %}
       </div>
-      {% if is_parent %}
-        <div class="task-toolbar">
-          <button type="button" class="primary-button" data-open-task-modal="create">
-            <span aria-hidden="true">+</span>
-            <span>Lisa ülesanne</span>
-          </button>
-        </div>
-      {% endif %}
     </header>
 
     {% if not has_family %}
@@ -32,6 +24,166 @@
         <p>Perekonda pole veel ühendatud. Kui lood või liitud perega, saad hakata ülesandeid haldama.</p>
       </section>
     {% else %}
+      {% if is_parent %}
+        <form method="post" class="add-item-card" id="quick-add-task-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="create">
+          <label class="visually-hidden" for="quick-task-input">Lisa uus ülesanne</label>
+          <div class="quick-add-input-wrapper">
+            <div class="input-with-help">
+              <input
+                id="quick-task-input"
+                name="task_text"
+                type="text"
+                placeholder="Kirjuta ülesanne... (nt. 'Võta prügi välja @Emma homme !kõrge')"
+                {% if not has_family %}disabled{% endif %}
+                required
+                autocomplete="off"
+              >
+              <button type="button" class="task-help-button" id="task-help-button" aria-label="Näita abi">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="autocomplete-dropdown" id="autocomplete-dropdown" role="listbox" aria-label="Laste nimed"></div>
+          </div>
+          <button type="submit" class="primary-button" {% if not has_family %}disabled{% endif %}>
+            <span aria-hidden="true">+</span>
+            <span>Lisa</span>
+          </button>
+        </form>
+        
+        <!-- Help Modal -->
+        <div class="task-help-modal" id="task-help-modal" aria-hidden="true" role="dialog" aria-modal="true">
+          <div class="task-help-modal-overlay" data-close-help-modal></div>
+          <div class="task-help-modal-content">
+            <button type="button" class="task-help-modal-close" data-close-help-modal aria-label="Sulge">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <h2 class="task-help-modal-title">Kuidas ülesandeid lisada?</h2>
+            <div class="task-help-modal-body">
+              <p class="task-help-intro">Kirjuta lihtsalt ülesande nimi või kasuta erimärke täpsemaks määramiseks:</p>
+              <div class="task-help-grid">
+                <div class="task-help-item">
+                  <div class="task-help-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </div>
+                  <div class="task-help-item-content">
+                    <code>@nimi</code>
+                    <span>Määra lapsele</span>
+                  </div>
+                </div>
+                <div class="task-help-item">
+                  <div class="task-help-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                  </div>
+                  <div class="task-help-item-content">
+                    <code>!kõrge</code>
+                    <span>Tähtsus</span>
+                  </div>
+                </div>
+                <div class="task-help-item">
+                  <div class="task-help-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </div>
+                  <div class="task-help-item-content">
+                    <code>+50</code>
+                    <span>Punktid</span>
+                  </div>
+                </div>
+                <div class="task-help-item">
+                  <div class="task-help-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                  </div>
+                  <div class="task-help-item-content">
+                    <code>*nädalaselt</code>
+                    <span>Korduv ülesanne</span>
+                  </div>
+                </div>
+                <div class="task-help-item">
+                  <div class="task-help-item-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                  <div class="task-help-item-content">
+                    <code>homme</code>
+                    <span>Tähtaeg</span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-help-examples">
+                <p class="task-help-examples-title">Näited:</p>
+                <ul class="task-help-examples-list">
+                  <li><code>"Võta prügi välja @Emma homme !kõrge"</code></li>
+                  <li><code>"Pesu *nädalaselt"</code></li>
+                  <li><code>"Kodutöö +50"</code></li>
+                  <li><code>"Toida koer @Tom homme !madal +25"</code></li>
+                  <li><code>"Koristus *igapäevaselt +30"</code></li>
+                  <li><code>"Kodutöö @Emma reedel !kõrge +100"</code></li>
+                </ul>
+              </div>
+              <div class="task-help-options">
+                <p class="task-help-examples-title">Võimalikud väärtused:</p>
+                <div class="task-help-options-list">
+                  <div class="task-help-option-group">
+                    <strong>Tähtsus:</strong>
+                    <div class="task-help-option-values">
+                      <code>!madal</code>
+                      <code>!keskmine</code>
+                      <code>!kõrge</code>
+                    </div>
+                  </div>
+                  <div class="task-help-option-group">
+                    <strong>Korduv:</strong>
+                    <div class="task-help-option-values">
+                      <code>*päevaselt</code>
+                      <code>*nädalaselt</code>
+                      <code>*kuus</code>
+                    </div>
+                  </div>
+                  <div class="task-help-option-group">
+                    <strong>Tähtaeg:</strong>
+                    <div class="task-help-option-values">
+                      <code>täna</code>
+                      <code>homme</code>
+                      <code>reede</code>
+                      <code>esmaspäev</code>
+                      <code>teisipäev</code>
+                      <code>kolmapäev</code>
+                      <code>neljapäev</code>
+                      <code>laupäev</code>
+                      <code>pühapäev</code>
+                      <code>^2024-12-25</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      
       <section class="task-section">
         <header class="list-section-header">
           <span class="list-section-icon need-icon" aria-hidden="true"></span>
@@ -43,27 +195,35 @@
               <article class="task-card priority-{{ task.priority }}{% if task.is_in_progress %} in-progress{% endif %}">
                 <div class="task-card-header">
                   <div>
-                    <h3 class="task-name">{{ task.name }}</h3>
+                    <h3 class="task-name">
+                      {% if task.is_in_progress %}
+                        <svg class="task-status-icon in-progress-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Pooleli">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      {% endif %}
+                      {{ task.name }}
+                    </h3>
                     <p class="task-assigned">
                       {% if is_child %}
                         {% if task.is_in_progress %}
                           {% if task.assigned_to == user %}
                             Teeb: Sina
                           {% else %}
-                            Teeb: {{ task.assigned_to.display_name }}
+                            Teeb: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                           {% endif %}
                         {% elif task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          Määratud: {{ task.assigned_to.display_name }}
+                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
                       {% else %}
                         {% if task.is_in_progress %}
-                          Teeb: {{ task.assigned_to.display_name }}
+                          Teeb: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% elif task.assigned_to %}
-                          Määratud: {{ task.assigned_to.display_name }}
+                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
@@ -187,19 +347,24 @@
               <article class="task-card awaiting priority-{{ task.priority }}">
                 <div class="task-card-header">
                   <div>
-                    <h3 class="task-name">{{ task.name }}</h3>
+                    <h3 class="task-name">
+                      <svg class="task-status-icon completed-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Lõpetatud">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      {{ task.name }}
+                    </h3>
                     <p class="task-assigned">
                       {% if is_child %}
                         {% if task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          {{ task.assigned_to.display_name }}
+                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
                       {% else %}
                         {% if task.assigned_to %}
-                          Määratud: {{ task.assigned_to.display_name }}
+                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% if task.assigned_to.username %} @{{ task.assigned_to.username }}{% endif %}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
@@ -226,7 +391,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Lõpetas {{ task.completed_by.display_name }} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% if task.completed_by.username %} @{{ task.completed_by.username }}{% endif %}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -286,17 +451,23 @@
               <article class="task-card approved priority-{{ task.priority }}">
                 <div class="task-card-header">
                   <div>
-                    <h3 class="task-name">{{ task.name }}</h3>
+                    <h3 class="task-name">
+                      <svg class="task-status-icon approved-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Kinnitatud">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                      {{ task.name }}
+                    </h3>
                     <p class="task-assigned">
                       {% with winner=task.assigned_to|default:task.completed_by %}
                         {% if is_child %}
                           {% if winner == user %}
                             Punktid teenis: Sina
                           {% else %}
-                            Punktid teenis: {{ winner.display_name }}
+                            Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% if winner.username %} @{{ winner.username }}{% endif %}{% else %}{{ winner.display_name }}{% endif %}
                           {% endif %}
                         {% else %}
-                          Punktid teenis: {{ winner.display_name }}
+                          Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% if winner.username %} @{{ winner.username }}{% endif %}{% else %}{{ winner.display_name }}{% endif %}
                         {% endif %}
                       {% endwith %}
                     </p>
@@ -321,7 +492,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Kinnitas {{ task.approved_by.display_name }} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% if task.approved_by.username %} @{{ task.approved_by.username }}{% endif %}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -695,5 +866,223 @@
       });
     });
   </script>
+
+  {% if is_parent %}
+    <script>
+      // Help modal functionality
+      document.addEventListener('DOMContentLoaded', function () {
+        const helpButton = document.getElementById('task-help-button');
+        const helpModal = document.getElementById('task-help-modal');
+        const closeButtons = document.querySelectorAll('[data-close-help-modal]');
+        
+        if (!helpButton || !helpModal) return;
+        
+        function openHelpModal() {
+          helpModal.setAttribute('aria-hidden', 'false');
+          helpModal.classList.add('is-visible');
+          document.body.classList.add('modal-open');
+        }
+        
+        function closeHelpModal() {
+          helpModal.setAttribute('aria-hidden', 'true');
+          helpModal.classList.remove('is-visible');
+          document.body.classList.remove('modal-open');
+        }
+        
+        helpButton.addEventListener('click', openHelpModal);
+        closeButtons.forEach(btn => btn.addEventListener('click', closeHelpModal));
+        
+        helpModal.addEventListener('click', (e) => {
+          if (e.target === helpModal || e.target.classList.contains('task-help-modal-overlay')) {
+            closeHelpModal();
+          }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && helpModal.classList.contains('is-visible')) {
+            closeHelpModal();
+          }
+        });
+      });
+    </script>
+    
+    <script>
+      // Quick add form enhancements with autocomplete
+      document.addEventListener('DOMContentLoaded', function () {
+        const quickAddForm = document.getElementById('quick-add-task-form');
+        const quickAddInput = document.getElementById('quick-task-input');
+        const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+        
+        if (!quickAddForm || !quickAddInput) return;
+        
+        // Family members data for autocomplete
+        const familyMembers = {{ family_members_data|default:"[]" }};
+        let selectedIndex = -1;
+        let filteredMembers = [];
+        
+        // Auto-focus on desktop (not mobile to prevent keyboard popup)
+        if (window.innerWidth > 768) {
+          quickAddInput.focus();
+        }
+        
+        // Autocomplete functionality
+        function showAutocomplete(matches) {
+          if (!matches || matches.length === 0) {
+            autocompleteDropdown.innerHTML = '';
+            autocompleteDropdown.classList.remove('is-visible');
+            return;
+          }
+          
+          filteredMembers = matches;
+          selectedIndex = -1;
+          
+          autocompleteDropdown.innerHTML = matches.map((member, index) => {
+            return `<div class="autocomplete-item" data-index="${index}" role="option" tabindex="0">
+              <span class="autocomplete-name">${member.display_text}</span>
+            </div>`;
+          }).join('');
+          
+          autocompleteDropdown.classList.add('is-visible');
+          
+          // Add click handlers
+          autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach((item, index) => {
+            item.addEventListener('click', () => selectMember(matches[index]));
+            item.addEventListener('mousedown', (e) => e.preventDefault()); // Prevent input blur
+          });
+        }
+        
+        function hideAutocomplete() {
+          autocompleteDropdown.classList.remove('is-visible');
+          selectedIndex = -1;
+        }
+        
+        function selectMember(member) {
+          const inputValue = quickAddInput.value;
+          const cursorPos = quickAddInput.selectionStart;
+          
+          // Find the @ mention position
+          let mentionStart = inputValue.lastIndexOf('@', cursorPos - 1);
+          if (mentionStart === -1) {
+            // No @ found, insert @name at cursor
+            const before = inputValue.substring(0, cursorPos);
+            const after = inputValue.substring(cursorPos);
+            quickAddInput.value = before + '@' + (member.first_name || member.username) + ' ' + after;
+            quickAddInput.focus();
+            const newPos = cursorPos + 1 + (member.first_name || member.username).length + 1;
+            quickAddInput.setSelectionRange(newPos, newPos);
+          } else {
+            // Replace the mention
+            const before = inputValue.substring(0, mentionStart + 1);
+            const afterMatch = inputValue.substring(mentionStart + 1).match(/^(\w*)\s*/);
+            const after = afterMatch ? inputValue.substring(mentionStart + 1 + afterMatch[0].length) : inputValue.substring(mentionStart + 1);
+            quickAddInput.value = before + (member.first_name || member.username) + ' ' + after;
+            quickAddInput.focus();
+            const newPos = mentionStart + 1 + (member.first_name || member.username).length + 1;
+            quickAddInput.setSelectionRange(newPos, newPos);
+          }
+          
+          hideAutocomplete();
+        }
+        
+        function filterMembers(query) {
+          if (!query || query.length < 1) {
+            return [];
+          }
+          
+          const lowerQuery = query.toLowerCase();
+          return familyMembers.filter(member => {
+            return member.search_text.includes(lowerQuery) ||
+                   (member.first_name && member.first_name.toLowerCase().includes(lowerQuery)) ||
+                   (member.username && member.username.toLowerCase().includes(lowerQuery));
+          }).slice(0, 5); // Limit to 5 results
+        }
+        
+        // Handle input for autocomplete
+        quickAddInput.addEventListener('input', function (e) {
+          const value = this.value;
+          const cursorPos = this.selectionStart;
+          
+          // Find if we're typing after an @
+          const textBeforeCursor = value.substring(0, cursorPos);
+          const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+          
+          if (mentionMatch) {
+            const query = mentionMatch[1];
+            const matches = filterMembers(query);
+            showAutocomplete(matches);
+          } else {
+            hideAutocomplete();
+          }
+        });
+        
+        // Handle keyboard navigation
+        quickAddInput.addEventListener('keydown', function (e) {
+          if (autocompleteDropdown.classList.contains('is-visible') && filteredMembers.length > 0) {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              selectedIndex = Math.min(selectedIndex + 1, filteredMembers.length - 1);
+              updateSelectedItem();
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              selectedIndex = Math.max(selectedIndex - 1, -1);
+              updateSelectedItem();
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+              e.preventDefault();
+              selectMember(filteredMembers[selectedIndex]);
+            } else if (e.key === 'Escape') {
+              hideAutocomplete();
+            }
+          } else if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            quickAddForm.submit();
+          } else if (e.key === 'Escape') {
+            this.value = '';
+            this.blur();
+            hideAutocomplete();
+          }
+        });
+        
+        function updateSelectedItem() {
+          const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+          items.forEach((item, index) => {
+            item.classList.toggle('is-selected', index === selectedIndex);
+          });
+        }
+        
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function (e) {
+          if (!quickAddInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+            hideAutocomplete();
+          }
+        });
+        
+        // Prevent zoom on iOS when focusing input
+        if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+          quickAddInput.addEventListener('focus', function () {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+              viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+            }
+          });
+          
+          quickAddInput.addEventListener('blur', function () {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport) {
+              viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            }
+          });
+        }
+        
+        // Clear input after successful submission (form will redirect, but just in case)
+        quickAddForm.addEventListener('submit', function () {
+          hideAutocomplete();
+          // Input will be cleared on redirect, but we can clear it here too
+          setTimeout(function () {
+            quickAddInput.value = '';
+          }, 100);
+        });
+      });
+    </script>
+  {% endif %}
 {% endblock %}
 
