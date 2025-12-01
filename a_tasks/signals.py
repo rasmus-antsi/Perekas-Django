@@ -3,7 +3,7 @@ from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
-from .models import Task
+from .models import Task, TaskRecurrence
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +59,64 @@ def auto_delete_old_completed_tasks(sender, instance, created, **kwargs):
     # Only run cleanup when a task is actually being completed
     if was_just_completed:
         try:
+            # Handle recurring tasks - create next occurrence when task is completed
+            recurrences = TaskRecurrence.objects.filter(task=instance)
+            for recurrence in recurrences:
+                try:
+                    # Calculate next occurrence date based on frequency
+                    now = timezone.now()
+                    if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
+                        next_date = now + timedelta(days=recurrence.interval)
+                        # If there's a due_date, calculate next due date
+                        next_due_date = None
+                        if instance.due_date:
+                            next_due_date = instance.due_date + timedelta(days=recurrence.interval)
+                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
+                        next_date = now + timedelta(weeks=recurrence.interval)
+                        next_due_date = None
+                        if instance.due_date:
+                            next_due_date = instance.due_date + timedelta(weeks=recurrence.interval)
+                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
+                        next_date = now + timedelta(days=30 * recurrence.interval)
+                        next_due_date = None
+                        if instance.due_date:
+                            # Approximate monthly - add 30 days
+                            next_due_date = instance.due_date + timedelta(days=30 * recurrence.interval)
+                    else:
+                        next_date = now + timedelta(days=1)
+                        next_due_date = instance.due_date
+                    
+                    # Check if recurrence has ended
+                    if recurrence.end_date:
+                        check_date = next_due_date if next_due_date else next_date.date()
+                        if check_date > recurrence.end_date:
+                            # Recurrence has ended, delete it
+                            recurrence.delete()
+                            continue
+                    
+                    # Create new task instance
+                    new_task = Task.objects.create(
+                        name=instance.name,
+                        description=instance.description,
+                        family=instance.family,
+                        assigned_to=instance.assigned_to,
+                        created_by=instance.created_by,
+                        due_date=next_due_date,
+                        priority=instance.priority,
+                        points=instance.points,
+                        completed=False,
+                        approved=False,
+                    )
+                    
+                    # Update recurrence to point to new task
+                    recurrence.task = new_task
+                    recurrence.next_occurrence = next_date
+                    recurrence.save()
+                    
+                    logger.info(f"Created recurring task '{new_task.name}' (next: {next_date})")
+                except Exception as e:
+                    logger.error(f"Error creating recurring task: {e}", exc_info=True)
+            
             # Calculate the cutoff time (48 hours ago)
             cutoff_time = timezone.now() - timedelta(hours=48)
             

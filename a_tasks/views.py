@@ -1,4 +1,7 @@
 import itertools
+import json
+import re
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -6,6 +9,7 @@ from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.safestring import mark_safe
 
 from a_family.models import Family, User
 from a_family.emails import send_task_completed_notification, send_task_approved_notification
@@ -29,6 +33,157 @@ def _ensure_user_role(user, default_role=User.ROLE_CHILD):
         user.role = default_role
         user.save(update_fields=['role'])
     return user
+
+
+def _parse_task_text(text, family):
+    """
+    Parse natural language task text to extract task details.
+    
+    Patterns:
+    - @name or @username - Assign to family member
+    - !low, !medium, !high - Set priority
+    - +50 or +points - Set points value
+    - *daily, *weekly, *monthly - Set recurring frequency
+    - Date keywords: today, tomorrow, next week, Monday, etc.
+    - Date format: ^2024-12-25 for specific dates
+    
+    Returns dict with: name, assigned_to_id, priority, points, due_date, recurring
+    """
+    if not text or not text.strip():
+        return None
+    
+    text = text.strip()
+    parsed = {
+        'name': '',
+        'assigned_to_id': None,
+        'priority': Task.PRIORITY_MEDIUM,  # Default to medium
+        'points': 25,  # Default points
+        'due_date': None,
+        'recurring': None,
+    }
+    
+    # Extract @mentions (assignment)
+    mention_pattern = r'@(\w+)'
+    mentions = re.findall(mention_pattern, text, re.IGNORECASE)
+    if mentions:
+        mention_name = mentions[0].lower()
+        # Try to find family member by display name or username
+        family_members = list(family.members.all())
+        if family.owner:
+            family_members.append(family.owner)
+        
+        # Handle "everyone" special case
+        if mention_name == 'everyone' or mention_name == 'kõik':
+            parsed['assigned_to_id'] = None  # None means open task
+        else:
+            # Try to find family member by display name or username
+            for member in family_members:
+                display_name = member.get_display_name().lower()
+                username = (member.username or '').lower()
+                first_name = (member.first_name or '').lower()
+                
+                if (mention_name in display_name or 
+                    mention_name == username or 
+                    mention_name == first_name):
+                    parsed['assigned_to_id'] = member.id
+                    break
+        
+        # Remove @mentions from text
+        text = re.sub(mention_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract priority (!low, !medium, !high)
+    priority_pattern = r'!(low|medium|high|madal|keskmine|kõrge)'
+    priority_match = re.search(priority_pattern, text, re.IGNORECASE)
+    if priority_match:
+        priority_str = priority_match.group(1).lower()
+        if priority_str in ['high', 'kõrge']:
+            parsed['priority'] = Task.PRIORITY_HIGH
+        elif priority_str in ['low', 'madal']:
+            parsed['priority'] = Task.PRIORITY_LOW
+        else:
+            parsed['priority'] = Task.PRIORITY_MEDIUM
+        
+        text = re.sub(priority_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract points (+50, +points)
+    points_pattern = r'\+(\d+)'
+    points_match = re.search(points_pattern, text)
+    if points_match:
+        parsed['points'] = int(points_match.group(1))
+        text = re.sub(points_pattern, '', text).strip()
+    
+    # Extract recurring (*daily, *weekly, *monthly)
+    recurring_pattern = r'\*(daily|weekly|monthly|päevaselt|nädalaselt|kuus)'
+    recurring_match = re.search(recurring_pattern, text, re.IGNORECASE)
+    if recurring_match:
+        recurring_str = recurring_match.group(1).lower()
+        if recurring_str in ['daily', 'päevaselt']:
+            parsed['recurring'] = 'daily'
+        elif recurring_str in ['weekly', 'nädalaselt']:
+            parsed['recurring'] = 'weekly'
+        elif recurring_str in ['monthly', 'kuus']:
+            parsed['recurring'] = 'monthly'
+        
+        text = re.sub(recurring_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract dates
+    today = timezone.localdate()
+    now = timezone.now()
+    
+    # Specific date format: ^2024-12-25
+    date_format_pattern = r'\^(\d{4}-\d{2}-\d{2})'
+    date_format_match = re.search(date_format_pattern, text)
+    if date_format_match:
+        try:
+            parsed['due_date'] = parse_date(date_format_match.group(1))
+            text = re.sub(date_format_pattern, '', text).strip()
+        except (ValueError, TypeError):
+            pass
+    
+    # Date keywords (case-insensitive)
+    date_keywords = {
+        'today': today,
+        'täna': today,
+        'tomorrow': today + timedelta(days=1),
+        'homme': today + timedelta(days=1),
+        'next week': today + timedelta(days=7),
+        'järgmine nädal': today + timedelta(days=7),
+        'next month': today + timedelta(days=30),
+        'järgmine kuu': today + timedelta(days=30),
+    }
+    
+    # Weekday names (Estonian and English)
+    # Monday=0, Tuesday=1, ..., Sunday=6
+    weekdays_est = ['esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev', 'pühapäev']
+    weekdays_en = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    weekdays_est_short = ['esmasp', 'teisip', 'kolmap', 'neljap', 'reede', 'laup', 'pühap']
+    
+    for keyword, date_value in date_keywords.items():
+        if keyword.lower() in text.lower():
+            parsed['due_date'] = date_value
+            # Remove keyword from text (case-insensitive)
+            text = re.sub(re.escape(keyword), '', text, flags=re.IGNORECASE).strip()
+            break
+    
+    # Check for weekday names
+    text_lower = text.lower()
+    all_weekdays = weekdays_est + weekdays_en + weekdays_est_short
+    for i, weekday in enumerate(all_weekdays):
+        if weekday in text_lower:
+            # Find next occurrence of this weekday
+            # Map to 0-6 (Monday-Sunday)
+            weekday_index = i % 7
+            days_ahead = weekday_index - today.weekday()
+            if days_ahead <= 0:  # Target day already happened this week
+                days_ahead += 7
+            parsed['due_date'] = today + timedelta(days=days_ahead)
+            text = re.sub(weekday, '', text, flags=re.IGNORECASE).strip()
+            break
+    
+    # Clean up text: remove extra spaces, trim
+    parsed['name'] = ' '.join(text.split())
+    
+    return parsed
 
 
 @login_required
@@ -60,12 +215,33 @@ def index(request):
             return Task.objects.filter(family=family, id=task_id).select_related("assigned_to").first()
 
         if action == "create" and is_parent:
+            # Check if this is a quick add (task_text) or modal form (name)
+            task_text = request.POST.get("task_text", "").strip()
             name = request.POST.get("name", "").strip()
-            description = request.POST.get("description", "").strip()
-            assigned_id = request.POST.get("assigned_to")
-            due = parse_date(request.POST.get("due_date") or "")
-            priority = request.POST.get("priority")
-            points_raw = request.POST.get("points", "0")
+            
+            # Quick add form uses task_text, modal form uses name
+            if task_text:
+                # Parse natural language
+                parsed = _parse_task_text(task_text, family)
+                if not parsed or not parsed['name']:
+                    messages.error(request, "Palun sisesta ülesande nimi.")
+                    return redirect("a_tasks:index")
+                
+                name = parsed['name']
+                description = ""
+                assigned_id = parsed['assigned_to_id']
+                due = parsed['due_date']
+                priority = parsed['priority']
+                points_value = parsed['points']
+                recurring = parsed['recurring']
+            else:
+                # Modal form (backward compatibility)
+                description = request.POST.get("description", "").strip()
+                assigned_id = request.POST.get("assigned_to")
+                due = parse_date(request.POST.get("due_date") or "")
+                priority = request.POST.get("priority")
+                points_raw = request.POST.get("points", "0")
+                recurring = None
 
             if name:
                 # Check subscription limit before creating
@@ -79,15 +255,19 @@ def index(request):
                     )
                     return redirect("a_tasks:index")
 
-                try:
-                    priority_value = int(priority)
-                except (TypeError, ValueError):
-                    priority_value = Task.PRIORITY_LOW
+                if not task_text:  # Only parse if from modal form
+                    try:
+                        priority_value = int(priority)
+                    except (TypeError, ValueError):
+                        priority_value = Task.PRIORITY_LOW
 
-                try:
-                    points_value = max(0, int(points_raw))
-                except (TypeError, ValueError):
-                    points_value = 0
+                    try:
+                        points_value = max(0, int(points_raw))
+                    except (TypeError, ValueError):
+                        points_value = 0
+                else:
+                    priority_value = priority
+                    # points_value already set from parsed dict
 
                 assigned_user = None
                 if assigned_id:
@@ -95,7 +275,7 @@ def index(request):
                     if not assigned_user and str(family.owner_id) == str(assigned_id):
                         assigned_user = family.owner
 
-                Task.objects.create(
+                task = Task.objects.create(
                     name=name,
                     description=description,
                     family=family,
@@ -105,6 +285,24 @@ def index(request):
                     priority=priority_value,
                     points=points_value,
                 )
+                
+                # Handle recurring tasks
+                if recurring:
+                    from .models import TaskRecurrence
+                    next_occurrence = timezone.now()
+                    if recurring == 'daily':
+                        next_occurrence = timezone.now() + timedelta(days=1)
+                    elif recurring == 'weekly':
+                        next_occurrence = timezone.now() + timedelta(days=7)
+                    elif recurring == 'monthly':
+                        next_occurrence = timezone.now() + timedelta(days=30)
+                    
+                    TaskRecurrence.objects.create(
+                        task=task,
+                        frequency=recurring,
+                        next_occurrence=next_occurrence,
+                    )
+                
                 # Increment usage counter
                 increment_usage(family, 'tasks', 1)
 
@@ -367,6 +565,26 @@ def index(request):
         approved_tasks = []
         family_members = []
 
+    # Prepare family members data for autocomplete (first name + username format)
+    family_members_data = []
+    for member in family_members:
+        name_parts = []
+        if member.first_name:
+            name_parts.append(member.first_name)
+        if member.username:
+            name_parts.append(f"@{member.username}")
+        display_text = " ".join(name_parts) if name_parts else member.get_display_name()
+        family_members_data.append({
+            'id': member.id,
+            'first_name': member.first_name or '',
+            'username': member.username or '',
+            'display_text': display_text,
+            'search_text': f"{member.first_name or ''} {member.username or ''}".strip().lower(),
+        })
+    
+    # Convert to JSON string for template
+    family_members_json = mark_safe(json.dumps(family_members_data))
+    
     context = {
         "family": family,
         "role": role,
@@ -374,6 +592,7 @@ def index(request):
         "is_child": is_child,
         "has_family": family is not None,
         "family_members": family_members,
+        "family_members_data": family_members_json,  # JSON string for autocomplete
         "active_tasks": active_tasks,
         "pending_tasks": pending_tasks,
         "approved_tasks": approved_tasks,

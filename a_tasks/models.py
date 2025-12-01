@@ -70,3 +70,34 @@ class Task(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TaskRecurrence(models.Model):
+    FREQUENCY_DAILY = 'daily'
+    FREQUENCY_WEEKLY = 'weekly'
+    FREQUENCY_MONTHLY = 'monthly'
+    FREQUENCY_CHOICES = [
+        (FREQUENCY_DAILY, 'Daily'),
+        (FREQUENCY_WEEKLY, 'Weekly'),
+        (FREQUENCY_MONTHLY, 'Monthly'),
+    ]
+
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='recurrences', db_index=True)
+    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, db_index=True)
+    interval = models.PositiveIntegerField(default=1)
+    end_date = models.DateField(null=True, blank=True)
+    next_occurrence = models.DateTimeField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'tasks_taskrecurrence'
+        verbose_name = 'task recurrence'
+        verbose_name_plural = 'task recurrences'
+        ordering = ['next_occurrence']
+        indexes = [
+            models.Index(fields=['task', 'next_occurrence']),
+            models.Index(fields=['next_occurrence']),
+        ]
+
+    def __str__(self):
+        return f'{self.task.name} - {self.get_frequency_display()}'
