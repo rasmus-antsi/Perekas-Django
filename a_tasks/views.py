@@ -49,7 +49,7 @@ def _parse_task_text(text, family):
     - +50 or +points - Set points value
     - *daily, *weekly, *monthly - Set recurring frequency
     - Date keywords: today, tomorrow, next week, Monday, etc.
-    - Date format: ^2024-12-25 for specific dates
+    - Date format: ^25.12.2024 (pp.kk.aaaa) for specific dates
     
     Returns dict with: name, assigned_to_id, priority, points, due_date, recurring
     """
@@ -116,13 +116,17 @@ def _parse_task_text(text, family):
         parsed['points'] = int(points_match.group(1))
         text = re.sub(points_pattern, '', text).strip()
     
-    # Extract recurring (*daily, *weekly, *monthly)
-    recurring_pattern = r'\*(daily|weekly|monthly|päevaselt|nädalaselt|kuus)'
+    # Extract recurring (*daily, *business_daily, *every_other_day, *weekly, *monthly)
+    recurring_pattern = r'\*(daily|business_daily|every_other_day|weekly|monthly|päevaselt|tööpäevaselt|iga_teine_päev|nädalaselt|kuus)'
     recurring_match = re.search(recurring_pattern, text, re.IGNORECASE)
     if recurring_match:
         recurring_str = recurring_match.group(1).lower()
         if recurring_str in ['daily', 'päevaselt']:
             parsed['recurring'] = 'daily'
+        elif recurring_str in ['business_daily', 'tööpäevaselt']:
+            parsed['recurring'] = 'business_daily'
+        elif recurring_str in ['every_other_day', 'iga_teine_päev']:
+            parsed['recurring'] = 'every_other_day'
         elif recurring_str in ['weekly', 'nädalaselt']:
             parsed['recurring'] = 'weekly'
         elif recurring_str in ['monthly', 'kuus']:
@@ -134,12 +138,16 @@ def _parse_task_text(text, family):
     today = timezone.localdate()
     now = timezone.now()
     
-    # Specific date format: ^2024-12-25
-    date_format_pattern = r'\^(\d{4}-\d{2}-\d{2})'
+    # Specific date format: ^25.12.2024 (Estonian format pp.kk.aaaa)
+    date_format_pattern = r'\^(\d{1,2}\.\d{1,2}\.\d{4})'
     date_format_match = re.search(date_format_pattern, text)
     if date_format_match:
         try:
-            parsed['due_date'] = parse_date(date_format_match.group(1))
+            date_str = date_format_match.group(1)
+            # Parse Estonian format (dd.mm.yyyy) to date object
+            from datetime import datetime
+            date_obj = datetime.strptime(date_str, '%d.%m.%Y').date()
+            parsed['due_date'] = date_obj
             text = re.sub(date_format_pattern, '', text).strip()
         except (ValueError, TypeError):
             pass
@@ -294,6 +302,8 @@ def index(request):
                 recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
                 if recurring_frequency:
                     from .models import TaskRecurrence
+                    from .recurrence_utils import calculate_next_occurrence
+                    
                     recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
                     recurring_end_date = None
                     if recurring_end_date_str:
@@ -302,17 +312,26 @@ def index(request):
                         except (ValueError, TypeError):
                             pass
                     
-                    next_occurrence = timezone.now()
-                    if recurring_frequency == 'daily':
-                        next_occurrence = timezone.now() + timedelta(days=1)
-                    elif recurring_frequency == 'weekly':
-                        next_occurrence = timezone.now() + timedelta(days=7)
-                    elif recurring_frequency == 'monthly':
-                        next_occurrence = timezone.now() + timedelta(days=30)
+                    # Get day_of_week and day_of_month if provided
+                    recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                    recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                    
+                    # day_of_month is now a number input (1-31)
+                    recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                    recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                    
+                    # Calculate next occurrence based on due_date or selected day
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        task.due_date, recurring_frequency, 
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month
+                    )
                     
                     TaskRecurrence.objects.create(
                         task=task,
                         frequency=recurring_frequency,
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month,
                         end_date=recurring_end_date,
                         next_occurrence=next_occurrence,
                     )
@@ -375,6 +394,8 @@ def index(request):
                 
                 if recurring_frequency:
                     # Create or update recurrence
+                    from .recurrence_utils import calculate_next_occurrence
+                    
                     recurring_end_date = None
                     if recurring_end_date_str:
                         try:
@@ -382,17 +403,25 @@ def index(request):
                         except (ValueError, TypeError):
                             pass
                     
-                    # Calculate next_occurrence based on frequency
-                    next_occurrence = timezone.now()
-                    if recurring_frequency == 'daily':
-                        next_occurrence = timezone.now() + timedelta(days=1)
-                    elif recurring_frequency == 'weekly':
-                        next_occurrence = timezone.now() + timedelta(days=7)
-                    elif recurring_frequency == 'monthly':
-                        next_occurrence = timezone.now() + timedelta(days=30)
+                    # Get day_of_week and day_of_month if provided
+                    recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                    recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                    
+                    # day_of_month is now a number input (1-31)
+                    recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                    recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                    
+                    # Calculate next_occurrence based on due_date or selected day
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        task.due_date, recurring_frequency,
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month
+                    )
                     
                     if existing_recurrence:
                         existing_recurrence.frequency = recurring_frequency
+                        existing_recurrence.day_of_week = recurring_day_of_week
+                        existing_recurrence.day_of_month = recurring_day_of_month
                         existing_recurrence.end_date = recurring_end_date
                         existing_recurrence.next_occurrence = next_occurrence
                         existing_recurrence.save()
@@ -400,6 +429,8 @@ def index(request):
                         TaskRecurrence.objects.create(
                             task=task,
                             frequency=recurring_frequency,
+                            day_of_week=recurring_day_of_week,
+                            day_of_month=recurring_day_of_month,
                             end_date=recurring_end_date,
                             next_occurrence=next_occurrence,
                         )
@@ -424,6 +455,48 @@ def index(request):
         elif action == "delete" and is_parent:
             task = _get_task()
             if task:
+                # Check if task has recurrence
+                from .models import TaskRecurrence
+                recurrence = TaskRecurrence.objects.filter(task=task).first()
+                
+                if recurrence:
+                    # For recurring tasks, preserve the recurrence by creating the next occurrence
+                    # This allows the recurrence to continue creating new tasks
+                    from .recurrence_utils import calculate_next_occurrence
+                    
+                    # Calculate next occurrence
+                    base_due_date = task.due_date if task.due_date else timezone.now().date()
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        base_due_date, recurrence.frequency, recurrence.interval,
+                        day_of_week=recurrence.day_of_week,
+                        day_of_month=recurrence.day_of_month
+                    )
+                    
+                    # Check if recurrence has ended
+                    if recurrence.end_date and next_due_date > recurrence.end_date:
+                        # Recurrence has ended, delete it
+                        recurrence.delete()
+                    else:
+                        # Create the next occurrence task to preserve the recurrence
+                        template_task = Task.objects.create(
+                            name=task.name,
+                            description=task.description,
+                            family=task.family,
+                            assigned_to=task.assigned_to,
+                            created_by=task.created_by,
+                            due_date=next_due_date,
+                            priority=task.priority,
+                            points=task.points,
+                            completed=False,
+                            approved=False,
+                        )
+                        
+                        # Update recurrence to point to the new task
+                        recurrence.task = template_task
+                        recurrence.next_occurrence = next_occurrence
+                        recurrence.save()
+                
+                # Now delete the original task (recurrence is already moved if it existed)
                 task.delete()
 
         elif action == "start" and is_child:

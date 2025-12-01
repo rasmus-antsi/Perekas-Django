@@ -56,12 +56,13 @@ def create_recurring_tasks():
         
         if existing_task:
             # Task already exists, just update the recurrence
-            if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
-                recurrence.next_occurrence = now + timedelta(days=1)
-            elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
-                recurrence.next_occurrence = now + timedelta(days=7)
-            elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
-                recurrence.next_occurrence = now + timedelta(days=30)
+            from .recurrence_utils import calculate_next_occurrence
+            next_due_date, next_occurrence = calculate_next_occurrence(
+                new_due_date, recurrence.frequency, recurrence.interval,
+                day_of_week=recurrence.day_of_week,
+                day_of_month=recurrence.day_of_month
+            )
+            recurrence.next_occurrence = next_occurrence
             recurrence.save()
             continue
         
@@ -85,21 +86,24 @@ def create_recurring_tasks():
         )
         created_count += 1
         
-        # Update recurrence next_occurrence
-        if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
-            recurrence.next_occurrence = now + timedelta(days=1)
-        elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
-            recurrence.next_occurrence = now + timedelta(days=7)
-        elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
-            recurrence.next_occurrence = now + timedelta(days=30)
+        # Calculate next occurrence based on the new task's due_date
+        # Recurring tasks recur on the same day of week (weekly) or day of month (monthly)
+        from .recurrence_utils import calculate_next_occurrence
+        next_due_date, next_occurrence = calculate_next_occurrence(
+            new_due_date, recurrence.frequency, recurrence.interval,
+            day_of_week=recurrence.day_of_week,
+            day_of_month=recurrence.day_of_month
+        )
         
-        # Create a new recurrence for the new task
+        # Create a new recurrence for the new task (preserve day_of_week and day_of_month)
         TaskRecurrence.objects.create(
             task=new_task,
             frequency=recurrence.frequency,
             interval=recurrence.interval,
+            day_of_week=recurrence.day_of_week,
+            day_of_month=recurrence.day_of_month,
             end_date=recurrence.end_date,
-            next_occurrence=recurrence.next_occurrence,
+            next_occurrence=next_occurrence,
         )
         
         # Delete the old recurrence (it's been replaced by the new one)

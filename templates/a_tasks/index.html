@@ -114,7 +114,7 @@
                   </div>
                   <div class="task-help-item-content">
                     <code>*nädalaselt</code>
-                    <span>Korduv ülesanne</span>
+                    <span>Korduv ülesanne (alustab tähtajast)</span>
                   </div>
                 </div>
                 <div class="task-help-item">
@@ -136,11 +136,44 @@
                 <p class="task-help-examples-title">Näited:</p>
                 <ul class="task-help-examples-list">
                   <li><code>"Võta prügi välja @Emma homme !kõrge"</code></li>
-                  <li><code>"Pesu *nädalaselt"</code></li>
+                  <li>
+                    <code>"Pesu *nädalaselt"</code>
+                    <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">- kordub iga nädal sama päeval</span>
+                  </li>
                   <li><code>"Kodutöö +50"</code></li>
-                  <li><code>"Toida koer @Tom homme !madal +25"</code></li>
-                  <li><code>"Koristus *igapäevaselt +30"</code></li>
-                  <li><code>"Kodutöö @Emma reedel !kõrge +100"</code></li>
+                  <li><code>"Toida koera @Tom homme !madal +25"</code></li>
+                  <li>
+                    <code>"Koristus *igapäevaselt +30"</code>
+                    <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">- kordub iga päev</span>
+                  </li>
+                  <li>
+                    <code>"Kontrolli postkasti *tööpäevaselt"</code>
+                    <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">- kordub iga tööpäev</span>
+                  </li>
+                  <li>
+                    <code>"Vannitoa koristus *iga_teine_päev"</code>
+                    <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">- kordub iga teine päev</span>
+                  </li>
+                  <li><code>"Kodutöö @Emma reede *nädalaselt !kõrge +100"</code> - kordub iga reede</li>
+                  <li>
+                    <code>"Rent *kuus ^15.12.2024"</code>
+                    <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span style="margin-left: 0.5rem;">- kordub iga kuu 15. kuupäeval</span>
+                  </li>
                 </ul>
               </div>
               <div class="task-help-options">
@@ -158,9 +191,12 @@
                     <strong>Korduv:</strong>
                     <div class="task-help-option-values">
                       <code>*päevaselt</code>
+                      <code>*tööpäevaselt</code>
+                      <code>*iga_teine_päev</code>
                       <code>*nädalaselt</code>
                       <code>*kuus</code>
                     </div>
+                    <p class="task-help-option-note">Korduv ülesanne algab tähtajast. Nädalaselt korduv ülesanne kordub samal nädalapäeval, kuus korduv samal kuupäeval.</p>
                   </div>
                   <div class="task-help-option-group">
                     <strong>Tähtaeg:</strong>
@@ -174,7 +210,7 @@
                       <code>neljapäev</code>
                       <code>laupäev</code>
                       <code>pühapäev</code>
-                      <code>^2024-12-25</code>
+                      <code>^25.12.2024</code>
                     </div>
                   </div>
                 </div>
@@ -200,6 +236,11 @@
                         <svg class="task-status-icon in-progress-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Pooleli">
                           <circle cx="12" cy="12" r="10"></circle>
                           <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      {% endif %}
+                      {% if task.recurrences.exists %}
+                        <svg class="task-status-icon recurring-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                         </svg>
                       {% endif %}
                       {{ task.name }}
@@ -253,7 +294,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"d.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
@@ -308,6 +349,8 @@
                       data-task-priority="{{ task.priority }}"
                       data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
                       data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
+                      data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
+                      data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
                       data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -315,7 +358,7 @@
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                       </svg>
                     </button>
-                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.">
+                    <form method="post" class="icon-form" data-confirm="{% if task.recurrences.exists %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See kustutab ainult selle ülesande, mitte korduvat ülesannet. Korduva ülesande peatamiseks muuda ülesannet ja vali 'Ei kordu'.{% else %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.{% endif %}">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -353,6 +396,11 @@
                       <svg class="task-status-icon completed-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Lõpetatud">
                         <polyline points="20 6 9 17 4 12"></polyline>
                       </svg>
+                      {% if task.recurrences.exists %}
+                        <svg class="task-status-icon recurring-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                      {% endif %}
                       {{ task.name }}
                     </h3>
                     <p class="task-assigned">
@@ -393,7 +441,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% if task.completed_by.username %} @{{ task.completed_by.username }}{% endif %}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% if task.completed_by.username %} @{{ task.completed_by.username }}{% endif %}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"d.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -403,7 +451,7 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"d.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
@@ -458,6 +506,11 @@
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                       </svg>
+                      {% if task.recurrences.exists %}
+                        <svg class="task-status-icon recurring-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                      {% endif %}
                       {{ task.name }}
                     </h3>
                     <p class="task-assigned">
@@ -494,7 +547,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% if task.approved_by.username %} @{{ task.approved_by.username }}{% endif %}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"j.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% if task.approved_by.username %} @{{ task.approved_by.username }}{% endif %}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"d.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -504,13 +557,13 @@
                         <line x1="8" y1="2" x2="8" y2="6"></line>
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                       </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"j.m" }}</span>
+                      <span class="task-meta-label">{{ task.due_date|date:"d.m" }}</span>
                     </div>
                   {% endif %}
                 </div>
                 {% if is_parent %}
                   <div class="task-actions">
-                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.">
+                    <form method="post" class="icon-form" data-confirm="{% if task.recurrences.exists %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See kustutab ainult selle ülesande, mitte korduvat ülesannet. Korduva ülesande peatamiseks muuda ülesannet ja vali 'Ei kordu'.{% else %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.{% endif %}">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
                       <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -609,9 +662,30 @@
               <select name="recurring_frequency" id="recurring-frequency">
                 <option value="">Ei kordu</option>
                 <option value="daily">Igapäevaselt</option>
+                <option value="business_daily">Tööpäevaselt</option>
+                <option value="every_other_day">Iga teine päev</option>
                 <option value="weekly">Nädalaselt</option>
                 <option value="monthly">Kuus</option>
               </select>
+            </label>
+            <p class="task-modal-recurring-note" id="recurring-note" style="display: none;">
+              <small id="recurring-note-text"></small>
+            </p>
+            <label id="recurring-day-of-week-label" style="display: none;">
+              <span>Nädalapäev</span>
+              <select name="recurring_day_of_week" id="recurring-day-of-week">
+                <option value="0">Esmaspäev</option>
+                <option value="1">Teisipäev</option>
+                <option value="2">Kolmapäev</option>
+                <option value="3">Neljapäev</option>
+                <option value="4">Reede</option>
+                <option value="5">Laupäev</option>
+                <option value="6">Pühapäev</option>
+              </select>
+            </label>
+            <label id="recurring-day-of-month-label" style="display: none;">
+              <span>Kuupäev (1-31)</span>
+              <input type="number" name="recurring_day_of_month" id="recurring-day-of-month" min="1" max="31" placeholder="15">
             </label>
             <label id="recurring-end-date-label" style="display: none;">
               <span>Lõppkuupäev (valikuline)</span>
@@ -695,20 +769,106 @@
             // Set recurrence fields
             recurringFrequencySelect.value = data.recurringFrequency || '';
             recurringEndDateInput.value = data.recurringEndDate || '';
-            updateRecurringEndDateVisibility();
+            recurringDayOfWeekSelect.value = data.recurringDayOfWeek || '';
+            recurringDayOfMonthInput.value = data.recurringDayOfMonth || '';
+            updateRecurringFieldsVisibility();
           }
         }
         
-        function updateRecurringEndDateVisibility() {
-          if (recurringFrequencySelect.value) {
-            recurringEndDateLabel.style.display = 'block';
-          } else {
+        const recurringNote = document.getElementById('recurring-note');
+        const recurringNoteText = document.getElementById('recurring-note-text');
+        const recurringDayOfWeekLabel = document.getElementById('recurring-day-of-week-label');
+        const recurringDayOfWeekSelect = document.getElementById('recurring-day-of-week');
+        const recurringDayOfMonthLabel = document.getElementById('recurring-day-of-month-label');
+        const recurringDayOfMonthInput = document.getElementById('recurring-day-of-month');
+        
+        function updateRecurringFieldsVisibility() {
+          const frequency = recurringFrequencySelect.value;
+          
+          if (!frequency) {
+            // Hide all recurring fields
             recurringEndDateLabel.style.display = 'none';
+            recurringNote.style.display = 'none';
+            recurringDayOfWeekLabel.style.display = 'none';
+            recurringDayOfMonthLabel.style.display = 'none';
             recurringEndDateInput.value = '';
+            recurringDayOfWeekSelect.value = '';
+            recurringDayOfMonthInput.value = '';
+            return;
+          }
+          
+          // Show end date and note
+          recurringEndDateLabel.style.display = 'block';
+          recurringNote.style.display = 'block';
+          
+          // Show/hide day selection based on frequency
+          if (frequency === 'weekly') {
+            recurringDayOfWeekLabel.style.display = 'block';
+            recurringDayOfMonthLabel.style.display = 'none';
+            recurringDayOfMonthInput.value = '';
+            updateRecurringNote();
+          } else if (frequency === 'monthly') {
+            recurringDayOfWeekLabel.style.display = 'none';
+            recurringDayOfWeekSelect.value = '';
+            recurringDayOfMonthLabel.style.display = 'block';
+            updateRecurringNote();
+          } else if (frequency === 'daily') {
+            recurringDayOfWeekLabel.style.display = 'none';
+            recurringDayOfMonthLabel.style.display = 'none';
+            recurringDayOfWeekSelect.value = '';
+            recurringDayOfMonthInput.value = '';
+            updateRecurringNote();
+          } else if (frequency === 'business_daily') {
+            recurringDayOfWeekLabel.style.display = 'none';
+            recurringDayOfMonthLabel.style.display = 'none';
+            recurringDayOfWeekSelect.value = '';
+            recurringDayOfMonthInput.value = '';
+            updateRecurringNote();
+          } else if (frequency === 'every_other_day') {
+            recurringDayOfWeekLabel.style.display = 'none';
+            recurringDayOfMonthLabel.style.display = 'none';
+            recurringDayOfWeekSelect.value = '';
+            recurringDayOfMonthInput.value = '';
+            updateRecurringNote();
           }
         }
         
-        recurringFrequencySelect.addEventListener('change', updateRecurringEndDateVisibility);
+        function updateRecurringNote() {
+          const frequency = recurringFrequencySelect.value;
+          
+          if (!frequency) {
+            recurringNoteText.textContent = '';
+            return;
+          }
+          
+          if (frequency === 'daily') {
+            recurringNoteText.innerHTML = 'See ülesanne kordub <strong>iga päev</strong>.';
+          } else if (frequency === 'business_daily') {
+            recurringNoteText.innerHTML = 'See ülesanne kordub <strong>iga tööpäev</strong> (esmaspäevast reedeni).';
+          } else if (frequency === 'every_other_day') {
+            recurringNoteText.innerHTML = 'See ülesanne kordub <strong>iga teine päev</strong>.';
+          } else if (frequency === 'weekly') {
+            const dayOfWeek = parseInt(recurringDayOfWeekSelect.value);
+            if (!isNaN(dayOfWeek)) {
+              const weekdays = ['esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev', 'pühapäev'];
+              const dayName = weekdays[dayOfWeek] || 'valitud päev';
+              recurringNoteText.innerHTML = `See ülesanne kordub iga <strong>${dayName}</strong>.`;
+            } else {
+              recurringNoteText.innerHTML = 'Vali nädalapäev, mil ülesanne peaks korduma.';
+            }
+          } else if (frequency === 'monthly') {
+            const dayOfMonth = parseInt(recurringDayOfMonthInput.value);
+            if (!isNaN(dayOfMonth) && dayOfMonth >= 1 && dayOfMonth <= 31) {
+              recurringNoteText.innerHTML = `See ülesanne kordub iga kuu <strong>${dayOfMonth}. kuupäeval</strong>.`;
+            } else {
+              recurringNoteText.innerHTML = 'Vali kuupäev (1-31), mil ülesanne peaks korduma.';
+            }
+          }
+        }
+        
+        recurringFrequencySelect.addEventListener('change', updateRecurringFieldsVisibility);
+        recurringDayOfWeekSelect.addEventListener('change', updateRecurringNote);
+        recurringDayOfMonthInput.addEventListener('input', updateRecurringNote);
 
         function closeModal() {
           modal.classList.remove('is-visible');
@@ -730,6 +890,8 @@
               priority: button.dataset.taskPriority,
               due: button.dataset.taskDue,
               recurringFrequency: button.dataset.taskRecurringFrequency || '',
+              recurringDayOfWeek: button.dataset.taskRecurringDayOfWeek || '',
+              recurringDayOfMonth: button.dataset.taskRecurringDayOfMonth || '',
               recurringEndDate: button.dataset.taskRecurringEndDate || '',
             });
           });
@@ -955,8 +1117,95 @@
         
         // Family members data for autocomplete
         const familyMembers = {{ family_members_data|default:"[]" }};
+        
+        // Autocomplete options for different symbols
+        const autocompleteOptions = {
+          '@': {
+            items: familyMembers,
+            getDisplayText: (item) => item.display_text,
+            getInsertText: (item) => `@${item.username || item.first_name || 'kõik'}`,
+            filter: (query, items) => {
+              if (!query || query.length < 1) {
+                return items.slice(0, 8); // Show first 8 if no query
+              }
+              const lowerQuery = query.toLowerCase();
+              return items.filter(member => {
+                const searchText = (member.search_text || '').toLowerCase();
+                const displayText = (member.display_text || '').toLowerCase();
+                const username = (member.username || '').toLowerCase();
+                const firstName = (member.first_name || '').toLowerCase();
+                return searchText.includes(lowerQuery) || 
+                       displayText.includes(lowerQuery) ||
+                       username.includes(lowerQuery) || 
+                       firstName.includes(lowerQuery);
+              }).slice(0, 8);
+            }
+          },
+          '!': {
+            items: [
+              { value: 'madal', label: 'Madal', english: 'low' },
+              { value: 'keskmine', label: 'Keskmine', english: 'medium' },
+              { value: 'kõrge', label: 'Kõrge', english: 'high' }
+            ],
+            getDisplayText: (item) => item.label,
+            getInsertText: (item) => `!${item.value}`,
+            filter: (query, items) => {
+              const lowerQuery = query.toLowerCase();
+              return items.filter(item => 
+                item.value.includes(lowerQuery) || 
+                item.label.toLowerCase().includes(lowerQuery) ||
+                item.english.includes(lowerQuery)
+              );
+            }
+          },
+          '*': {
+            items: [
+              { value: 'päevaselt', label: 'Igapäevaselt', english: 'daily' },
+              { value: 'tööpäevaselt', label: 'Tööpäevaselt', english: 'business_daily' },
+              { value: 'iga_teine_päev', label: 'Iga teine päev', english: 'every_other_day' },
+              { value: 'nädalaselt', label: 'Nädalaselt', english: 'weekly' },
+              { value: 'kuus', label: 'Kuus', english: 'monthly' }
+            ],
+            getDisplayText: (item) => item.label,
+            getInsertText: (item) => `*${item.value}`,
+            filter: (query, items) => {
+              const lowerQuery = query.toLowerCase();
+              return items.filter(item => 
+                item.value.includes(lowerQuery) || 
+                item.label.toLowerCase().includes(lowerQuery) ||
+                item.english.includes(lowerQuery)
+              );
+            }
+          },
+          'date': {
+            items: [
+              { value: 'täna', label: 'Täna', english: 'today' },
+              { value: 'homme', label: 'Homme', english: 'tomorrow' },
+              { value: 'esmaspäev', label: 'Esmaspäev', english: 'monday' },
+              { value: 'teisipäev', label: 'Teisipäev', english: 'tuesday' },
+              { value: 'kolmapäev', label: 'Kolmapäev', english: 'wednesday' },
+              { value: 'neljapäev', label: 'Neljapäev', english: 'thursday' },
+              { value: 'reede', label: 'Reede', english: 'friday' },
+              { value: 'laupäev', label: 'Laupäev', english: 'saturday' },
+              { value: 'pühapäev', label: 'Pühapäev', english: 'sunday' },
+              { value: 'järgmine nädal', label: 'Järgmine nädal', english: 'next week' }
+            ],
+            getDisplayText: (item) => item.label,
+            getInsertText: (item) => item.value,
+            filter: (query, items) => {
+              const lowerQuery = query.toLowerCase();
+              return items.filter(item => 
+                item.value.includes(lowerQuery) || 
+                item.label.toLowerCase().includes(lowerQuery) ||
+                item.english.includes(lowerQuery)
+              );
+            }
+          }
+        };
+        
         let selectedIndex = -1;
-        let filteredMembers = [];
+        let filteredItems = [];
+        let currentAutocompleteType = null;
         
         // Auto-focus on desktop (not mobile to prevent keyboard popup)
         if (window.innerWidth > 768) {
@@ -964,19 +1213,22 @@
         }
         
         // Autocomplete functionality
-        function showAutocomplete(matches) {
+        function showAutocomplete(matches, autocompleteType) {
           if (!matches || matches.length === 0) {
             autocompleteDropdown.innerHTML = '';
             autocompleteDropdown.classList.remove('is-visible');
             return;
           }
           
-          filteredMembers = matches;
+          filteredItems = matches;
+          currentAutocompleteType = autocompleteType;
           selectedIndex = -1;
           
-          autocompleteDropdown.innerHTML = matches.map((member, index) => {
+          const config = autocompleteOptions[autocompleteType];
+          
+          autocompleteDropdown.innerHTML = matches.map((item, index) => {
             return `<div class="autocomplete-item" data-index="${index}" role="option" tabindex="0">
-              <span class="autocomplete-name">${member.display_text}</span>
+              <span class="autocomplete-name">${config.getDisplayText(item)}</span>
             </div>`;
           }).join('');
           
@@ -984,7 +1236,7 @@
           
           // Add click handlers
           autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach((item, index) => {
-            item.addEventListener('click', () => selectMember(matches[index]));
+            item.addEventListener('click', () => selectItem(matches[index], autocompleteType));
             item.addEventListener('mousedown', (e) => e.preventDefault()); // Prevent input blur
           });
         }
@@ -992,62 +1244,137 @@
         function hideAutocomplete() {
           autocompleteDropdown.classList.remove('is-visible');
           selectedIndex = -1;
+          filteredItems = [];
+          currentAutocompleteType = null;
         }
         
-        function selectMember(member) {
+        function selectItem(item, autocompleteType) {
           const inputValue = quickAddInput.value;
           const cursorPos = quickAddInput.selectionStart;
+          const config = autocompleteOptions[autocompleteType];
+          const insertText = config.getInsertText(item);
           
-          // Find the @ mention position
-          let mentionStart = inputValue.lastIndexOf('@', cursorPos - 1);
-          if (mentionStart === -1) {
-            // No @ found, insert @name at cursor
+          // Find the symbol position
+          let symbolStart = -1;
+          let symbol = '';
+          
+          if (autocompleteType === '@') {
+            symbolStart = inputValue.lastIndexOf('@', cursorPos - 1);
+            symbol = '@';
+          } else if (autocompleteType === '!') {
+            symbolStart = inputValue.lastIndexOf('!', cursorPos - 1);
+            symbol = '!';
+          } else if (autocompleteType === '+') {
+            symbolStart = inputValue.lastIndexOf('+', cursorPos - 1);
+            symbol = '+';
+          } else if (autocompleteType === '*') {
+            symbolStart = inputValue.lastIndexOf('*', cursorPos - 1);
+            symbol = '*';
+          } else if (autocompleteType === 'date') {
+            // For dates, find the word being typed
+            const textBeforeCursor = inputValue.substring(0, cursorPos);
+            const wordMatch = textBeforeCursor.match(/(\S+)$/);
+            if (wordMatch) {
+              symbolStart = cursorPos - wordMatch[1].length;
+            }
+          }
+          
+          if (symbolStart === -1 && autocompleteType !== 'date') {
+            // No symbol found, insert at cursor
             const before = inputValue.substring(0, cursorPos);
             const after = inputValue.substring(cursorPos);
-            quickAddInput.value = before + '@' + (member.first_name || member.username) + ' ' + after;
+            quickAddInput.value = before + insertText + ' ' + after;
             quickAddInput.focus();
-            const newPos = cursorPos + 1 + (member.first_name || member.username).length + 1;
+            const newPos = cursorPos + insertText.length + 1;
             quickAddInput.setSelectionRange(newPos, newPos);
+          } else if (symbolStart >= 0) {
+            // Replace the symbol and query
+            const before = inputValue.substring(0, symbolStart + 1);
+            let after = inputValue.substring(cursorPos);
+            // Remove the query part
+            if (autocompleteType === 'date') {
+              const textBeforeCursor = inputValue.substring(0, cursorPos);
+              const wordMatch = textBeforeCursor.match(/(\S+)$/);
+              if (wordMatch) {
+                after = inputValue.substring(cursorPos);
+                const beforeWord = inputValue.substring(0, symbolStart);
+                quickAddInput.value = beforeWord + insertText + ' ' + after;
+                quickAddInput.focus();
+                const newPos = symbolStart + insertText.length + 1;
+                quickAddInput.setSelectionRange(newPos, newPos);
+              } else {
+                quickAddInput.value = before + insertText + ' ' + after;
+                quickAddInput.focus();
+                const newPos = symbolStart + 1 + insertText.length + 1;
+                quickAddInput.setSelectionRange(newPos, newPos);
+              }
+            } else {
+              const afterMatch = inputValue.substring(symbolStart + 1, cursorPos).match(/^(\S*)/);
+              const queryLength = afterMatch ? afterMatch[1].length : 0;
+              after = inputValue.substring(symbolStart + 1 + queryLength);
+              quickAddInput.value = before + insertText.replace(symbol, '') + ' ' + after;
+              quickAddInput.focus();
+              const newPos = symbolStart + 1 + insertText.replace(symbol, '').length + 1;
+              quickAddInput.setSelectionRange(newPos, newPos);
+            }
           } else {
-            // Replace the mention
-            const before = inputValue.substring(0, mentionStart + 1);
-            const afterMatch = inputValue.substring(mentionStart + 1).match(/^(\w*)\s*/);
-            const after = afterMatch ? inputValue.substring(mentionStart + 1 + afterMatch[0].length) : inputValue.substring(mentionStart + 1);
-            quickAddInput.value = before + (member.first_name || member.username) + ' ' + after;
+            // Date without symbol - insert at cursor
+            const before = inputValue.substring(0, cursorPos);
+            const after = inputValue.substring(cursorPos);
+            quickAddInput.value = before + insertText + ' ' + after;
             quickAddInput.focus();
-            const newPos = mentionStart + 1 + (member.first_name || member.username).length + 1;
+            const newPos = cursorPos + insertText.length + 1;
             quickAddInput.setSelectionRange(newPos, newPos);
           }
           
           hideAutocomplete();
         }
         
-        function filterMembers(query) {
-          if (!query || query.length < 1) {
-            return [];
+        function detectAutocompleteType(textBeforeCursor, cursorPos) {
+          // Check for @ mentions
+          const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+          if (mentionMatch) {
+            return { type: '@', query: mentionMatch[1], start: textBeforeCursor.lastIndexOf('@') };
           }
           
-          const lowerQuery = query.toLowerCase();
-          return familyMembers.filter(member => {
-            return member.search_text.includes(lowerQuery) ||
-                   (member.first_name && member.first_name.toLowerCase().includes(lowerQuery)) ||
-                   (member.username && member.username.toLowerCase().includes(lowerQuery));
-          }).slice(0, 5); // Limit to 5 results
+          // Check for ! priority
+          const priorityMatch = textBeforeCursor.match(/!(\w*)$/);
+          if (priorityMatch) {
+            return { type: '!', query: priorityMatch[1], start: textBeforeCursor.lastIndexOf('!') };
+          }
+          
+          // Check for * recurring
+          const recurringMatch = textBeforeCursor.match(/\*(\w*)$/);
+          if (recurringMatch) {
+            return { type: '*', query: recurringMatch[1], start: textBeforeCursor.lastIndexOf('*') };
+          }
+          
+          // Check for date keywords (word at cursor)
+          const wordMatch = textBeforeCursor.match(/(\S+)$/);
+          if (wordMatch) {
+            const word = wordMatch[1].toLowerCase();
+            // Check if it looks like a date keyword
+            const dateKeywords = ['täna', 'homme', 'esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev', 'pühapäev', 'järgmine'];
+            if (dateKeywords.some(keyword => keyword.startsWith(word) || word.startsWith(keyword))) {
+              return { type: 'date', query: word, start: textBeforeCursor.length - word.length };
+            }
+          }
+          
+          return null;
         }
         
         // Handle input for autocomplete
         quickAddInput.addEventListener('input', function (e) {
           const value = this.value;
           const cursorPos = this.selectionStart;
-          
-          // Find if we're typing after an @
           const textBeforeCursor = value.substring(0, cursorPos);
-          const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
           
-          if (mentionMatch) {
-            const query = mentionMatch[1];
-            const matches = filterMembers(query);
-            showAutocomplete(matches);
+          const autocompleteInfo = detectAutocompleteType(textBeforeCursor, cursorPos);
+          
+          if (autocompleteInfo) {
+            const config = autocompleteOptions[autocompleteInfo.type];
+            const matches = config.filter(autocompleteInfo.query, config.items).slice(0, 8); // Limit to 8 results
+            showAutocomplete(matches, autocompleteInfo.type);
           } else {
             hideAutocomplete();
           }
@@ -1055,10 +1382,10 @@
         
         // Handle keyboard navigation
         quickAddInput.addEventListener('keydown', function (e) {
-          if (autocompleteDropdown.classList.contains('is-visible') && filteredMembers.length > 0) {
+          if (autocompleteDropdown.classList.contains('is-visible') && filteredItems.length > 0) {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
-              selectedIndex = Math.min(selectedIndex + 1, filteredMembers.length - 1);
+              selectedIndex = Math.min(selectedIndex + 1, filteredItems.length - 1);
               updateSelectedItem();
             } else if (e.key === 'ArrowUp') {
               e.preventDefault();
@@ -1066,7 +1393,7 @@
               updateSelectedItem();
             } else if (e.key === 'Enter' && selectedIndex >= 0) {
               e.preventDefault();
-              selectMember(filteredMembers[selectedIndex]);
+              selectItem(filteredItems[selectedIndex], currentAutocompleteType);
             } else if (e.key === 'Escape') {
               hideAutocomplete();
             }
@@ -1085,6 +1412,10 @@
           items.forEach((item, index) => {
             item.classList.toggle('is-selected', index === selectedIndex);
           });
+          // Scroll selected item into view
+          if (selectedIndex >= 0 && items[selectedIndex]) {
+            items[selectedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
         }
         
         // Hide autocomplete when clicking outside
