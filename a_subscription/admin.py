@@ -26,8 +26,30 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(SubscriptionUsage)
 class SubscriptionUsageAdmin(admin.ModelAdmin):
-    list_display = ['family', 'period_start', 'tasks_created', 'rewards_created', 'updated_at']
+    list_display = ['family', 'period_start', 'tasks_created', 'rewards_created', 'recurring_tasks_created', 'recurring_tasks_actual_count', 'updated_at']
     list_filter = ['period_start', 'updated_at']
     search_fields = ['family__name', 'family__owner__username']
-    readonly_fields = ['updated_at']
+    readonly_fields = ['updated_at', 'recurring_tasks_actual_count']
     date_hierarchy = 'period_start'
+    
+    fieldsets = (
+        ('Family', {
+            'fields': ('family',)
+        }),
+        ('Period', {
+            'fields': ('period_start',)
+        }),
+        ('Usage Statistics', {
+            'fields': ('tasks_created', 'rewards_created', 'recurring_tasks_created', 'recurring_tasks_actual_count')
+        }),
+        ('Timestamps', {
+            'fields': ('updated_at',)
+        }),
+    )
+    
+    def recurring_tasks_actual_count(self, obj):
+        """Display the actual count of recurring tasks for this family (read-only)"""
+        from a_tasks.models import TaskRecurrence
+        count = TaskRecurrence.objects.filter(task__family=obj.family).count()
+        return count
+    recurring_tasks_actual_count.short_description = 'Tegelik korduvate ülesannete arv'

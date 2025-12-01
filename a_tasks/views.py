@@ -259,9 +259,10 @@ def index(request):
                 # Check subscription limit before creating
                 can_create, current_count, limit, tier = check_subscription_limit(family, 'tasks', 1)
                 if not can_create:
+                    tier_name = "Tasuta" if tier == "FREE" else "Alustaja" if tier == "STARTER" else "Pro"
                     messages.error(
                         request,
-                        f"Oled jõudnud oma kuise ülesandepiirini ({limit} ülesannet). "
+                        f"Oled jõudnud oma kuise ülesandepiirini ({limit} ülesannet {tier_name} paketis). "
                         f"Oled sel kuul loonud {current_count} ülesannet. "
                         f"Palun uuenda tellimust, et luua rohkem ülesandeid."
                     )
@@ -739,6 +740,26 @@ def index(request):
     # Convert to JSON string for template
     family_members_json = mark_safe(json.dumps(family_members_data))
     
+    # Get subscription limits for frontend validation
+    task_limit_info = None
+    recurring_limit_info = None
+    if family:
+        can_create_task, current_task_count, task_limit, task_tier = check_subscription_limit(family, 'tasks', 1)
+        task_limit_info = {
+            'can_create': can_create_task,
+            'current': current_task_count,
+            'limit': task_limit,
+            'tier': task_tier,
+        }
+        
+        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+        recurring_limit_info = {
+            'can_create': can_create_recurring,
+            'current': current_recurring_count,
+            'limit': recurring_limit,
+            'tier': recurring_tier,
+        }
+    
     context = {
         "family": family,
         "role": role,
@@ -750,6 +771,10 @@ def index(request):
         "active_tasks": active_tasks,
         "pending_tasks": pending_tasks,
         "approved_tasks": approved_tasks,
+        "task_limit_info": task_limit_info,
+        "recurring_limit_info": recurring_limit_info,
+        "task_limit_info_json": mark_safe(json.dumps(task_limit_info)) if task_limit_info else None,
+        "recurring_limit_info_json": mark_safe(json.dumps(recurring_limit_info)) if recurring_limit_info else None,
     }
     return render(request, "a_tasks/index.html", context)
 

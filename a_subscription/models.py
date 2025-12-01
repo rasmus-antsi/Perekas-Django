@@ -77,6 +77,7 @@ class SubscriptionUsage(models.Model):
     period_start = models.DateTimeField(db_index=True)  # Start of the subscription period
     tasks_created = models.PositiveIntegerField(default=0)
     rewards_created = models.PositiveIntegerField(default=0)
+    recurring_tasks_created = models.PositiveIntegerField(default=0, help_text='Korduvate ülesannete arv (testimiseks muudetav)')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

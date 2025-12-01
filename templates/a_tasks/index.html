@@ -5,6 +5,24 @@
 {% block nav_tasks_active %} active{% endblock %}
 
 {% block content %}
+  {% if task_limit_info and not task_limit_info.can_create %}
+    <div class="messages-container" id="task-limit-message-container">
+      <div class="message-toast message-toast-error" id="task-limit-message" role="alert">
+        <div class="message-toast-content">
+          <span class="message-toast-text">
+            <strong>Ülesandepiir saavutatud:</strong> Oled sel kuul loonud {{ task_limit_info.current }}/{{ task_limit_info.limit }} ülesannet. 
+            <a href="{% url 'a_account:subscriptions' %}" style="color: currentColor; text-decoration: underline; font-weight: 600;">Uuenda tellimust</a>, et luua rohkem ülesandeid.
+          </span>
+        </div>
+        <button type="button" class="message-toast-dismiss" aria-label="Sulge" onclick="dismissLimitMessage(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  {% endif %}
   <div class="page-container">
     <header class="page-header">
       <div>
@@ -36,9 +54,10 @@
                 name="task_text"
                 type="text"
                 placeholder="Kirjuta ülesanne... (nt. 'Võta prügi välja @Emma homme !kõrge')"
-                {% if not has_family %}disabled{% endif %}
+                {% if not has_family or task_limit_info and not task_limit_info.can_create %}disabled{% endif %}
                 required
                 autocomplete="off"
+                data-task-limit-reached="{% if task_limit_info and not task_limit_info.can_create %}true{% else %}false{% endif %}"
               >
               <button type="button" class="task-help-button" id="task-help-button" aria-label="Näita abi">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -50,7 +69,7 @@
             </div>
             <div class="autocomplete-dropdown" id="autocomplete-dropdown" role="listbox" aria-label="Laste nimed"></div>
           </div>
-          <button type="submit" class="primary-button" {% if not has_family %}disabled{% endif %}>
+          <button type="submit" class="primary-button" {% if not has_family or task_limit_info and not task_limit_info.can_create %}disabled{% endif %}>
             <span aria-hidden="true">+</span>
             <span>Lisa</span>
           </button>
@@ -782,6 +801,9 @@
         submitIcon.dataset.createIcon = '+';
         submitIcon.dataset.editIcon = '✔';
 
+        // Store whether task has existing recurrence (for limit checking)
+        let taskHasExistingRecurrence = false;
+        
         function openModal(mode, data = {}) {
           modal.classList.add('is-visible');
           document.body.classList.add('modal-open');
@@ -802,6 +824,8 @@
             submitLabel.textContent = 'Salvesta ülesanne';
             submitIcon.textContent = submitIcon.dataset.createIcon || '+';
             assignedSelect.value = '';
+            taskHasExistingRecurrence = false;
+            updateRecurringLimitCheck();
           } else {
             actionInput.value = 'update';
             idInput.value = data.id || '';
@@ -826,8 +850,79 @@
             recurringDayOfWeekSelect.value = data.recurringDayOfWeek || '';
             recurringDayOfMonthInput.value = data.recurringDayOfMonth || '';
             updateRecurringFieldsVisibility();
+            
+            // Check if task already has recurrence
+            taskHasExistingRecurrence = data.recurringFrequency && data.recurringFrequency !== '';
+            updateRecurringLimitCheck();
           }
         }
+        
+        // Update recurring limit check (called from openModal and when recurring frequency changes)
+        function updateRecurringLimitCheck() {
+          const recurringLimitInfo = {% if recurring_limit_info_json %}{{ recurring_limit_info_json|safe }}{% else %}null{% endif %};
+          const currentValue = recurringFrequencySelect.value;
+          
+          // If limit reached and task doesn't have existing recurrence, disable non-empty options
+          if (recurringLimitInfo && !recurringLimitInfo.can_create && !taskHasExistingRecurrence) {
+            // Disable all frequency options except "Ei kordu" (empty value)
+            Array.from(recurringFrequencySelect.options).forEach(option => {
+              option.disabled = option.value !== '';
+            });
+            // If current value is a frequency (not empty), reset to empty
+            if (currentValue !== '') {
+              recurringFrequencySelect.value = '';
+              updateRecurringFieldsVisibility();
+            }
+            showRecurringLimitMessage(recurringLimitInfo);
+          } else {
+            // Re-enable all options
+            Array.from(recurringFrequencySelect.options).forEach(option => {
+              option.disabled = false;
+            });
+            hideRecurringLimitMessage();
+          }
+        }
+        
+        // Show recurring limit message in modal
+        function showRecurringLimitMessage(limitInfo) {
+          let limitMsg = document.getElementById('recurring-limit-message');
+          if (!limitMsg) {
+            limitMsg = document.createElement('p');
+            limitMsg.id = 'recurring-limit-message';
+            limitMsg.className = 'recurring-limit-message';
+            limitMsg.style.cssText = 'margin-top: 0.5rem; padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; color: #fca5a5; font-size: 0.875rem; line-height: 1.5;';
+            const recurringSection = document.querySelector('.task-modal-recurring');
+            if (recurringSection) {
+              recurringSection.appendChild(limitMsg);
+            }
+          }
+          const tierName = limitInfo.tier === 'FREE' ? 'Tasuta' : limitInfo.tier === 'STARTER' ? 'Alustaja' : 'Pro';
+          limitMsg.innerHTML = `<strong>Korduvate ülesannete piir saavutatud:</strong> Oled jõudnud oma limiidini (${limitInfo.current}/${limitInfo.limit} ${tierName} paketis). <a href="{% url 'a_account:subscriptions' %}" style="color: currentColor; text-decoration: underline; font-weight: 600;">Uuenda tellimust</a>, et luua rohkem korduvaid ülesandeid.`;
+          limitMsg.style.display = 'block';
+        }
+        
+        function hideRecurringLimitMessage() {
+          const limitMsg = document.getElementById('recurring-limit-message');
+          if (limitMsg) {
+            limitMsg.style.display = 'none';
+          }
+        }
+        
+        // Also check limit when recurring frequency changes
+        recurringFrequencySelect.addEventListener('change', function() {
+          // If user tries to select a frequency when limit is reached and task doesn't have existing recurrence, prevent it
+          if (!taskHasExistingRecurrence && this.value !== '') {
+            const recurringLimitInfo = {% if recurring_limit_info_json %}{{ recurring_limit_info_json|safe }}{% else %}null{% endif %};
+            if (recurringLimitInfo && !recurringLimitInfo.can_create) {
+              // Reset to empty and show message
+              this.value = '';
+              updateRecurringFieldsVisibility();
+              updateRecurringLimitCheck();
+              return;
+            }
+          }
+          updateRecurringFieldsVisibility();
+        });
         
         const recurringNote = document.getElementById('recurring-note');
         const recurringNoteText = document.getElementById('recurring-note-text');
@@ -1172,6 +1267,10 @@
         // Family members data for autocomplete
         const familyMembers = {{ family_members_data|default:"[]" }};
         
+        // Limit information from backend
+        const taskLimitInfo = {% if task_limit_info_json %}{{ task_limit_info_json|safe }}{% else %}null{% endif %};
+        const recurringLimitInfo = {% if recurring_limit_info_json %}{{ recurring_limit_info_json|safe }}{% else %}null{% endif %};
+        
         // Autocomplete options for different symbols
         const autocompleteOptions = {
           '@': {
@@ -1268,6 +1367,23 @@
         
         // Autocomplete functionality
         function showAutocomplete(matches, autocompleteType) {
+          // Check if recurring limit is reached when showing recurring options
+          if (autocompleteType === '*' && recurringLimitInfo && !recurringLimitInfo.can_create) {
+            const tierName = recurringLimitInfo.tier === 'FREE' ? 'Tasuta' : recurringLimitInfo.tier === 'STARTER' ? 'Alustaja' : 'Pro';
+            const subscriptionsUrl = "{% url 'a_account:subscriptions' %}";
+            autocompleteDropdown.innerHTML = `
+              <div class="autocomplete-item autocomplete-limit-message" role="option" style="padding: 1rem; color: #fca5a5; border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Korduvate ülesannete piir saavutatud</div>
+                <div style="font-size: 0.875rem; opacity: 0.9;">
+                  Oled jõudnud oma limiidini (${recurringLimitInfo.current}/${recurringLimitInfo.limit} ${tierName} paketis).
+                  <a href="${subscriptionsUrl}" style="color: #fca5a5; text-decoration: underline; display: inline-block; margin-top: 0.5rem;">Uuenda tellimust</a>, et luua rohkem korduvaid ülesandeid.
+                </div>
+              </div>
+            `;
+            autocompleteDropdown.classList.add('is-visible');
+            return;
+          }
+          
           if (!matches || matches.length === 0) {
             autocompleteDropdown.innerHTML = '';
             autocompleteDropdown.classList.remove('is-visible');
@@ -1290,7 +1406,13 @@
           
           // Add click handlers
           autocompleteDropdown.querySelectorAll('.autocomplete-item').forEach((item, index) => {
-            item.addEventListener('click', () => selectItem(matches[index], autocompleteType));
+            item.addEventListener('click', () => {
+              // Don't allow selection if recurring limit is reached
+              if (autocompleteType === '*' && recurringLimitInfo && !recurringLimitInfo.can_create) {
+                return;
+              }
+              selectItem(matches[index], autocompleteType);
+            });
             item.addEventListener('mousedown', (e) => e.preventDefault()); // Prevent input blur
           });
         }
@@ -1505,6 +1627,21 @@
           }, 100);
         });
       });
+      
+      // Dismiss limit message (does not auto-dismiss)
+      function dismissLimitMessage(button) {
+        const message = button.closest('.message-toast');
+        const container = button.closest('.messages-container');
+        message.style.opacity = '0';
+        message.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+          message.remove();
+          // If container is empty, remove it
+          if (container && container.children.length === 0) {
+            container.remove();
+          }
+        }, 200);
+      }
     </script>
   {% endif %}
 {% endblock %}
