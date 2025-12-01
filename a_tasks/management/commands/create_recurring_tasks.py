@@ -71,13 +71,14 @@ class Command(BaseCommand):
                         f"would update recurrence next_occurrence"
                     )
                 else:
-                    # Update recurrence next_occurrence
-                    if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
-                        recurrence.next_occurrence = timezone.now() + timedelta(days=1)
-                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
-                        recurrence.next_occurrence = timezone.now() + timedelta(days=7)
-                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
-                        recurrence.next_occurrence = timezone.now() + timedelta(days=30)
+                    # Update recurrence next_occurrence using utility function
+                    from a_tasks.recurrence_utils import calculate_next_occurrence
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        new_due_date, recurrence.frequency, recurrence.interval,
+                        day_of_week=recurrence.day_of_week,
+                        day_of_month=recurrence.day_of_month
+                    )
+                    recurrence.next_occurrence = next_occurrence
                     recurrence.save()
                 continue
             
@@ -110,13 +111,14 @@ class Command(BaseCommand):
                 new_task.save()
                 created_count += 1
                 
-                # Update recurrence next_occurrence
-                if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
-                    recurrence.next_occurrence = timezone.now() + timedelta(days=1)
-                elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
-                    recurrence.next_occurrence = timezone.now() + timedelta(days=7)
-                elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
-                    recurrence.next_occurrence = timezone.now() + timedelta(days=30)
+                # Update recurrence next_occurrence using utility function
+                from a_tasks.recurrence_utils import calculate_next_occurrence
+                next_due_date, next_occurrence = calculate_next_occurrence(
+                    new_due_date, recurrence.frequency, recurrence.interval,
+                    day_of_week=recurrence.day_of_week,
+                    day_of_month=recurrence.day_of_month
+                )
+                recurrence.next_occurrence = next_occurrence
                 
                 # Create a new recurrence for the new task
                 TaskRecurrence.objects.create(

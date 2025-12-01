@@ -98,7 +98,33 @@
         </div>
         <div class="hero-visual scroll-scale">
           <div class="hero-visual-glow" aria-hidden="true"></div>
-          <div class="hero-dashboard-preview">
+          <div class="hero-task-demo-card">
+            <!-- Animated Task Input -->
+            <div class="hero-task-input-wrapper">
+              <div class="hero-task-input-card">
+                <input 
+                  type="text" 
+                  id="hero-task-input" 
+                  class="hero-task-input" 
+                  placeholder="Kirjuta ülesanne..."
+                  readonly
+                  aria-label="Näidis ülesande sisestus"
+                >
+                <button type="button" class="hero-task-submit" id="hero-task-submit" aria-label="Lisa ülesanne">
+                  <span aria-hidden="true">+</span>
+                  <span>Lisa</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Animated Task Cards -->
+            <div class="hero-task-cards-container">
+              <div class="hero-task-cards-wrapper" id="hero-task-cards-wrapper">
+                <!-- Task cards will be dynamically added here -->
+              </div>
+            </div>
+          </div>
+          <div class="hero-dashboard-preview" style="display: none;">
             <div class="hero-dashboard-header">
               <div class="hero-dashboard-title">
                 <div class="hero-dashboard-icon-wrapper">
@@ -551,6 +577,202 @@
           }
         });
       }
+
+      // Hero Task Animation
+      (function() {
+        const heroInput = document.getElementById('hero-task-input');
+        const heroSubmit = document.getElementById('hero-task-submit');
+        const heroCardsWrapper = document.getElementById('hero-task-cards-wrapper');
+        
+        if (!heroInput || !heroSubmit || !heroCardsWrapper) return;
+        
+        // Example tasks to type
+        const exampleTasks = [
+          "Vii prügi välja @Emma homme !kõrge",
+          "Koristus *igapäevaselt +30",
+          "Kodutöö @Tom reedel *nädalaselt !kõrge +100",
+          "Toida koera @kõik +25"
+        ];
+        
+        // Task data for cards
+        const taskData = [
+          { name: "Vii prügi välja", assigned: "Emma", points: 50, priority: 2, dueDate: "homme" },
+          { name: "Koristus", assigned: "Kõigile", points: 30, priority: 1, recurring: true },
+          { name: "Kodutöö", assigned: "Tom", points: 100, priority: 2, recurring: true },
+          { name: "Toida koera", assigned: "Kõigile", points: 25, priority: 0 }
+        ];
+        
+        let currentTaskIndex = 0;
+        let isTyping = false;
+        let currentCards = [];
+        
+        function createTaskCard(task, isFaded = false) {
+          const card = document.createElement('article');
+          const priorityClass = task.priority === 2 ? 'priority-2' : task.priority === 0 ? 'priority-0' : 'priority-1';
+          card.className = `task-card ${priorityClass} ${isFaded ? 'faded' : ''}`;
+          
+          const priorityText = task.priority === 2 ? 'Kõrge' : task.priority === 0 ? 'Madal' : 'Keskmine';
+          
+          card.innerHTML = `
+            <div class="task-card-header">
+              <div>
+                <h3 class="task-name">
+                  ${task.recurring ? '<svg class="task-status-icon recurring-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>' : ''}
+                  ${task.name}
+                </h3>
+                <p class="task-assigned">Määratud: ${task.assigned}</p>
+              </div>
+              <span class="task-points points-chip">
+                <span class="points-value">${task.points}</span>
+                <span class="points-label">pkt</span>
+              </span>
+            </div>
+            <div class="task-meta">
+              <div class="task-meta-item">
+                <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                </svg>
+                <span class="task-meta-label">${priorityText}</span>
+              </div>
+              ${task.dueDate ? `
+              <div class="task-meta-item">
+                <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span class="task-meta-label">${task.dueDate}</span>
+              </div>
+              ` : ''}
+            </div>
+          `;
+          
+          return card;
+        }
+        
+        function typeText(text, callback) {
+          if (isTyping) return;
+          isTyping = true;
+          heroInput.value = '';
+          heroSubmit.classList.remove('active');
+          
+          let charIndex = 0;
+          const typingInterval = setInterval(() => {
+            if (charIndex < text.length) {
+              heroInput.value = text.substring(0, charIndex + 1);
+              charIndex++;
+              // Scroll to end to show the latest typed text
+              heroInput.scrollLeft = heroInput.scrollWidth;
+            } else {
+              clearInterval(typingInterval);
+              // Ensure input scrolls to show the end
+              setTimeout(() => {
+                heroInput.scrollLeft = heroInput.scrollWidth;
+              }, 10);
+              // Show button animation - quick tap effect
+              setTimeout(() => {
+                // Quick tap down
+                heroSubmit.classList.add('active');
+                setTimeout(() => {
+                  // Quick tap up with glow
+                  heroSubmit.classList.remove('active');
+                  heroSubmit.classList.add('clicked');
+                  // Remove clicked state quickly for next cycle
+                  setTimeout(() => {
+                    heroSubmit.classList.remove('clicked');
+                  }, 150);
+                }, 80); // Very quick tap - only 80ms pressed
+                
+                // First, animate existing cards moving down
+                currentCards.forEach((card, index) => {
+                  if (index === 0) {
+                    // First card (top) moves down and becomes faded
+                    card.classList.add('moving-down');
+                    setTimeout(() => {
+                      card.classList.add('faded');
+                      card.classList.remove('moving-down');
+                    }, 50);
+                  } else if (index === 1) {
+                    // Second card moves down (becomes half-visible at bottom)
+                    card.classList.add('moving-down');
+                  } else if (index >= 2) {
+                    // Remove any extra cards
+                    card.classList.add('fading-out');
+                    setTimeout(() => {
+                      if (card.parentNode) {
+                        card.remove();
+                      }
+                    }, 500);
+                  }
+                });
+                
+                // Wait a bit for cards to start moving, then add new card
+                setTimeout(() => {
+                  // Add new task card at the top
+                  const newTask = taskData[currentTaskIndex];
+                  const newCard = createTaskCard(newTask, false);
+                  
+                  // Insert at the beginning (top of stack)
+                  heroCardsWrapper.insertBefore(newCard, heroCardsWrapper.firstChild);
+                  
+                  // Add to beginning of array
+                  currentCards.unshift(newCard);
+                  
+                  // Keep only 2 cards visible (one full, one half-visible at bottom)
+                  if (currentCards.length > 2) {
+                    const oldCard = currentCards.pop();
+                    if (oldCard && !oldCard.classList.contains('fading-out')) {
+                      oldCard.classList.add('fading-out');
+                      setTimeout(() => {
+                        if (oldCard.parentNode) {
+                          oldCard.remove();
+                        }
+                      }, 500);
+                    }
+                  }
+                  
+                  // Force reflow to ensure initial state is applied
+                  void newCard.offsetHeight;
+                  
+                  // Smooth fade in the new card at the top position
+                  setTimeout(() => {
+                    newCard.classList.add('visible');
+                  }, 50);
+                  
+                  // Ensure the last card (bottom) is positioned correctly for half-visibility
+                  if (currentCards.length >= 2) {
+                    const bottomCard = currentCards[currentCards.length - 1];
+                    if (bottomCard && !bottomCard.classList.contains('visible')) {
+                      bottomCard.style.position = 'absolute';
+                      bottomCard.style.bottom = '0';
+                      bottomCard.style.left = '0';
+                      bottomCard.style.right = '0';
+                      bottomCard.style.clipPath = 'inset(0 0 50% 0)';
+                    }
+                  }
+                }, 100);
+                
+                // Reset for next cycle
+                setTimeout(() => {
+                  heroInput.value = '';
+                  heroSubmit.classList.remove('clicked');
+                  isTyping = false;
+                  currentTaskIndex = (currentTaskIndex + 1) % exampleTasks.length;
+                  setTimeout(() => {
+                    typeText(exampleTasks[currentTaskIndex]);
+                  }, 1000);
+                }, 500);
+              }, 500);
+            }
+          }, 50); // Typing speed
+        }
+        
+        // Start animation after a delay
+        setTimeout(() => {
+          typeText(exampleTasks[0]);
+        }, 1500);
+      })();
     </script>
   </body>
 </html>

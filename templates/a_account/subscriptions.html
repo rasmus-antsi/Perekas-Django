@@ -141,7 +141,7 @@
           <div class="subscription-highlight">
             <h2 style="margin: 0 0 0.5rem 0;">{{ subscription_data.display_tier|default:'Tasuta' }} pakett</h2>
             {% if subscription_data.subscription and subscription_data.subscription.current_period_end %}
-              <p style="margin: 0;">Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"j.m.Y" }}</p>
+              <p style="margin: 0;">Järgmine arveldus: {{ subscription_data.subscription.current_period_end|date:"d.m.Y" }}</p>
             {% else %}
               <p style="margin: 0;">Alusta tasulist paketti, et avada rohkem võimalusi.</p>
             {% endif %}

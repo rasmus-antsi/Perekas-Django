@@ -366,19 +366,25 @@ def delete_family(request):
     
     family_name = family.name
     
-    # Remove all members from the family first
-    # This ensures members keep their accounts but are no longer associated with the family
+    delete_children_choice = request.POST.get('delete_children', 'delete')
+    if delete_children_choice not in ('delete', 'keep'):
+        delete_children_choice = 'delete'
+
+    child_accounts = list(family.members.filter(role=User.ROLE_CHILD))
+    if delete_children_choice == 'delete':
+        for child in child_accounts:
+            try:
+                from allauth.account.models import EmailAddress
+                EmailAddress.objects.filter(user=child).delete()
+            except Exception:
+                pass
+            child.delete()
+    else:
+        for child in child_accounts:
+            family.members.remove(child)
+
+    # Remove remaining members from the family to break associations
     family.members.clear()
-    
-    # Delete subscriptions associated with the family owner
-    # Members keep their accounts, so their subscriptions stay if any
-    try:
-        from a_subscription.models import Subscription
-        subscriptions = Subscription.objects.filter(owner=user)
-        for subscription in subscriptions:
-            subscription.delete()
-    except Exception:
-        pass
     
     # Note: Tasks have CASCADE delete on family FK (family=models.ForeignKey(Family, on_delete=models.CASCADE))
     # So they'll be deleted automatically when the family is deleted
