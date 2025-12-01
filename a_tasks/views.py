@@ -1,15 +1,23 @@
 import itertools
+import json
+import os
+import re
+from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from a_family.models import Family, User
 from a_family.emails import send_task_completed_notification, send_task_approved_notification
-from a_subscription.utils import check_subscription_limit, increment_usage
+from a_subscription.utils import check_subscription_limit, increment_usage, check_recurring_task_limit
 
 from .models import Task
 
@@ -29,6 +37,165 @@ def _ensure_user_role(user, default_role=User.ROLE_CHILD):
         user.role = default_role
         user.save(update_fields=['role'])
     return user
+
+
+def _parse_task_text(text, family):
+    """
+    Parse natural language task text to extract task details.
+    
+    Patterns:
+    - @name or @username - Assign to family member
+    - !low, !medium, !high - Set priority
+    - +50 or +points - Set points value
+    - *daily, *weekly, *monthly - Set recurring frequency
+    - Date keywords: today, tomorrow, next week, Monday, etc.
+    - Date format: ^25.12.2024 (pp.kk.aaaa) for specific dates
+    
+    Returns dict with: name, assigned_to_id, priority, points, due_date, recurring
+    """
+    if not text or not text.strip():
+        return None
+    
+    text = text.strip()
+    parsed = {
+        'name': '',
+        'assigned_to_id': None,
+        'priority': Task.PRIORITY_MEDIUM,  # Default to medium
+        'points': 25,  # Default points
+        'due_date': None,
+        'recurring': None,
+    }
+    
+    # Extract @mentions (assignment)
+    mention_pattern = r'@(\w+)'
+    mentions = re.findall(mention_pattern, text, re.IGNORECASE)
+    if mentions:
+        mention_name = mentions[0].lower()
+        # Try to find family member by display name or username
+        family_members = list(family.members.all())
+        if family.owner:
+            family_members.append(family.owner)
+        
+        # Handle "everyone" special case
+        if mention_name == 'everyone' or mention_name == 'kõik':
+            parsed['assigned_to_id'] = None  # None means open task
+        else:
+            # Try to find family member by display name or username
+            for member in family_members:
+                display_name = member.get_display_name().lower()
+                username = (member.username or '').lower()
+                first_name = (member.first_name or '').lower()
+                
+                if (mention_name in display_name or 
+                    mention_name == username or 
+                    mention_name == first_name):
+                    parsed['assigned_to_id'] = member.id
+                    break
+        
+        # Remove @mentions from text
+        text = re.sub(mention_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract priority (!low, !medium, !high)
+    priority_pattern = r'!(low|medium|high|madal|keskmine|kõrge)'
+    priority_match = re.search(priority_pattern, text, re.IGNORECASE)
+    if priority_match:
+        priority_str = priority_match.group(1).lower()
+        if priority_str in ['high', 'kõrge']:
+            parsed['priority'] = Task.PRIORITY_HIGH
+        elif priority_str in ['low', 'madal']:
+            parsed['priority'] = Task.PRIORITY_LOW
+        else:
+            parsed['priority'] = Task.PRIORITY_MEDIUM
+        
+        text = re.sub(priority_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract points (+50, +points)
+    points_pattern = r'\+(\d+)'
+    points_match = re.search(points_pattern, text)
+    if points_match:
+        parsed['points'] = int(points_match.group(1))
+        text = re.sub(points_pattern, '', text).strip()
+    
+    # Extract recurring (*daily, *business_daily, *every_other_day, *weekly, *monthly)
+    recurring_pattern = r'\*(daily|business_daily|every_other_day|weekly|monthly|päevaselt|tööpäevaselt|iga_teine_päev|nädalaselt|kuus)'
+    recurring_match = re.search(recurring_pattern, text, re.IGNORECASE)
+    if recurring_match:
+        recurring_str = recurring_match.group(1).lower()
+        if recurring_str in ['daily', 'päevaselt']:
+            parsed['recurring'] = 'daily'
+        elif recurring_str in ['business_daily', 'tööpäevaselt']:
+            parsed['recurring'] = 'business_daily'
+        elif recurring_str in ['every_other_day', 'iga_teine_päev']:
+            parsed['recurring'] = 'every_other_day'
+        elif recurring_str in ['weekly', 'nädalaselt']:
+            parsed['recurring'] = 'weekly'
+        elif recurring_str in ['monthly', 'kuus']:
+            parsed['recurring'] = 'monthly'
+        
+        text = re.sub(recurring_pattern, '', text, flags=re.IGNORECASE).strip()
+    
+    # Extract dates
+    today = timezone.localdate()
+    now = timezone.now()
+    
+    # Specific date format: ^25.12.2024 (Estonian format pp.kk.aaaa)
+    date_format_pattern = r'\^(\d{1,2}\.\d{1,2}\.\d{4})'
+    date_format_match = re.search(date_format_pattern, text)
+    if date_format_match:
+        try:
+            date_str = date_format_match.group(1)
+            # Parse Estonian format (dd.mm.yyyy) to date object
+            from datetime import datetime
+            date_obj = datetime.strptime(date_str, '%d.%m.%Y').date()
+            parsed['due_date'] = date_obj
+            text = re.sub(date_format_pattern, '', text).strip()
+        except (ValueError, TypeError):
+            pass
+    
+    # Date keywords (case-insensitive)
+    date_keywords = {
+        'today': today,
+        'täna': today,
+        'tomorrow': today + timedelta(days=1),
+        'homme': today + timedelta(days=1),
+        'next week': today + timedelta(days=7),
+        'järgmine nädal': today + timedelta(days=7),
+        'next month': today + timedelta(days=30),
+        'järgmine kuu': today + timedelta(days=30),
+    }
+    
+    # Weekday names (Estonian and English)
+    # Monday=0, Tuesday=1, ..., Sunday=6
+    weekdays_est = ['esmaspäev', 'teisipäev', 'kolmapäev', 'neljapäev', 'reede', 'laupäev', 'pühapäev']
+    weekdays_en = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    weekdays_est_short = ['esmasp', 'teisip', 'kolmap', 'neljap', 'reede', 'laup', 'pühap']
+    
+    for keyword, date_value in date_keywords.items():
+        if keyword.lower() in text.lower():
+            parsed['due_date'] = date_value
+            # Remove keyword from text (case-insensitive)
+            text = re.sub(re.escape(keyword), '', text, flags=re.IGNORECASE).strip()
+            break
+    
+    # Check for weekday names
+    text_lower = text.lower()
+    all_weekdays = weekdays_est + weekdays_en + weekdays_est_short
+    for i, weekday in enumerate(all_weekdays):
+        if weekday in text_lower:
+            # Find next occurrence of this weekday
+            # Map to 0-6 (Monday-Sunday)
+            weekday_index = i % 7
+            days_ahead = weekday_index - today.weekday()
+            if days_ahead <= 0:  # Target day already happened this week
+                days_ahead += 7
+            parsed['due_date'] = today + timedelta(days=days_ahead)
+            text = re.sub(weekday, '', text, flags=re.IGNORECASE).strip()
+            break
+    
+    # Clean up text: remove extra spaces, trim
+    parsed['name'] = ' '.join(text.split())
+    
+    return parsed
 
 
 @login_required
@@ -60,34 +227,60 @@ def index(request):
             return Task.objects.filter(family=family, id=task_id).select_related("assigned_to").first()
 
         if action == "create" and is_parent:
+            # Check if this is a quick add (task_text) or modal form (name)
+            task_text = request.POST.get("task_text", "").strip()
             name = request.POST.get("name", "").strip()
-            description = request.POST.get("description", "").strip()
-            assigned_id = request.POST.get("assigned_to")
-            due = parse_date(request.POST.get("due_date") or "")
-            priority = request.POST.get("priority")
-            points_raw = request.POST.get("points", "0")
+            
+            # Quick add form uses task_text, modal form uses name
+            if task_text:
+                # Parse natural language
+                parsed = _parse_task_text(task_text, family)
+                if not parsed or not parsed['name']:
+                    messages.error(request, "Palun sisesta ülesande nimi.")
+                    return redirect("a_tasks:index")
+                
+                name = parsed['name']
+                description = ""
+                assigned_id = parsed['assigned_to_id']
+                due = parsed['due_date']
+                priority = parsed['priority']
+                points_value = parsed['points']
+                recurring = parsed['recurring']
+            else:
+                # Modal form (backward compatibility)
+                description = request.POST.get("description", "").strip()
+                assigned_id = request.POST.get("assigned_to")
+                due = parse_date(request.POST.get("due_date") or "")
+                priority = request.POST.get("priority")
+                points_raw = request.POST.get("points", "0")
+                recurring = request.POST.get("recurring_frequency", "").strip() or None
 
             if name:
                 # Check subscription limit before creating
                 can_create, current_count, limit, tier = check_subscription_limit(family, 'tasks', 1)
                 if not can_create:
+                    tier_name = "Tasuta" if tier == "FREE" else "Alustaja" if tier == "STARTER" else "Pro"
                     messages.error(
                         request,
-                        f"Oled jõudnud oma kuise ülesandepiirini ({limit} ülesannet). "
+                        f"Oled jõudnud oma kuise ülesandepiirini ({limit} ülesannet {tier_name} paketis). "
                         f"Oled sel kuul loonud {current_count} ülesannet. "
                         f"Palun uuenda tellimust, et luua rohkem ülesandeid."
                     )
                     return redirect("a_tasks:index")
 
-                try:
-                    priority_value = int(priority)
-                except (TypeError, ValueError):
-                    priority_value = Task.PRIORITY_LOW
+                if not task_text:  # Only parse if from modal form
+                    try:
+                        priority_value = int(priority)
+                    except (TypeError, ValueError):
+                        priority_value = Task.PRIORITY_LOW
 
-                try:
-                    points_value = max(0, int(points_raw))
-                except (TypeError, ValueError):
-                    points_value = 0
+                    try:
+                        points_value = max(0, int(points_raw))
+                    except (TypeError, ValueError):
+                        points_value = 0
+                else:
+                    priority_value = priority
+                    # points_value already set from parsed dict
 
                 assigned_user = None
                 if assigned_id:
@@ -95,7 +288,7 @@ def index(request):
                     if not assigned_user and str(family.owner_id) == str(assigned_id):
                         assigned_user = family.owner
 
-                Task.objects.create(
+                task = Task.objects.create(
                     name=name,
                     description=description,
                     family=family,
@@ -105,6 +298,57 @@ def index(request):
                     priority=priority_value,
                     points=points_value,
                 )
+                
+                # Handle recurring tasks (from quick add or modal)
+                recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
+                if recurring_frequency:
+                    # Check recurring task limit
+                    can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                    if not can_create_recurring:
+                        tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                        messages.error(
+                            request,
+                            f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                            f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                        )
+                        task.delete()  # Delete the task since we can't create the recurrence
+                        return redirect("a_tasks:index")
+                    
+                    from .models import TaskRecurrence
+                    from .recurrence_utils import calculate_next_occurrence
+                    
+                    recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                    recurring_end_date = None
+                    if recurring_end_date_str:
+                        try:
+                            recurring_end_date = parse_date(recurring_end_date_str)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # Get day_of_week and day_of_month if provided
+                    recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                    recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                    
+                    # day_of_month is now a number input (1-31)
+                    recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                    recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                    
+                    # Calculate next occurrence based on due_date or selected day
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        task.due_date, recurring_frequency, 
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month
+                    )
+                    
+                    TaskRecurrence.objects.create(
+                        task=task,
+                        frequency=recurring_frequency,
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month,
+                        end_date=recurring_end_date,
+                        next_occurrence=next_occurrence,
+                    )
+                
                 # Increment usage counter
                 increment_usage(family, 'tasks', 1)
 
@@ -152,6 +396,73 @@ def index(request):
                 if assignment_changed:
                     update_fields.append("started_at")
                 task.save(update_fields=update_fields)
+                
+                # Handle recurring tasks
+                from .models import TaskRecurrence
+                recurring_frequency = request.POST.get("recurring_frequency", "").strip()
+                recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                
+                # Get or delete existing recurrence
+                existing_recurrence = TaskRecurrence.objects.filter(task=task).first()
+                
+                if recurring_frequency:
+                    # Check recurring task limit (only if creating new, not updating existing)
+                    if not existing_recurrence:
+                        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                        if not can_create_recurring:
+                            tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                            messages.error(
+                                request,
+                                f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                            )
+                            return redirect("a_tasks:index")
+                    
+                    # Create or update recurrence
+                    from .recurrence_utils import calculate_next_occurrence
+                    
+                    recurring_end_date = None
+                    if recurring_end_date_str:
+                        try:
+                            recurring_end_date = parse_date(recurring_end_date_str)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # Get day_of_week and day_of_month if provided
+                    recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                    recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                    
+                    # day_of_month is now a number input (1-31)
+                    recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                    recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                    
+                    # Calculate next_occurrence based on due_date or selected day
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        task.due_date, recurring_frequency,
+                        day_of_week=recurring_day_of_week,
+                        day_of_month=recurring_day_of_month
+                    )
+                    
+                    if existing_recurrence:
+                        existing_recurrence.frequency = recurring_frequency
+                        existing_recurrence.day_of_week = recurring_day_of_week
+                        existing_recurrence.day_of_month = recurring_day_of_month
+                        existing_recurrence.end_date = recurring_end_date
+                        existing_recurrence.next_occurrence = next_occurrence
+                        existing_recurrence.save()
+                    else:
+                        TaskRecurrence.objects.create(
+                            task=task,
+                            frequency=recurring_frequency,
+                            day_of_week=recurring_day_of_week,
+                            day_of_month=recurring_day_of_month,
+                            end_date=recurring_end_date,
+                            next_occurrence=next_occurrence,
+                        )
+                else:
+                    # Remove recurrence if it exists
+                    if existing_recurrence:
+                        existing_recurrence.delete()
 
                 if task.approved:
                     if previous_assigned:
@@ -169,6 +480,48 @@ def index(request):
         elif action == "delete" and is_parent:
             task = _get_task()
             if task:
+                # Check if task has recurrence
+                from .models import TaskRecurrence
+                recurrence = TaskRecurrence.objects.filter(task=task).first()
+                
+                if recurrence:
+                    # For recurring tasks, preserve the recurrence by creating the next occurrence
+                    # This allows the recurrence to continue creating new tasks
+                    from .recurrence_utils import calculate_next_occurrence
+                    
+                    # Calculate next occurrence
+                    base_due_date = task.due_date if task.due_date else timezone.now().date()
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        base_due_date, recurrence.frequency, recurrence.interval,
+                        day_of_week=recurrence.day_of_week,
+                        day_of_month=recurrence.day_of_month
+                    )
+                    
+                    # Check if recurrence has ended
+                    if recurrence.end_date and next_due_date > recurrence.end_date:
+                        # Recurrence has ended, delete it
+                        recurrence.delete()
+                    else:
+                        # Create the next occurrence task to preserve the recurrence
+                        template_task = Task.objects.create(
+                            name=task.name,
+                            description=task.description,
+                            family=task.family,
+                            assigned_to=task.assigned_to,
+                            created_by=task.created_by,
+                            due_date=next_due_date,
+                            priority=task.priority,
+                            points=task.points,
+                            completed=False,
+                            approved=False,
+                        )
+                        
+                        # Update recurrence to point to the new task
+                        recurrence.task = template_task
+                        recurrence.next_occurrence = next_occurrence
+                        recurrence.save()
+                
+                # Now delete the original task (recurrence is already moved if it existed)
                 task.delete()
 
         elif action == "start" and is_child:
@@ -328,7 +681,7 @@ def index(request):
             "created_by",
             "completed_by",
             "approved_by",
-        )
+        ).prefetch_related('recurrences')
         active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
@@ -367,6 +720,46 @@ def index(request):
         approved_tasks = []
         family_members = []
 
+    # Prepare family members data for autocomplete (first name + username format)
+    family_members_data = []
+    for member in family_members:
+        name_parts = []
+        if member.first_name:
+            name_parts.append(member.first_name)
+        if member.username:
+            name_parts.append(f"@{member.username}")
+        display_text = " ".join(name_parts) if name_parts else member.get_display_name()
+        family_members_data.append({
+            'id': member.id,
+            'first_name': member.first_name or '',
+            'username': member.username or '',
+            'display_text': display_text,
+            'search_text': f"{member.first_name or ''} {member.username or ''}".strip().lower(),
+        })
+    
+    # Convert to JSON string for template
+    family_members_json = mark_safe(json.dumps(family_members_data))
+    
+    # Get subscription limits for frontend validation
+    task_limit_info = None
+    recurring_limit_info = None
+    if family:
+        can_create_task, current_task_count, task_limit, task_tier = check_subscription_limit(family, 'tasks', 1)
+        task_limit_info = {
+            'can_create': can_create_task,
+            'current': current_task_count,
+            'limit': task_limit,
+            'tier': task_tier,
+        }
+        
+        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+        recurring_limit_info = {
+            'can_create': can_create_recurring,
+            'current': current_recurring_count,
+            'limit': recurring_limit,
+            'tier': recurring_tier,
+        }
+    
     context = {
         "family": family,
         "role": role,
@@ -374,8 +767,59 @@ def index(request):
         "is_child": is_child,
         "has_family": family is not None,
         "family_members": family_members,
+        "family_members_data": family_members_json,  # JSON string for autocomplete
         "active_tasks": active_tasks,
         "pending_tasks": pending_tasks,
         "approved_tasks": approved_tasks,
+        "task_limit_info": task_limit_info,
+        "recurring_limit_info": recurring_limit_info,
+        "task_limit_info_json": mark_safe(json.dumps(task_limit_info)) if task_limit_info else None,
+        "recurring_limit_info_json": mark_safe(json.dumps(recurring_limit_info)) if recurring_limit_info else None,
     }
     return render(request, "a_tasks/index.html", context)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "GET"])
+def create_recurring_tasks_endpoint(request):
+    """
+    HTTP endpoint to trigger maintenance tasks.
+    This can be called manually or by external cron services if needed.
+    
+    Note: Maintenance tasks now run automatically on login, so this endpoint
+    is mainly for manual triggering or backup purposes.
+    
+    Requires RAILWAY_CRON_SECRET environment variable to be set for security.
+    """
+    # Check for authentication token (set in Railway environment variables)
+    cron_secret = os.environ.get('RAILWAY_CRON_SECRET')
+    if cron_secret:
+        provided_secret = request.headers.get('X-Railway-Cron-Secret') or request.GET.get('secret')
+        if provided_secret != cron_secret:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Use the maintenance function (runs both recurring tasks and cleanup)
+        from .maintenance import run_maintenance_tasks
+        result = run_maintenance_tasks()
+        
+        if result.get('skipped'):
+            return JsonResponse({
+                'status': 'skipped',
+                'message': result.get('message', 'Maintenance already ran today')
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': result.get('message', 'Maintenance tasks completed'),
+            'recurring_tasks_created': result.get('recurring_tasks_created', 0),
+            'old_tasks_deleted': result.get('old_tasks_deleted', 0),
+        })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error running maintenance tasks: {e}", exc_info=True)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
