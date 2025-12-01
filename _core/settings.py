@@ -242,6 +242,22 @@ USE_I18N = True
 
 USE_TZ = True
 
+# Date formats - Estonian format (dd.mm.yyyy)
+DATE_FORMAT = 'd.m.Y'
+DATE_INPUT_FORMATS = [
+    '%d.%m.%Y',  # 25.12.2024
+    '%d/%m/%Y',  # 25/12/2024
+    '%Y-%m-%d',  # 2024-12-25 (ISO format for HTML date inputs)
+    '%d.%m.%y',  # 25.12.24
+]
+DATETIME_FORMAT = 'd.m.Y H:i'
+DATETIME_INPUT_FORMATS = [
+    '%d.%m.%Y %H:%M',  # 25.12.2024 14:30
+    '%d.%m.%Y %H:%M:%S',  # 25.12.2024 14:30:45
+    '%Y-%m-%d %H:%M:%S',  # ISO format
+    '%Y-%m-%d %H:%M',  # ISO format
+]
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
