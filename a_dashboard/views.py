@@ -190,7 +190,7 @@ def dashboard(request):
                 {
                     "label": "Tänased tähtajad",
                     "value": due_today_count,
-                    "change": "Vaata ja planeri päev",
+                    "change": "Vaata ja planeeri päev",
                     "icon": "icon-green",
                     "url": "a_tasks:index",
                 },
