@@ -17,7 +17,7 @@ from django.views.decorators.http import require_http_methods
 
 from a_family.models import Family, User
 from a_family.emails import send_task_completed_notification, send_task_approved_notification
-from a_subscription.utils import check_subscription_limit, increment_usage
+from a_subscription.utils import check_subscription_limit, increment_usage, check_recurring_task_limit
 
 from .models import Task
 
@@ -301,6 +301,18 @@ def index(request):
                 # Handle recurring tasks (from quick add or modal)
                 recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
                 if recurring_frequency:
+                    # Check recurring task limit
+                    can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                    if not can_create_recurring:
+                        tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                        messages.error(
+                            request,
+                            f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                            f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                        )
+                        task.delete()  # Delete the task since we can't create the recurrence
+                        return redirect("a_tasks:index")
+                    
                     from .models import TaskRecurrence
                     from .recurrence_utils import calculate_next_occurrence
                     
@@ -393,6 +405,18 @@ def index(request):
                 existing_recurrence = TaskRecurrence.objects.filter(task=task).first()
                 
                 if recurring_frequency:
+                    # Check recurring task limit (only if creating new, not updating existing)
+                    if not existing_recurrence:
+                        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                        if not can_create_recurring:
+                            tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                            messages.error(
+                                request,
+                                f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                            )
+                            return redirect("a_tasks:index")
+                    
                     # Create or update recurrence
                     from .recurrence_utils import calculate_next_occurrence
                     
