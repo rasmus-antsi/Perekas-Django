@@ -1,15 +1,19 @@
 import itertools
 import json
+import os
 import re
 from datetime import datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
 from a_family.models import Family, User
 from a_family.emails import send_task_completed_notification, send_task_approved_notification
@@ -241,7 +245,7 @@ def index(request):
                 due = parse_date(request.POST.get("due_date") or "")
                 priority = request.POST.get("priority")
                 points_raw = request.POST.get("points", "0")
-                recurring = None
+                recurring = request.POST.get("recurring_frequency", "").strip() or None
 
             if name:
                 # Check subscription limit before creating
@@ -286,20 +290,30 @@ def index(request):
                     points=points_value,
                 )
                 
-                # Handle recurring tasks
-                if recurring:
+                # Handle recurring tasks (from quick add or modal)
+                recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
+                if recurring_frequency:
                     from .models import TaskRecurrence
+                    recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                    recurring_end_date = None
+                    if recurring_end_date_str:
+                        try:
+                            recurring_end_date = parse_date(recurring_end_date_str)
+                        except (ValueError, TypeError):
+                            pass
+                    
                     next_occurrence = timezone.now()
-                    if recurring == 'daily':
+                    if recurring_frequency == 'daily':
                         next_occurrence = timezone.now() + timedelta(days=1)
-                    elif recurring == 'weekly':
+                    elif recurring_frequency == 'weekly':
                         next_occurrence = timezone.now() + timedelta(days=7)
-                    elif recurring == 'monthly':
+                    elif recurring_frequency == 'monthly':
                         next_occurrence = timezone.now() + timedelta(days=30)
                     
                     TaskRecurrence.objects.create(
                         task=task,
-                        frequency=recurring,
+                        frequency=recurring_frequency,
+                        end_date=recurring_end_date,
                         next_occurrence=next_occurrence,
                     )
                 
@@ -350,6 +364,49 @@ def index(request):
                 if assignment_changed:
                     update_fields.append("started_at")
                 task.save(update_fields=update_fields)
+                
+                # Handle recurring tasks
+                from .models import TaskRecurrence
+                recurring_frequency = request.POST.get("recurring_frequency", "").strip()
+                recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                
+                # Get or delete existing recurrence
+                existing_recurrence = TaskRecurrence.objects.filter(task=task).first()
+                
+                if recurring_frequency:
+                    # Create or update recurrence
+                    recurring_end_date = None
+                    if recurring_end_date_str:
+                        try:
+                            recurring_end_date = parse_date(recurring_end_date_str)
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # Calculate next_occurrence based on frequency
+                    next_occurrence = timezone.now()
+                    if recurring_frequency == 'daily':
+                        next_occurrence = timezone.now() + timedelta(days=1)
+                    elif recurring_frequency == 'weekly':
+                        next_occurrence = timezone.now() + timedelta(days=7)
+                    elif recurring_frequency == 'monthly':
+                        next_occurrence = timezone.now() + timedelta(days=30)
+                    
+                    if existing_recurrence:
+                        existing_recurrence.frequency = recurring_frequency
+                        existing_recurrence.end_date = recurring_end_date
+                        existing_recurrence.next_occurrence = next_occurrence
+                        existing_recurrence.save()
+                    else:
+                        TaskRecurrence.objects.create(
+                            task=task,
+                            frequency=recurring_frequency,
+                            end_date=recurring_end_date,
+                            next_occurrence=next_occurrence,
+                        )
+                else:
+                    # Remove recurrence if it exists
+                    if existing_recurrence:
+                        existing_recurrence.delete()
 
                 if task.approved:
                     if previous_assigned:
@@ -526,7 +583,7 @@ def index(request):
             "created_by",
             "completed_by",
             "approved_by",
-        )
+        ).prefetch_related('recurrences')
         active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
@@ -598,3 +655,49 @@ def index(request):
         "approved_tasks": approved_tasks,
     }
     return render(request, "a_tasks/index.html", context)
+
+
+@csrf_exempt
+@require_http_methods(["POST", "GET"])
+def create_recurring_tasks_endpoint(request):
+    """
+    HTTP endpoint to trigger maintenance tasks.
+    This can be called manually or by external cron services if needed.
+    
+    Note: Maintenance tasks now run automatically on login, so this endpoint
+    is mainly for manual triggering or backup purposes.
+    
+    Requires RAILWAY_CRON_SECRET environment variable to be set for security.
+    """
+    # Check for authentication token (set in Railway environment variables)
+    cron_secret = os.environ.get('RAILWAY_CRON_SECRET')
+    if cron_secret:
+        provided_secret = request.headers.get('X-Railway-Cron-Secret') or request.GET.get('secret')
+        if provided_secret != cron_secret:
+            return JsonResponse({'error': 'Unauthorized'}, status=401)
+    
+    try:
+        # Use the maintenance function (runs both recurring tasks and cleanup)
+        from .maintenance import run_maintenance_tasks
+        result = run_maintenance_tasks()
+        
+        if result.get('skipped'):
+            return JsonResponse({
+                'status': 'skipped',
+                'message': result.get('message', 'Maintenance already ran today')
+            })
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': result.get('message', 'Maintenance tasks completed'),
+            'recurring_tasks_created': result.get('recurring_tasks_created', 0),
+            'old_tasks_deleted': result.get('old_tasks_deleted', 0),
+        })
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error running maintenance tasks: {e}", exc_info=True)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)

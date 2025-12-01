@@ -307,6 +307,8 @@
                       data-task-points="{{ task.points }}"
                       data-task-priority="{{ task.priority }}"
                       data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
+                      data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
+                      data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 20h9"></path>
@@ -601,6 +603,21 @@
               <input type="date" name="due_date">
             </label>
           </div>
+          <div class="task-modal-recurring">
+            <label>
+              <span>Korduv ülesanne</span>
+              <select name="recurring_frequency" id="recurring-frequency">
+                <option value="">Ei kordu</option>
+                <option value="daily">Igapäevaselt</option>
+                <option value="weekly">Nädalaselt</option>
+                <option value="monthly">Kuus</option>
+              </select>
+            </label>
+            <label id="recurring-end-date-label" style="display: none;">
+              <span>Lõppkuupäev (valikuline)</span>
+              <input type="date" name="recurring_end_date" id="recurring-end-date">
+            </label>
+          </div>
           <div class="form-actions">
             <button type="submit" class="primary-button">
               <span aria-hidden="true" data-submit-icon>+</span>
@@ -627,6 +644,9 @@
         const pointsInput = form.querySelector('input[name="points"]');
         const prioritySelect = form.querySelector('select[name="priority"]');
         const dueInput = form.querySelector('input[name="due_date"]');
+        const recurringFrequencySelect = form.querySelector('select[name="recurring_frequency"]');
+        const recurringEndDateInput = form.querySelector('input[name="recurring_end_date"]');
+        const recurringEndDateLabel = document.getElementById('recurring-end-date-label');
         const titleEl = modal.querySelector('[data-modal-title]');
         const submitLabel = modal.querySelector('[data-submit-label]');
         const submitIcon = modal.querySelector('[data-submit-icon]');
@@ -671,8 +691,24 @@
             if (data.assigned && assignedSelect.querySelector(`option[value="${data.assigned}"]`)) {
               assignedSelect.value = data.assigned;
             }
+            
+            // Set recurrence fields
+            recurringFrequencySelect.value = data.recurringFrequency || '';
+            recurringEndDateInput.value = data.recurringEndDate || '';
+            updateRecurringEndDateVisibility();
           }
         }
+        
+        function updateRecurringEndDateVisibility() {
+          if (recurringFrequencySelect.value) {
+            recurringEndDateLabel.style.display = 'block';
+          } else {
+            recurringEndDateLabel.style.display = 'none';
+            recurringEndDateInput.value = '';
+          }
+        }
+        
+        recurringFrequencySelect.addEventListener('change', updateRecurringEndDateVisibility);
 
         function closeModal() {
           modal.classList.remove('is-visible');
@@ -693,6 +729,8 @@
               points: button.dataset.taskPoints,
               priority: button.dataset.taskPriority,
               due: button.dataset.taskDue,
+              recurringFrequency: button.dataset.taskRecurringFrequency || '',
+              recurringEndDate: button.dataset.taskRecurringEndDate || '',
             });
           });
         });
