@@ -235,17 +235,39 @@
               <h3>Ühine ostunimekiri</h3>
               <p>Reaalajas sünkroonitud ostunimekirjad, mida kogu pere saab kasutada. Lisa, jaga ja märgi tooted kiiresti ära — nii teab igaüks täpselt, mida poest tuua.</p>
             </div>
-            {% comment %}
             <div class="feature-card-product scroll-scale scroll-delay-4">
               <div class="feature-icon-product">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
                 </svg>
               </div>
-              <h3>Automaatne korduvus</h3>
-              <p>Seadista korduvad ülesanded automaatseks määramiseks. Säästa aega korduste lisamisel.</p>
+              <h3>Ülesannete lisamine hetkega</h3>
+              <p>Lisa ülesandeid hetkega — määra laps, tähtaeg, prioriteet ja punktid otse tekstis. Näide: Vii prügi välja @Emma homme !kõrge +50.</p>
             </div>
             <div class="feature-card-product scroll-scale scroll-delay-5">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+              </div>
+              <h3>Korduvad ülesanded</h3>
+              <p>Seadista ülesanded korduma automaatselt ja lase neil iga päev, nädal või kuu end ise uuesti luua — nii säästad aega ja ei pea midagi meelde jätma.</p>
+            </div>
+            <div class="feature-card-product scroll-scale scroll-delay-6">
+              <div class="feature-icon-product">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h3>Ülesannete kinnitamine</h3>
+              <p>Lapsed märgivad ülesanded tehtuks ja vanemad kinnitavad need — nii on kõik tehtud tööd selgelt nähtavad ning peres valitseb selgus ja usaldus.</p>
+            </div>
+            {% comment %}
+            <div class="feature-card-product scroll-scale scroll-delay-6">
               <div class="feature-icon-product">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -255,7 +277,7 @@
               <h3>Reaalajas sünkroonimine</h3>
               <p>Kõik muudatused uuenevad kohe kõigis seadmetes. Ei pea ootama või värskendama lehte.</p>
             </div>
-            <div class="feature-card-product scroll-scale scroll-delay-6">
+            <div class="feature-card-product scroll-scale scroll-delay-7">
               <div class="feature-icon-product">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -681,8 +703,8 @@
                   // Remove clicked state quickly for next cycle
                   setTimeout(() => {
                     heroSubmit.classList.remove('clicked');
-                  }, 150);
-                }, 80); // Very quick tap - only 80ms pressed
+                  }, 200);
+                }, 100); // Quick tap - 100ms pressed
                 
                 // First, animate existing cards moving down
                 currentCards.forEach((card, index) => {
@@ -692,7 +714,7 @@
                     setTimeout(() => {
                       card.classList.add('faded');
                       card.classList.remove('moving-down');
-                    }, 50);
+                    }, 100);
                   } else if (index === 1) {
                     // Second card moves down (becomes half-visible at bottom)
                     card.classList.add('moving-down');
@@ -703,7 +725,7 @@
                       if (card.parentNode) {
                         card.remove();
                       }
-                    }, 500);
+                    }, 800);
                   }
                 });
                 
@@ -728,7 +750,7 @@
                         if (oldCard.parentNode) {
                           oldCard.remove();
                         }
-                      }, 500);
+                      }, 800);
                     }
                   }
                   
@@ -738,7 +760,7 @@
                   // Smooth fade in the new card at the top position
                   setTimeout(() => {
                     newCard.classList.add('visible');
-                  }, 50);
+                  }, 100);
                   
                   // Ensure the last card (bottom) is positioned correctly for half-visibility
                   if (currentCards.length >= 2) {
@@ -751,7 +773,7 @@
                       bottomCard.style.clipPath = 'inset(0 0 50% 0)';
                     }
                   }
-                }, 100);
+                }, 200);
                 
                 // Reset for next cycle
                 setTimeout(() => {
@@ -761,17 +783,17 @@
                   currentTaskIndex = (currentTaskIndex + 1) % exampleTasks.length;
                   setTimeout(() => {
                     typeText(exampleTasks[currentTaskIndex]);
-                  }, 1000);
-                }, 500);
-              }, 500);
+                  }, 2000);
+                }, 1000);
+              }, 800);
             }
-          }, 50); // Typing speed
+          }, 80); // Typing speed - slower
         }
         
         // Start animation after a delay
         setTimeout(() => {
           typeText(exampleTasks[0]);
-        }, 1500);
+        }, 2000);
       })();
     </script>
   </body>
