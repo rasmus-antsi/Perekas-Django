@@ -1251,7 +1251,10 @@ body {
 
 .input-with-help input:disabled,
 .add-item-card input:disabled {
-  cursor: default;
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .input-with-help input:focus,
@@ -1313,6 +1316,37 @@ body {
 .autocomplete-item:hover .autocomplete-name,
 .autocomplete-item.is-selected .autocomplete-name {
   color: rgba(196, 181, 253, 0.95);
+}
+
+.autocomplete-item.autocomplete-limit-message {
+  cursor: default;
+  background: rgba(239, 68, 68, 0.1);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.autocomplete-item.autocomplete-limit-message:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.limit-message {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.5rem;
+  color: #fca5a5;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.limit-message a {
+  color: #fca5a5;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.limit-message a:hover {
+  color: #f87171;
 }
 
 /* Mobile adjustments for autocomplete */
