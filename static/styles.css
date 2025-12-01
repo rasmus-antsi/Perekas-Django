@@ -2469,6 +2469,15 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
+.task-modal-recurring {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(59, 72, 99, 0.3);
+  margin-top: 0.5rem;
+}
+
 .task-modal-form textarea {
   resize: vertical;
 }
