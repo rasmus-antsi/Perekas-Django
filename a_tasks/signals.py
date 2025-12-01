@@ -63,33 +63,24 @@ def auto_delete_old_completed_tasks(sender, instance, created, **kwargs):
             recurrences = TaskRecurrence.objects.filter(task=instance)
             for recurrence in recurrences:
                 try:
-                    # Calculate next occurrence date based on frequency
-                    now = timezone.now()
-                    if recurrence.frequency == TaskRecurrence.FREQUENCY_DAILY:
-                        next_date = now + timedelta(days=recurrence.interval)
-                        # If there's a due_date, calculate next due date
-                        next_due_date = None
-                        if instance.due_date:
-                            next_due_date = instance.due_date + timedelta(days=recurrence.interval)
-                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_WEEKLY:
-                        next_date = now + timedelta(weeks=recurrence.interval)
-                        next_due_date = None
-                        if instance.due_date:
-                            next_due_date = instance.due_date + timedelta(weeks=recurrence.interval)
-                    elif recurrence.frequency == TaskRecurrence.FREQUENCY_MONTHLY:
-                        next_date = now + timedelta(days=30 * recurrence.interval)
-                        next_due_date = None
-                        if instance.due_date:
-                            # Approximate monthly - add 30 days
-                            next_due_date = instance.due_date + timedelta(days=30 * recurrence.interval)
-                    else:
-                        next_date = now + timedelta(days=1)
-                        next_due_date = instance.due_date
+                    from .recurrence_utils import calculate_next_occurrence
+                    
+                    # Calculate next occurrence based on due_date (recurring starts from due date)
+                    # Use the current task's due_date as the base
+                    base_due_date = instance.due_date
+                    if not base_due_date:
+                        # If no due date, use today
+                        base_due_date = timezone.now().date()
+                    
+                    next_due_date, next_occurrence = calculate_next_occurrence(
+                        base_due_date, recurrence.frequency, recurrence.interval,
+                        day_of_week=recurrence.day_of_week,
+                        day_of_month=recurrence.day_of_month
+                    )
                     
                     # Check if recurrence has ended
                     if recurrence.end_date:
-                        check_date = next_due_date if next_due_date else next_date.date()
-                        if check_date > recurrence.end_date:
+                        if next_due_date > recurrence.end_date:
                             # Recurrence has ended, delete it
                             recurrence.delete()
                             continue
@@ -108,12 +99,12 @@ def auto_delete_old_completed_tasks(sender, instance, created, **kwargs):
                         approved=False,
                     )
                     
-                    # Update recurrence to point to new task
+                    # Update recurrence to point to new task (preserve day_of_week and day_of_month)
                     recurrence.task = new_task
-                    recurrence.next_occurrence = next_date
+                    recurrence.next_occurrence = next_occurrence
                     recurrence.save()
                     
-                    logger.info(f"Created recurring task '{new_task.name}' (next: {next_date})")
+                    logger.info(f"Created recurring task '{new_task.name}' (next: {next_occurrence.date()})")
                 except Exception as e:
                     logger.error(f"Error creating recurring task: {e}", exc_info=True)
             

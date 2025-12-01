@@ -74,10 +74,14 @@ class Task(models.Model):
 
 class TaskRecurrence(models.Model):
     FREQUENCY_DAILY = 'daily'
+    FREQUENCY_BUSINESS_DAILY = 'business_daily'
+    FREQUENCY_EVERY_OTHER_DAY = 'every_other_day'
     FREQUENCY_WEEKLY = 'weekly'
     FREQUENCY_MONTHLY = 'monthly'
     FREQUENCY_CHOICES = [
         (FREQUENCY_DAILY, 'Daily'),
+        (FREQUENCY_BUSINESS_DAILY, 'Business Daily'),
+        (FREQUENCY_EVERY_OTHER_DAY, 'Every Other Day'),
         (FREQUENCY_WEEKLY, 'Weekly'),
         (FREQUENCY_MONTHLY, 'Monthly'),
     ]
@@ -85,6 +89,8 @@ class TaskRecurrence(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='recurrences', db_index=True)
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, db_index=True)
     interval = models.PositiveIntegerField(default=1)
+    day_of_week = models.IntegerField(null=True, blank=True, help_text='0=Monday, 6=Sunday (for weekly recurrence)')
+    day_of_month = models.IntegerField(null=True, blank=True, help_text='1-31 (for monthly recurrence)')
     end_date = models.DateField(null=True, blank=True)
     next_occurrence = models.DateTimeField(db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)

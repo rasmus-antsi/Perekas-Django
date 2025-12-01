@@ -1822,6 +1822,14 @@ body {
   white-space: nowrap;
 }
 
+.task-help-option-note {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.7rem;
+  color: rgba(148, 163, 184, 0.65);
+  line-height: 1.4;
+  font-style: italic;
+}
+
 /* Mobile: Bottom sheet style */
 @media (max-width: 768px) {
   .task-help-modal-content {
@@ -2200,6 +2208,10 @@ body {
   color: rgba(139, 92, 246, 0.9);
 }
 
+.task-status-icon.recurring-icon {
+  color: rgba(6, 182, 212, 0.9);
+}
+
 .task-description {
   margin: 0.5rem 0 0;
   color: var(--color-text-muted);
@@ -2476,6 +2488,25 @@ body {
   padding-top: 0.5rem;
   border-top: 1px solid rgba(59, 72, 99, 0.3);
   margin-top: 0.5rem;
+}
+
+.task-modal-recurring-note {
+  margin: -0.5rem 0 0 0;
+  padding: 0.5rem 0.75rem;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.task-modal-recurring-note small {
+  font-size: 0.75rem;
+  color: rgba(148, 163, 184, 0.8);
+  line-height: 1.5;
+}
+
+.task-modal-recurring-note strong {
+  color: rgba(196, 181, 253, 0.95);
+  font-weight: 600;
 }
 
 .task-modal-form textarea {
