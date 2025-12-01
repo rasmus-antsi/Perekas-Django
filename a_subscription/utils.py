@@ -14,6 +14,7 @@ TIER_LIMITS = {
         'max_children': 1,
         'max_tasks_per_month': 30,
         'max_rewards_per_month': 4,
+        'max_recurring_tasks': 3,
         'shopping_list_enabled': False,
     },
     Subscription.TIER_STARTER: {
@@ -21,6 +22,7 @@ TIER_LIMITS = {
         'max_children': 2,
         'max_tasks_per_month': 45,
         'max_rewards_per_month': 10,
+        'max_recurring_tasks': 10,
         'shopping_list_enabled': True,
     },
     Subscription.TIER_PRO: {
@@ -28,6 +30,7 @@ TIER_LIMITS = {
         'max_children': 5,
         'max_tasks_per_month': 1000,  # Soft limit - effectively unlimited
         'max_rewards_per_month': 50,
+        'max_recurring_tasks': 1000,  # Soft limit - effectively unlimited
         'shopping_list_enabled': True,
     },
 }
@@ -224,6 +227,33 @@ def can_add_member(family, role):
 
     can_add = current_count < limit
     return can_add, current_count, limit, tier
+
+
+def check_recurring_task_limit(family):
+    """
+    Check if a family can create a recurring task based on subscription limits.
+    
+    Args:
+        family: Family instance
+    
+    Returns:
+        tuple: (can_create: bool, current_count: int, limit: int, tier: str)
+    """
+    if not family:
+        return False, 0, 0, Subscription.TIER_FREE
+
+    tier = get_family_subscription(family)
+    limits = get_tier_limits(tier)
+    limit = limits.get('max_recurring_tasks', 0)
+    
+    # Count active recurring tasks (tasks with active recurrences)
+    from a_tasks.models import TaskRecurrence
+    current_count = TaskRecurrence.objects.filter(
+        task__family=family
+    ).count()
+    
+    can_create = current_count < limit
+    return can_create, current_count, limit, tier
 
 
 def has_shopping_list_access(family):
