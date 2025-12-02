@@ -243,14 +243,6 @@
         if (!modal) return;
 
         const form = document.getElementById('reward-modal-form');
-        // Add haptic feedback to form submission
-        if (form) {
-          form.addEventListener('submit', function() {
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('formSubmit');
-            }
-          });
-        }
         const actionInput = form.querySelector('input[name="action"]');
         const idInput = form.querySelector('input[name="reward_id"]');
         const nameInput = form.querySelector('input[name="name"]');
@@ -266,10 +258,6 @@
         function openModal(mode, data = {}) {
           modal.classList.add('is-visible');
           document.body.classList.add('modal-open');
-          // Haptic feedback for modal open
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('modalOpen');
-          }
           form.reset();
           // Ensure modal is visible by scrolling viewport to top
           setTimeout(() => {
@@ -303,26 +291,14 @@
         function closeModal() {
           modal.classList.remove('is-visible');
           document.body.classList.remove('modal-open');
-          // Haptic feedback for modal close
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('modalClose');
-          }
         }
 
         document.querySelectorAll('[data-open-reward-modal="create"]').forEach((button) => {
-          button.addEventListener('click', () => {
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('modalOpen');
-            }
-            openModal('create');
-          });
+          button.addEventListener('click', () => openModal('create'));
         });
 
         document.querySelectorAll('[data-open-reward-modal="edit"]').forEach((button) => {
           button.addEventListener('click', () => {
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('modalOpen');
-            }
             openModal('edit', {
               id: button.dataset.rewardId,
               name: button.dataset.rewardName,
@@ -485,10 +461,6 @@
             title = 'Kinnita kustutamine';
           } else if (action === 'claim') {
             title = 'Kinnita lunastamine';
-            // Haptic feedback for reward claim confirmation
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('buttonPress');
-            }
           } else if (action === 'unclaim') {
             title = 'Kinnita tagasivõtmine';
           }
@@ -496,19 +468,6 @@
           pendingForm = form;
           formSubmitHandler = submitHandler;
           const confirmed = await showConfirm(title, message);
-          
-          // Haptic feedback when form is actually submitted
-          if (confirmed && window.HapticFeedback) {
-            if (action === 'claim') {
-              window.HapticFeedback.trigger('rewardClaim');
-            } else if (action === 'create' || action === 'update') {
-              window.HapticFeedback.trigger('formSubmit');
-            } else if (action === 'delete' || action === 'unclaim') {
-              window.HapticFeedback.trigger('error');
-            } else {
-              window.HapticFeedback.trigger('formSubmit');
-            }
-          }
         };
         
         form.addEventListener('submit', submitHandler);

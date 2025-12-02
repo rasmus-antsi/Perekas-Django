@@ -23,7 +23,6 @@
       rel="stylesheet"
     >
     <link rel="stylesheet" href="{% static 'styles.css' %}">
-    <script src="{% static 'haptics.js' %}"></script>
     <style>
       /* Share dashboard-style toast messages */
       .messages-container {
@@ -108,17 +107,17 @@
         </div>
       </a>
       <nav class="landing-nav-links">
-        <a href="{% url 'a_landing:landing_index' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Kodu</a>
-        <a href="{% url 'a_landing:features' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Võimalused</a>
-        <a href="{% url 'a_landing:about' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Meist</a>
-        <a href="{% url 'a_landing:plans' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Paketid</a>
+        <a href="{% url 'a_landing:landing_index' %}">Kodu</a>
+        <a href="{% url 'a_landing:features' %}">Võimalused</a>
+        <a href="{% url 'a_landing:about' %}">Meist</a>
+        <a href="{% url 'a_landing:plans' %}">Paketid</a>
       </nav>
       <div class="landing-nav-actions">
         {% if user.is_authenticated %}
-          <a class="landing-link" href="{% url 'a_dashboard:dashboard' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Ülevaade</a>
+          <a class="landing-link" href="{% url 'a_dashboard:dashboard' %}">Ülevaade</a>
         {% else %}
-          <a class="landing-link" href="{% url 'account_login' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Logi sisse</a>
-          <a class="landing-button primary" href="{% url 'account_signup' %}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('buttonPress');}">Loo konto</a>
+          <a class="landing-link" href="{% url 'account_login' %}">Logi sisse</a>
+          <a class="landing-button primary" href="{% url 'account_signup' %}">Loo konto</a>
         {% endif %}
       </div>
       <button class="landing-nav-toggle" aria-label="Lülita menüü">
@@ -161,10 +160,6 @@
           toggle.classList.toggle('open');
           navLinks.classList.toggle('open');
           navActions.classList.toggle('open');
-          // Haptic feedback for mobile nav toggle
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('buttonPress');
-          }
         });
       }
 
