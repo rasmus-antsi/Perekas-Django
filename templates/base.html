@@ -23,6 +23,7 @@
       rel="stylesheet"
     >
     <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <script src="{% static 'haptics.js' %}"></script>
     <style>
       /* Fallback styles for messages - ensure they always work */
       .messages-container {
@@ -231,6 +232,11 @@
         sidebar.classList.toggle('mobile-open');
         overlay.classList.toggle('active');
         toggle.classList.toggle('open');
+        
+        // Haptic feedback for mobile nav toggle
+        if (window.HapticFeedback) {
+          window.HapticFeedback.trigger('buttonPress');
+        }
       }
       
       function closeMobileNav() {
@@ -248,6 +254,10 @@
         const navLinks = document.querySelectorAll('.sidebar-nav .nav-link, .nav-link-settings');
         navLinks.forEach(link => {
           link.addEventListener('click', function() {
+            // Add haptic feedback to navigation clicks
+            if (window.HapticFeedback) {
+              window.HapticFeedback.trigger('navigation');
+            }
             if (window.innerWidth <= 1024) {
               closeMobileNav();
             }
