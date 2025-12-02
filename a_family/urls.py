@@ -11,7 +11,6 @@ urlpatterns = [
     path('manage-child/<int:child_id>/', views.manage_child_account, name='manage_child_account'),
     path('delete-child-account/', views.delete_child_account, name='delete_child_account'),
     path('delete-family/', views.delete_family, name='delete_family'),
-    path('status-check/', views.status_check, name='status_check'),
     path('', views.index, name='index'),
 ]
 
