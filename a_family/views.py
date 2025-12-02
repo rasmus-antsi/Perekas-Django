@@ -1,30 +1,20 @@
+# Standard library imports
 import logging
 
+# Django imports
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+
+# Third-party imports
 from allauth.account.adapter import get_adapter
 from allauth.account.models import EmailAddress
 
+# Local application imports
 from .emails import send_family_created_email, send_family_member_joined_email, send_admin_family_created_notification
 from .forms import CreateFamilyForm, JoinFamilyForm
 from .models import Family, User
-
-
-def _get_family_for_user(user):
-    """Get the first family for a user (as owner or member)"""
-    try:
-        # Try to get family where user is a member first (more common)
-        family = Family.objects.filter(members=user).first()
-        if family is None:
-            # If not a member, check if user is owner
-            family = Family.objects.filter(owner=user).first()
-        return family
-    except Exception as e:
-        # Log error but don't crash - return None so user can still access onboarding
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error getting family for user {user.id}: {str(e)}", exc_info=True)
-        return None
+from .utils import get_family_for_user as _get_family_for_user
 
 
 @login_required
@@ -78,12 +68,20 @@ def onboarding(request):
             create_form = CreateFamilyForm(request.POST)
             if create_form.is_valid():
                 family_name = create_form.cleaned_data['name']
-                family = Family.objects.create(
-                    name=family_name,
-                    owner=user,
-                )
-                family.members.add(user)
-                messages.success(request, f'Pere "{family_name}" loodud edukalt!')
+                try:
+                    family = Family.objects.create(
+                        name=family_name,
+                        owner=user,
+                    )
+                    family.members.add(user)
+                    messages.success(request, f'Pere "{family_name}" loodud edukalt!')
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error creating family: {e}", exc_info=True)
+                    from django.conf import settings
+                    messages.error(request, f"Midagi läks valesti pere loomisel. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                    return redirect('a_family:onboarding')
                 try:
                     send_family_created_email(request, user, family)
                 except Exception as email_error:
@@ -136,7 +134,8 @@ def onboarding(request):
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    from django.conf import settings
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         
         else:
             if action == 'create' and not is_parent:
@@ -332,11 +331,13 @@ def resend_verification_email(request):
             
             return redirect('account_verification_sent')
         except EmailAddress.DoesNotExist:
-            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            from django.conf import settings
+            messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
         except Exception as e:
             logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
-            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            from django.conf import settings
+            messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
     
     # GET request - show verification sent page

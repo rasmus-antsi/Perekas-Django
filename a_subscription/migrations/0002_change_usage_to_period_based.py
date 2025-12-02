@@ -50,16 +50,16 @@ class Migration(migrations.Migration):
         # Step 2: Migrate data from month to period_start
         migrations.RunPython(migrate_month_to_period_start, reverse_migrate_period_start_to_month),
         
-        # Step 3: Remove unique_together constraint on (family, month)
+        # Step 3: Remove the index on (family, month) BEFORE removing the field
+        migrations.RemoveIndex(
+            model_name='subscriptionusage',
+            name='subscriptio_family__96b583_idx',
+        ),
+        
+        # Step 4: Remove unique_together constraint on (family, month)
         migrations.AlterUniqueTogether(
             name='subscriptionusage',
             unique_together=set(),
-        ),
-        
-        # Step 4: Remove old index on (family, month)
-        migrations.AlterIndexTogether(
-            name='subscriptionusage',
-            index_together=set(),
         ),
         
         # Step 5: Make period_start non-nullable
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(db_index=True),
         ),
         
-        # Step 6: Remove the month field
+        # Step 6: Remove the month field (index is already removed)
         migrations.RemoveField(
             model_name='subscriptionusage',
             name='month',

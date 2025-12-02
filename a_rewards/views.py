@@ -1,25 +1,21 @@
+# Standard library imports
 import itertools
 
+# Django imports
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+# Local application imports
 from a_family.models import Family, User
 from a_family.emails import send_reward_claimed_notification
+from a_family.utils import get_family_for_user as _get_family_for_user
 from a_subscription.utils import check_subscription_limit, increment_usage
 
 from .models import Reward
-
-
-def _get_family_for_user(user):
-    family = None
-    if hasattr(user, "families"):
-        family = user.families.first()
-    if family is None:
-        family = Family.objects.filter(owner=user).first()
-    return family
 
 
 def _ensure_user_role(user, default_role=User.ROLE_CHILD):
@@ -80,15 +76,17 @@ def index(request):
                 except (TypeError, ValueError):
                     points_value = 0
 
-                reward = Reward.objects.create(
-                    name=name,
-                    description=description,
-                    points=points_value,
-                    family=family,
-                    created_by=user,
-                )
-                # Increment usage counter
-                increment_usage(family, 'rewards', 1)
+                # Use transaction to ensure reward creation and usage increment are atomic
+                with transaction.atomic():
+                    reward = Reward.objects.create(
+                        name=name,
+                        description=description,
+                        points=points_value,
+                        family=family,
+                        created_by=user,
+                    )
+                    # Increment usage counter (within same transaction)
+                    increment_usage(family, 'rewards', 1)
                 # Don't send notification when reward is created, only when claimed
 
         elif action == "update" and is_parent:
@@ -110,7 +108,7 @@ def index(request):
         elif action == "unclaim" and is_parent:
             reward = _get_reward()
             if not reward:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not reward.claimed:
                 messages.warning(request, "See preemia pole lunastatud.")
             elif not reward.claimed_by:
@@ -132,12 +130,12 @@ def index(request):
                         reward_refreshed.save(update_fields=["claimed", "claimed_by", "claimed_at"])
                         messages.success(request, f"Preemia '{reward_refreshed.name}' lunastamine tühistatud.")
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         elif action == "claim" and is_child:
             reward = _get_reward()
             if not reward:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif reward.claimed:
                 messages.warning(request, "See preemia on juba lunastatud.")
             else:
@@ -177,11 +175,11 @@ def index(request):
                                 logger = logging.getLogger(__name__)
                                 logger.warning(f"Failed to send reward claimed notification: {e}", exc_info=True)
                 except User.DoesNotExist:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
                 except Reward.DoesNotExist:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         return redirect("a_rewards:index")
 
@@ -202,6 +200,7 @@ def index(request):
         claimed_rewards = []
 
     if is_parent and family:
+        # Use values_list to avoid loading full objects when we only need points
         child_users = family.members.filter(role=User.ROLE_CHILD)
         points_balance = sum(child_users.values_list("points", flat=True))
     else:

@@ -38,15 +38,17 @@ A private SaaS application for family task management, rewards, and organization
 ## Project Structure
 
 ```
-Family v1/
+perekas-django/
 ├── _core/                    # Core Django settings and configuration
 │   ├── settings.py          # Main settings file
 │   ├── urls.py              # Root URL configuration
 │   └── ...
+├── a_account/               # Account management
 ├── a_dashboard/             # Dashboard application
 ├── a_family/                # Family management
 │   ├── models.py           # Family and UserProfile models
-│   └── forms.py            # Custom signup form
+│   ├── forms.py            # Custom signup form
+│   └── utils.py            # Family utilities
 ├── a_landing/               # Landing page and marketing
 ├── a_rewards/               # Rewards system
 ├── a_shopping/              # Shopping list feature
@@ -54,11 +56,20 @@ Family v1/
 │   ├── models.py           # Subscription models
 │   └── utils.py            # Subscription utilities and limits
 ├── a_tasks/                 # Task management
+├── docs/                    # Documentation
+│   ├── APP_REVIEW_REPORT.md
+│   └── FUTURE_FEATURES.md
+├── scripts/                 # Utility scripts
+│   ├── run_tests.py        # Test runner script
+│   └── send_template_emails.py
 ├── static/                  # Static files (CSS, JS)
 ├── templates/               # HTML templates
+├── logs/                    # Application logs
 ├── requirements.txt         # Python dependencies
 ├── manage.py               # Django management script
-└── db.sqlite3              # SQLite database (development)
+├── Procfile                # Deployment configuration
+├── .env.example            # Environment variables template
+└── README.md               # This file
 ```
 
 ## Setup & Installation
@@ -136,11 +147,11 @@ STRIPE_CUSTOMER_PORTAL_ID=bpc_...  # Optional
 
 ### Required for Production
 
-See `DEPLOYMENT.md` for a complete list of production environment variables including:
-- Production Stripe keys
+For production deployment, ensure all environment variables are set:
+- Production Stripe keys (not test keys)
 - Email SMTP configuration
-- Security settings
-- Domain configuration
+- Security settings (DEBUG=False, SECRET_KEY, ALLOWED_HOSTS, etc.)
+- Domain configuration (ALLOWED_HOSTS, CSRF_TRUSTED_ORIGINS)
 
 **Important**: Never commit the `.env` file to version control. It should be in `.gitignore`.
 
@@ -189,9 +200,113 @@ python manage.py collectstatic
 ```
 
 ### Testing
+
+#### Running Tests
+
+**Run All Tests (with nice output showing each test):**
 ```bash
-python manage.py test
+python manage.py test --verbosity=2
+# OR use the convenience script:
+python scripts/run_tests.py
 ```
+
+**Run Tests for One App:**
+```bash
+python manage.py test a_tasks --verbosity=2
+# OR:
+python scripts/run_tests.py a_tasks
+```
+
+**Run One Specific Test Class:**
+```bash
+python manage.py test a_tasks.tests.TaskModelTest --verbosity=2
+# OR:
+python scripts/run_tests.py a_tasks.tests.TaskModelTest
+```
+
+**Run One Specific Test:**
+```bash
+python manage.py test a_tasks.tests.TaskModelTest.test_task_creation --verbosity=2
+# OR:
+python scripts/run_tests.py a_tasks.tests.TaskModelTest.test_task_creation
+```
+
+#### Understanding Test Output
+
+With `--verbosity=2`, you'll see each test one by one with its status:
+
+```
+test_task_creation (a_tasks.tests.TaskModelTest.test_task_creation)
+Test basic task creation ... ok
+
+test_task_completion (a_tasks.tests.TaskModelTest.test_task_completion)
+Test task completion flow ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.123s
+
+OK
+```
+
+**Each test shows:**
+- Test name and full path
+- Test description (from docstring)
+- Status: `ok` ✅, `FAIL` ❌, or `ERROR` ⚠️
+
+**Tip:** Always use `--verbosity=2` to see which tests pass/fail!
+
+#### Test Database
+
+- Tests use a **separate test database** (not your real database)
+- Test database is created fresh for each test run
+- Your real data is never touched
+- Test database is deleted after tests complete
+
+#### Current Test Coverage
+
+We have tests for:
+- ✅ Task model (creation, completion, approval)
+- ✅ TaskRecurrence model (recurring tasks)
+- ✅ Subscription model (tiers, limits)
+- ✅ Subscription utilities (limits, usage tracking)
+- ✅ User model (display names, points)
+- ✅ Family model (creation, members)
+- ✅ Reward model (creation, claiming)
+
+#### Writing Your Own Tests
+
+**Basic Structure:**
+```python
+from django.test import TestCase
+
+class MyModelTest(TestCase):
+    def setUp(self):
+        # This runs BEFORE each test
+        # Create test data here
+        self.user = User.objects.create_user(...)
+    
+    def test_something(self):
+        # This is ONE test
+        result = do_something()
+        # Check if it worked
+        self.assertEqual(result, expected_value)
+```
+
+**Common Assertions:**
+```python
+self.assertEqual(actual, expected)  # Check if two values are equal
+self.assertTrue(value)              # Check if value is True
+self.assertFalse(value)             # Check if value is False
+self.assertIsNone(value)            # Check if value is None
+self.assertIn(item, list)           # Check if item is in a list
+```
+
+**Best Practices:**
+1. **One test = One thing** - Each test should check one specific behavior
+2. **Clear names** - Test names should describe what they test
+3. **Independent** - Tests shouldn't depend on each other
+4. **Fast** - Tests should run quickly
+5. **Repeatable** - Same test should always give same result
 
 ### Managing Dependencies
 The project uses `requirements.txt` to manage Python dependencies. To update dependencies:

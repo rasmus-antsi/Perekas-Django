@@ -37,9 +37,11 @@ def redirect_account_email_to_settings(request):
     return EmailView.as_view()(request)
 
 from a_family import views as family_views
+from . import views as core_views
 
 urlpatterns = [
     path('W01-d8/', admin.site.urls),
+    path('health/', core_views.health_check, name='health_check'),
     # Override account_email to redirect authenticated users to settings
     path('accounts/email/', redirect_account_email_to_settings, name='account_email'),
     # Override account_verification_sent to use custom view
