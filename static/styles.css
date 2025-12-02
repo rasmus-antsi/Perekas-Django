@@ -282,6 +282,41 @@ body {
   height: 100%;
   object-fit: contain;
   border-radius: inherit;
+  background: transparent;
+  /* No blend mode needed here since sidebar-logo has gradient background */
+  mix-blend-mode: normal;
+}
+
+/* Make all logo images have transparent backgrounds and remove white corners */
+/* mix-blend-mode: screen makes white pixels transparent on dark backgrounds */
+img[src*="perekas-logo.png"],
+img[alt="Perekas"] {
+  background: transparent !important;
+  mix-blend-mode: screen;
+  /* Increase brightness slightly to help blend white corners */
+  filter: brightness(1.1) contrast(1.05);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  /* Ensure no white background shows through */
+  isolation: isolate;
+}
+
+.landing-logo img,
+.nav-icon-logo {
+  background: transparent !important;
+  mix-blend-mode: screen;
+  filter: brightness(1.1) contrast(1.05);
+  isolation: isolate;
+}
+
+/* Sidebar logo doesn't need blend mode since it has gradient background */
+.sidebar-logo img {
+  mix-blend-mode: normal;
+}
+
+/* For favicon specifically, we can't use CSS blend modes, so ensure container is transparent */
+link[rel="icon"] {
+  background: transparent !important;
 }
 
 .sidebar-brand {
@@ -4266,6 +4301,7 @@ body.modal-open {
   justify-content: center;
   width: 44px;
   height: 44px;
+  background: transparent !important;
   border-radius: 16px;
   background: linear-gradient(135deg, rgba(79, 70, 229, 0.9), rgba(236, 72, 153, 0.85));
   font-weight: 700;
