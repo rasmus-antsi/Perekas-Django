@@ -203,9 +203,17 @@ else:
 # For local development, falls back to SQLite
 
 DATABASE_URL = os.getenv('DATABASE_URL')
+# PgBouncer connection string (if using PgBouncer, set PGBOUNCER_URL instead of DATABASE_URL)
+PGBOUNCER_URL = os.getenv('PGBOUNCER_URL')
 
-if DATABASE_URL:
-    # Use PostgreSQL from Railway or other providers
+if PGBOUNCER_URL:
+    # Use PgBouncer connection pooler for better performance at scale
+    # PgBouncer sits between Django and PostgreSQL, pooling connections
+    DATABASES = {
+        'default': dj_database_url.parse(PGBOUNCER_URL, conn_max_age=600)
+    }
+elif DATABASE_URL:
+    # Use PostgreSQL directly from Railway or other providers
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
