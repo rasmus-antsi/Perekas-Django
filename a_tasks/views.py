@@ -1,9 +1,11 @@
+# Standard library imports
 import itertools
 import json
 import os
 import re
 from datetime import datetime, timedelta
 
+# Django imports
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -15,20 +17,13 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+# Local application imports
 from a_family.models import Family, User
 from a_family.emails import send_task_completed_notification, send_task_approved_notification
+from a_family.utils import get_family_for_user as _get_family_for_user
 from a_subscription.utils import check_subscription_limit, increment_usage, check_recurring_task_limit
 
 from .models import Task
-
-
-def _get_family_for_user(user):
-    family = None
-    if hasattr(user, "families"):
-        family = user.families.first()
-    if family is None:
-        family = Family.objects.filter(owner=user).first()
-    return family
 
 
 def _ensure_user_role(user, default_role=User.ROLE_CHILD):
@@ -72,8 +67,10 @@ def _parse_task_text(text, family):
     if mentions:
         mention_name = mentions[0].lower()
         # Try to find family member by display name or username
+        # Note: members is a reverse FK, so select_related doesn't apply here
+        # We're just iterating, so this is already efficient
         family_members = list(family.members.all())
-        if family.owner:
+        if family.owner_id:
             family_members.append(family.owner)
         
         # Handle "everyone" special case
@@ -224,7 +221,10 @@ def index(request):
         def _get_task():
             if not task_id:
                 return None
-            return Task.objects.filter(family=family, id=task_id).select_related("assigned_to").first()
+            # Optimize query by selecting related objects we'll need
+            return Task.objects.filter(family=family, id=task_id).select_related(
+                "assigned_to", "created_by", "completed_by", "approved_by", "family"
+            ).prefetch_related('recurrences').first()
 
         if action == "create" and is_parent:
             # Check if this is a quick add (task_text) or modal form (name)
@@ -250,7 +250,22 @@ def index(request):
                 # Modal form (backward compatibility)
                 description = request.POST.get("description", "").strip()
                 assigned_id = request.POST.get("assigned_to")
-                due = parse_date(request.POST.get("due_date") or "")
+                due_date_str = request.POST.get("due_date", "").strip()
+                due = None
+                if due_date_str:
+                    try:
+                        due = parse_date(due_date_str)
+                        if due is None:
+                            # Try Estonian format (dd.mm.yyyy)
+                            try:
+                                from datetime import datetime
+                                due = datetime.strptime(due_date_str, '%d.%m.%Y').date()
+                            except (ValueError, TypeError):
+                                messages.error(request, f"Vigane kuupäev: '{due_date_str}'. Kasuta formaati pp.kk.aaaa (nt. 25.12.2024).")
+                                return redirect("a_tasks:index")
+                    except (ValueError, TypeError) as e:
+                        messages.error(request, f"Vigane kuupäev: '{due_date_str}'. Kasuta formaati pp.kk.aaaa (nt. 25.12.2024).")
+                        return redirect("a_tasks:index")
                 priority = request.POST.get("priority")
                 points_raw = request.POST.get("points", "0")
                 recurring = request.POST.get("recurring_frequency", "").strip() or None
@@ -288,69 +303,71 @@ def index(request):
                     if not assigned_user and str(family.owner_id) == str(assigned_id):
                         assigned_user = family.owner
 
-                task = Task.objects.create(
-                    name=name,
-                    description=description,
-                    family=family,
-                    assigned_to=assigned_user,
-                    created_by=user,
-                    due_date=due,
-                    priority=priority_value,
-                    points=points_value,
-                )
-                
-                # Handle recurring tasks (from quick add or modal)
-                recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
-                if recurring_frequency:
-                    # Check recurring task limit
-                    can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
-                    if not can_create_recurring:
-                        tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
-                        messages.error(
-                            request,
-                            f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
-                            f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                # Use transaction to ensure task creation and usage increment are atomic
+                with transaction.atomic():
+                    task = Task.objects.create(
+                        name=name,
+                        description=description,
+                        family=family,
+                        assigned_to=assigned_user,
+                        created_by=user,
+                        due_date=due,
+                        priority=priority_value,
+                        points=points_value,
+                    )
+                    
+                    # Handle recurring tasks (from quick add or modal)
+                    recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
+                    if recurring_frequency:
+                        # Check recurring task limit
+                        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                        if not can_create_recurring:
+                            tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                            messages.error(
+                                request,
+                                f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                            )
+                            # Transaction will rollback task creation automatically
+                            return redirect("a_tasks:index")
+                        
+                        from .models import TaskRecurrence
+                        from .recurrence_utils import calculate_next_occurrence
+                        
+                        recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                        recurring_end_date = None
+                        if recurring_end_date_str:
+                            try:
+                                recurring_end_date = parse_date(recurring_end_date_str)
+                            except (ValueError, TypeError):
+                                pass
+                        
+                        # Get day_of_week and day_of_month if provided
+                        recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                        recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                        
+                        # day_of_month is now a number input (1-31)
+                        recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                        recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                        
+                        # Calculate next occurrence based on due_date or selected day
+                        next_due_date, next_occurrence = calculate_next_occurrence(
+                            task.due_date, recurring_frequency, 
+                            day_of_week=recurring_day_of_week,
+                            day_of_month=recurring_day_of_month
                         )
-                        task.delete()  # Delete the task since we can't create the recurrence
-                        return redirect("a_tasks:index")
+                        
+                        TaskRecurrence.objects.create(
+                            task=task,
+                            frequency=recurring_frequency,
+                            day_of_week=recurring_day_of_week,
+                            day_of_month=recurring_day_of_month,
+                            end_date=recurring_end_date,
+                            next_occurrence=next_occurrence,
+                        )
                     
-                    from .models import TaskRecurrence
-                    from .recurrence_utils import calculate_next_occurrence
-                    
-                    recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
-                    recurring_end_date = None
-                    if recurring_end_date_str:
-                        try:
-                            recurring_end_date = parse_date(recurring_end_date_str)
-                        except (ValueError, TypeError):
-                            pass
-                    
-                    # Get day_of_week and day_of_month if provided
-                    recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
-                    recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
-                    
-                    # day_of_month is now a number input (1-31)
-                    recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
-                    recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
-                    
-                    # Calculate next occurrence based on due_date or selected day
-                    next_due_date, next_occurrence = calculate_next_occurrence(
-                        task.due_date, recurring_frequency, 
-                        day_of_week=recurring_day_of_week,
-                        day_of_month=recurring_day_of_month
-                    )
-                    
-                    TaskRecurrence.objects.create(
-                        task=task,
-                        frequency=recurring_frequency,
-                        day_of_week=recurring_day_of_week,
-                        day_of_month=recurring_day_of_month,
-                        end_date=recurring_end_date,
-                        next_occurrence=next_occurrence,
-                    )
-                
-                # Increment usage counter
-                increment_usage(family, 'tasks', 1)
+                    # Increment usage counter (within same transaction)
+                    increment_usage(family, 'tasks', 1)
 
         elif action == "update" and is_parent:
             task = _get_task()
@@ -379,7 +396,22 @@ def index(request):
                 if assignment_changed:
                     task.started_at = None
 
-                due = parse_date(request.POST.get("due_date") or "")
+                due_date_str = request.POST.get("due_date", "").strip()
+                due = None
+                if due_date_str:
+                    try:
+                        due = parse_date(due_date_str)
+                        if due is None:
+                            # Try Estonian format (dd.mm.yyyy)
+                            try:
+                                from datetime import datetime
+                                due = datetime.strptime(due_date_str, '%d.%m.%Y').date()
+                            except (ValueError, TypeError):
+                                messages.error(request, f"Vigane kuupäev: '{due_date_str}'. Kasuta formaati pp.kk.aaaa (nt. 25.12.2024).")
+                                return redirect("a_tasks:index")
+                    except (ValueError, TypeError):
+                        messages.error(request, f"Vigane kuupäev: '{due_date_str}'. Kasuta formaati pp.kk.aaaa (nt. 25.12.2024).")
+                        return redirect("a_tasks:index")
                 task.due_date = due
 
                 try:
@@ -527,7 +559,8 @@ def index(request):
         elif action == "start" and is_child:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
             elif task.is_in_progress:
@@ -543,7 +576,8 @@ def index(request):
         elif action == "cancel" and is_child:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
             elif not task.is_in_progress or task.assigned_to_id != user.id:
@@ -557,7 +591,8 @@ def index(request):
         elif action == "complete" and is_child:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
             elif not task.is_in_progress or task.assigned_to_id != user.id:
@@ -582,7 +617,8 @@ def index(request):
         elif action == "reopen" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.completed:
                 messages.warning(request, "See ülesanne pole täidetud.")
             else:
@@ -608,12 +644,14 @@ def index(request):
                         task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at", "started_at", "assigned_to"])
                         messages.success(request, f"Ülesanne '{task.name}' avatud uuesti.")
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         elif action == "approve" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.completed:
                 messages.error(request, "Saab kinnitada ainult täidetud ülesandeid.")
             elif task.approved:
@@ -646,12 +684,14 @@ def index(request):
                                 logger = logging.getLogger(__name__)
                                 logger.warning(f"Failed to send task approved notification: {e}", exc_info=True)
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         elif action == "unapprove" and is_parent:
             task = _get_task()
             if not task:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.approved:
                 messages.warning(request, "See ülesanne pole kinnitatud.")
             else:
@@ -671,7 +711,8 @@ def index(request):
                         task.save(update_fields=["approved", "approved_by", "approved_at"])
                         messages.success(request, f"Ülesande '{task.name}' kinnitamine tühistatud.")
                 except Exception as e:
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    from django.conf import settings
+                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         return redirect("a_tasks:index")
 
@@ -704,10 +745,11 @@ def index(request):
                 task.can_child_cancel = False
 
         # Only show children in the task assignment dropdown (not parents)
+        # Use values_list for member_ids to avoid loading full objects
         family_members_qs = family.members.filter(role=User.ROLE_CHILD)
         member_ids = set(family_members_qs.values_list("id", flat=True))
         # Also check owner if they're a child
-        if family.owner and family.owner.role == User.ROLE_CHILD:
+        if family.owner_id and family.owner.role == User.ROLE_CHILD:
             if family.owner_id not in member_ids:
                 family_members = list(family_members_qs) + [family.owner]
             else:

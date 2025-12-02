@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.conf import settings
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -48,12 +49,27 @@ def index(request):
         action = request.POST.get("action")
         if family and action == "add":
             item_name = request.POST.get("name", "").strip()
-            if item_name:
+            if not item_name:
+                messages.error(request, "Palun sisesta ostunimekirja kauba nimi.")
+                return redirect("a_shopping:index")
+            
+            # Validate item name length
+            if len(item_name) > 255:
+                messages.error(request, "Kauba nimi on liiga pikk (maksimum 255 tähemärki).")
+                return redirect("a_shopping:index")
+            
+            try:
                 item = ShoppingListItem.objects.create(
                     name=item_name,
                     family=family,
                     added_by=user,
                 )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error creating shopping item: {e}", exc_info=True)
+                messages.error(request, f"Midagi läks valesti kauba lisamisel. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                return redirect("a_shopping:index")
                 # Send notification email
                 try:
                     send_shopping_item_added_notification(request, item)
