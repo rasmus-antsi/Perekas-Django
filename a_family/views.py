@@ -2,6 +2,7 @@
 import logging
 
 # Django imports
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -79,7 +80,6 @@ def onboarding(request):
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f"Error creating family: {e}", exc_info=True)
-                    from django.conf import settings
                     messages.error(request, f"Midagi läks valesti pere loomisel. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
                     return redirect('a_family:onboarding')
                 try:
@@ -134,7 +134,6 @@ def onboarding(request):
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
                 except Exception as e:
-                    from django.conf import settings
                     messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         
         else:
@@ -331,12 +330,10 @@ def resend_verification_email(request):
             
             return redirect('account_verification_sent')
         except EmailAddress.DoesNotExist:
-            from django.conf import settings
             messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
         except Exception as e:
             logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
-            from django.conf import settings
             messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
     
@@ -601,4 +598,200 @@ def manage_child_account(request, child_id):
         'last_name': child.last_name,
         'email': child.email or '',
         'birthdate': child.birthdate.isoformat() if child.birthdate else '',
+    })
+
+
+@login_required
+def status_check(request):
+    """
+    API endpoint for polling status updates.
+    Returns email verification status and last update timestamp for the user's family.
+    Used for auto-refresh functionality.
+    
+    Only checks for updates relevant to the current page (e.g., tasks page only checks task updates).
+    Optimized for high load: Uses single query with UNION to get max updated_at from relevant tables.
+    """
+    import logging
+    from django.http import JsonResponse
+    from django.utils import timezone
+    from django.db.models import Max
+    from django.db import connection
+    
+    logger = logging.getLogger(__name__)
+    user = request.user
+    family = _get_family_for_user(user)
+    
+    # Get current page from request parameter
+    current_page = request.GET.get('page', '')
+    logger.info(f'Status check called: user={user.id}, page={current_page}, family={family.id if family else None}')
+    
+    # Check email verification status (cached in session if possible)
+    email_verified = True
+    if user.email:
+        # Check session cache first to avoid DB query
+        cache_key = f'email_verified_{user.id}'
+        if cache_key not in request.session:
+            try:
+                email_address = EmailAddress.objects.filter(
+                    user=user,
+                    email=user.email,
+                    primary=True
+                ).only('verified').first()
+                if email_address:
+                    email_verified = email_address.verified
+                    # Cache for 60 seconds
+                    request.session[cache_key] = email_verified
+                    request.session.set_expiry(60)
+                else:
+                    request.session[cache_key] = True
+                    request.session.set_expiry(60)
+            except Exception:
+                pass
+        else:
+            email_verified = request.session[cache_key]
+    
+    # Get last update timestamp from family and related models
+    last_update = None
+    family_id = None
+    
+    if family:
+        family_id = str(family.id)
+        
+        # Check updates for the current page
+        # Detects any changes: adds, updates, deletes, and aggregate changes (like points)
+        updates = []
+        
+        # Always check family updates (affects all pages)
+        if family.updated_at:
+            updates.append(family.updated_at)
+        
+        # Page-specific updates - check both updated_at and created_at to catch adds/deletes
+        if current_page == 'tasks':
+            # Check task updates (includes adds, updates, deletes)
+            try:
+                from a_tasks.models import Task
+                # Check both updated_at (for updates) and created_at (for new tasks)
+                latest_task_update = Task.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_task_create = Task.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_task_update['latest']:
+                    updates.append(latest_task_update['latest'])
+                if latest_task_create['latest']:
+                    updates.append(latest_task_create['latest'])
+            except Exception:
+                pass
+        elif current_page == 'rewards':
+            # Check reward updates (includes adds, updates, deletes, claims)
+            try:
+                from a_rewards.models import Reward
+                latest_reward_update = Reward.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_reward_create = Reward.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_reward_update['latest']:
+                    updates.append(latest_reward_update['latest'])
+                if latest_reward_create['latest']:
+                    updates.append(latest_reward_create['latest'])
+            except Exception:
+                pass
+        elif current_page == 'shopping':
+            # Check shopping list updates (includes adds, updates, deletes, cart changes)
+            try:
+                from a_shopping.models import ShoppingListItem
+                latest_item_update = ShoppingListItem.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_item_create = ShoppingListItem.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_item_update['latest']:
+                    updates.append(latest_item_update['latest'])
+                if latest_item_create['latest']:
+                    updates.append(latest_item_create['latest'])
+            except Exception:
+                pass
+        elif current_page == 'dashboard':
+            # Dashboard shows all data, so check all updates
+            try:
+                from a_tasks.models import Task
+                from a_rewards.models import Reward
+                from a_shopping.models import ShoppingListItem
+                
+                # Tasks
+                latest_task_update = Task.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_task_create = Task.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_task_update['latest']:
+                    updates.append(latest_task_update['latest'])
+                if latest_task_create['latest']:
+                    updates.append(latest_task_create['latest'])
+                
+                # Rewards
+                latest_reward_update = Reward.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_reward_create = Reward.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_reward_update['latest']:
+                    updates.append(latest_reward_update['latest'])
+                if latest_reward_create['latest']:
+                    updates.append(latest_reward_create['latest'])
+                
+                # Shopping
+                latest_item_update = ShoppingListItem.objects.filter(family=family).aggregate(
+                    latest=Max('updated_at')
+                )
+                latest_item_create = ShoppingListItem.objects.filter(family=family).aggregate(
+                    latest=Max('created_at')
+                )
+                if latest_item_update['latest']:
+                    updates.append(latest_item_update['latest'])
+                if latest_item_create['latest']:
+                    updates.append(latest_item_create['latest'])
+            except Exception:
+                pass
+        
+        # Always check user updates (points changes, profile updates affect all pages)
+        # Check both updated_at and created_at to catch new members
+        try:
+            family_user_ids = [family.owner_id]
+            family_user_ids.extend(family.members.values_list('id', flat=True))
+            latest_user_update = User.objects.filter(
+                id__in=family_user_ids
+            ).aggregate(latest=Max('updated_at'))
+            latest_user_create = User.objects.filter(
+                id__in=family_user_ids
+            ).aggregate(latest=Max('created_at'))
+            if latest_user_update['latest']:
+                updates.append(latest_user_update['latest'])
+            if latest_user_create['latest']:
+                updates.append(latest_user_create['latest'])
+        except Exception:
+            pass
+        
+        if updates:
+            last_update = max(updates)
+    
+    # Check if family has multiple members (more than just the owner)
+    has_multiple_members = False
+    if family:
+        # Count members (owner + members)
+        member_count = 1 + family.members.count()
+        has_multiple_members = member_count > 1
+    
+    return JsonResponse({
+        'email_verified': email_verified,
+        'family_id': family_id,
+        'last_update': last_update.isoformat() if last_update else None,
+        'has_multiple_members': has_multiple_members,
+        'timestamp': timezone.now().isoformat(),
     })
