@@ -23,7 +23,6 @@
       rel="stylesheet"
     >
     <link rel="stylesheet" href="{% static 'styles.css' %}">
-    <script src="{% static 'haptics.js' %}"></script>
     <style>
       /* Fallback styles for messages - ensure they always work */
       .messages-container {
@@ -232,11 +231,6 @@
         sidebar.classList.toggle('mobile-open');
         overlay.classList.toggle('active');
         toggle.classList.toggle('open');
-        
-        // Haptic feedback for mobile nav toggle
-        if (window.HapticFeedback) {
-          window.HapticFeedback.trigger('buttonPress');
-        }
       }
       
       function closeMobileNav() {
@@ -254,10 +248,6 @@
         const navLinks = document.querySelectorAll('.sidebar-nav .nav-link, .nav-link-settings');
         navLinks.forEach(link => {
           link.addEventListener('click', function() {
-            // Add haptic feedback to navigation clicks
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('navigation');
-            }
             if (window.innerWidth <= 1024) {
               closeMobileNav();
             }
@@ -330,15 +320,6 @@
           sessionStorage.removeItem('hasAnimatedSettings'); // Allow animation on first entry
         }
       });
-      
-      // Debug: Log haptic support on page load (for testing)
-      if (window.HapticFeedback) {
-        console.log('HapticFeedback support:', window.HapticFeedback.isSupported());
-        console.log('HapticFeedback enabled:', window.HapticFeedback.isEnabled());
-        console.log('Browser:', navigator.userAgent);
-        // Uncomment to test haptic on page load:
-        // setTimeout(() => window.HapticFeedback.test(), 1000);
-      }
     </script>
     {% block extra_scripts %}{% endblock %}
   </body>

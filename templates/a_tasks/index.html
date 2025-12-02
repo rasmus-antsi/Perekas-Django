@@ -1022,26 +1022,14 @@
         function closeModal() {
           modal.classList.remove('is-visible');
           document.body.classList.remove('modal-open');
-          // Haptic feedback for modal close
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('modalClose');
-          }
         }
 
         document.querySelectorAll('[data-open-task-modal="create"]').forEach((button) => {
-          button.addEventListener('click', () => {
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('modalOpen');
-            }
-            openModal('create');
-          });
+          button.addEventListener('click', () => openModal('create'));
         });
 
         document.querySelectorAll('[data-open-task-modal="edit"]').forEach((button) => {
           button.addEventListener('click', () => {
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('modalOpen');
-            }
             openModal('edit', {
               id: button.dataset.taskId,
               name: button.dataset.taskName,
@@ -1214,34 +1202,13 @@
             title = 'Kinnita tagasilükkamine';
           } else if (action === 'complete') {
             title = 'Kinnita täitmine';
-            // Haptic feedback for task completion confirmation
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('buttonPress');
-            }
           } else if (action === 'approve') {
             title = 'Kinnita ülesanne';
-            // Haptic feedback for task approval confirmation
-            if (window.HapticFeedback) {
-              window.HapticFeedback.trigger('buttonPress');
-            }
           }
           
           pendingForm = form;
           formSubmitHandler = submitHandler;
           const confirmed = await showConfirm(title, message);
-          
-          // Haptic feedback when form is actually submitted
-          if (confirmed && window.HapticFeedback) {
-            if (action === 'complete') {
-              window.HapticFeedback.trigger('taskComplete');
-            } else if (action === 'approve') {
-              window.HapticFeedback.trigger('taskApprove');
-            } else if (action === 'delete') {
-              window.HapticFeedback.trigger('error');
-            } else {
-              window.HapticFeedback.trigger('formSubmit');
-            }
-          }
         };
         
         form.addEventListener('submit', submitHandler);
@@ -1263,20 +1230,12 @@
           helpModal.setAttribute('aria-hidden', 'false');
           helpModal.classList.add('is-visible');
           document.body.classList.add('modal-open');
-          // Haptic feedback for modal open
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('modalOpen');
-          }
         }
         
         function closeHelpModal() {
           helpModal.setAttribute('aria-hidden', 'true');
           helpModal.classList.remove('is-visible');
           document.body.classList.remove('modal-open');
-          // Haptic feedback for modal close
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('modalClose');
-          }
         }
         
         helpButton.addEventListener('click', openHelpModal);
@@ -1661,10 +1620,6 @@
         
         // Clear input after successful submission (form will redirect, but just in case)
         quickAddForm.addEventListener('submit', function () {
-          // Haptic feedback for form submission
-          if (window.HapticFeedback) {
-            window.HapticFeedback.trigger('formSubmit');
-          }
           hideAutocomplete();
           // Input will be cleared on redirect, but we can clear it here too
           setTimeout(function () {
