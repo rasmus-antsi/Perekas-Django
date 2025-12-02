@@ -617,12 +617,17 @@ def status_check(request):
     from django.db.models import Max
     from django.db import connection
     
+    import time
+    
     logger = logging.getLogger(__name__)
     user = request.user
     family = _get_family_for_user(user)
     
     # Get current page from request parameter
     current_page = request.GET.get('page', '')
+    
+    # Track query execution time for dynamic polling adjustment
+    query_start_time = time.time()
     logger.info(f'Status check called: user={user.id}, page={current_page}, family={family.id if family else None}')
     
     # Check email verification status (cached in session if possible)
@@ -788,10 +793,14 @@ def status_check(request):
         member_count = 1 + family.members.count()
         has_multiple_members = member_count > 1
     
+    # Calculate query execution time in milliseconds
+    query_time_ms = (time.time() - query_start_time) * 1000
+    
     return JsonResponse({
         'email_verified': email_verified,
         'family_id': family_id,
         'last_update': last_update.isoformat() if last_update else None,
         'has_multiple_members': has_multiple_members,
         'timestamp': timezone.now().isoformat(),
+        'query_time_ms': round(query_time_ms, 2),  # Query execution time for dynamic polling adjustment
     })

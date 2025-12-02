@@ -328,27 +328,23 @@
       });
 
       // Auto-refresh polling - only when needed:
-      // 1. Email verification pending
-      // 2. Multiple family members might be viewing same page
+      // Multiple family members might be viewing same page
       (function() {
         // Only poll if user is authenticated
         {% if user.is_authenticated %}
         let lastUpdateTimestamp = null;
-        let lastEmailVerified = null;
         let pollingInterval = null;
         let isPolling = false;
-        let shouldPollForEmail = false;
         let shouldPollForUpdates = false;
         let hasMultipleMembers = false;
         const statusCheckUrl = '{% url "a_family:status_check" %}';
         
-        // Check if we need to poll for email verification
-        // Only poll if email verification banner is visible
-        function checkIfEmailPollingNeeded() {
-          const emailBanner = document.querySelector('.email-verification-banner');
-          shouldPollForEmail = emailBanner !== null && emailBanner.offsetParent !== null;
-          return shouldPollForEmail;
-        }
+        // Dynamic polling interval - adjusts based on query performance
+        let currentPollingInterval = 10000; // Start at 10 seconds
+        const MIN_POLLING_INTERVAL = 10000; // 10 seconds minimum
+        const MAX_POLLING_INTERVAL = 30000; // 30 seconds maximum
+        const QUERY_TIME_THRESHOLD_SLOW = 50; // ms - if query takes longer, slow down polling
+        const QUERY_TIME_THRESHOLD_FAST = 10; // ms - if query is fast, can speed up polling
         
         // Check if we should poll for multi-user updates
         // Only poll if there are multiple family members AND we're on a specific page
@@ -395,11 +391,10 @@
           }
           
           // Re-check if we still need to poll
-          const needsEmailPoll = checkIfEmailPollingNeeded();
           const needsUpdatePoll = checkIfUpdatePollingNeeded();
           
-          // Stop polling if neither is needed
-          if (!needsEmailPoll && !needsUpdatePoll) {
+          // Stop polling if not needed
+          if (!needsUpdatePoll) {
             stopPolling();
             return;
           }
@@ -410,7 +405,7 @@
           const currentPage = getCurrentPage();
           const url = statusCheckUrl + (currentPage ? '?page=' + encodeURIComponent(currentPage) : '');
           
-          console.log('[Polling] Status check:', { currentPage, url, needsEmailPoll, needsUpdatePoll });
+          console.log('[Polling] Status check:', { currentPage, url, needsUpdatePoll });
           
           fetch(url, {
             method: 'GET',
@@ -426,24 +421,14 @@
             return response.json();
           })
           .then(data => {
+            // Adjust polling interval based on query performance
+            if (data.query_time_ms !== undefined) {
+              adjustPollingInterval(data.query_time_ms);
+            }
+            
             // Update has_multiple_members from API response
             if (data.has_multiple_members !== undefined) {
               hasMultipleMembers = data.has_multiple_members;
-            }
-            
-            // Check email verification status (only if we're polling for it)
-            if (needsEmailPoll) {
-              if (lastEmailVerified !== null && !lastEmailVerified && data.email_verified) {
-                // Email was just verified - refresh page
-                window.location.reload();
-                return;
-              }
-              lastEmailVerified = data.email_verified;
-              
-              // If email is now verified, stop polling for email
-              if (data.email_verified) {
-                shouldPollForEmail = false;
-              }
             }
             
             // Check for data updates (only if we're polling for it)
@@ -478,10 +463,8 @@
         function initialStatusCheck() {
           const currentPage = getCurrentPage();
           
-          // Always check if we're on a relevant page - if so, make initial request
-          // This ensures we get hasMultipleMembers even if it starts as false
-          if (!currentPage && !checkIfEmailPollingNeeded()) {
-            // Not on a relevant page and no email verification needed
+          // Only check if we're on a relevant page
+          if (!currentPage) {
             return;
           }
           
@@ -510,23 +493,17 @@
               hasMultipleMembers = data.has_multiple_members;
             }
             
-            // Set email verification status
-            if (data.email_verified !== undefined) {
-              lastEmailVerified = data.email_verified;
-            }
-            
             // Set baseline timestamp
             if (data.last_update) {
               lastUpdateTimestamp = data.last_update;
             }
             
             // Now start polling if needed
-            checkIfEmailPollingNeeded();
             checkIfUpdatePollingNeeded();
             
-            console.log('[Polling] Should poll:', { shouldPollForEmail, shouldPollForUpdates, hasMultipleMembers, currentPage });
+            console.log('[Polling] Should poll:', { shouldPollForUpdates, hasMultipleMembers, currentPage });
             
-            if (shouldPollForEmail || shouldPollForUpdates) {
+            if (shouldPollForUpdates) {
               startPolling();
             }
           })
@@ -534,39 +511,71 @@
             console.error('[Polling] Initial status check failed:', error);
             // Still try to start polling after a delay if on relevant page
             setTimeout(() => {
-              checkIfEmailPollingNeeded();
-              // Assume multiple members if on relevant page (will be corrected on next check)
               const currentPage = getCurrentPage();
               if (currentPage) {
                 hasMultipleMembers = true; // Optimistic - will be corrected by API
                 checkIfUpdatePollingNeeded();
               }
-              if (shouldPollForEmail || shouldPollForUpdates) {
+              if (shouldPollForUpdates) {
                 startPolling();
               }
             }, 5000);
           });
         }
         
-        // Start polling every 10 seconds
+        // Adjust polling interval based on query performance
+        function adjustPollingInterval(queryTimeMs) {
+          const previousInterval = currentPollingInterval;
+          
+          if (queryTimeMs > QUERY_TIME_THRESHOLD_SLOW) {
+            // Query is slow - increase polling interval (reduce load)
+            currentPollingInterval = Math.min(
+              currentPollingInterval + 2000, // Increase by 2 seconds
+              MAX_POLLING_INTERVAL
+            );
+            if (previousInterval !== currentPollingInterval) {
+              console.log(`[Polling] Query slow (${queryTimeMs.toFixed(1)}ms), increasing interval to ${currentPollingInterval/1000}s`);
+              restartPollingWithNewInterval();
+            }
+          } else if (queryTimeMs < QUERY_TIME_THRESHOLD_FAST && currentPollingInterval > MIN_POLLING_INTERVAL) {
+            // Query is fast - decrease polling interval (more responsive)
+            currentPollingInterval = Math.max(
+              currentPollingInterval - 1000, // Decrease by 1 second
+              MIN_POLLING_INTERVAL
+            );
+            if (previousInterval !== currentPollingInterval) {
+              console.log(`[Polling] Query fast (${queryTimeMs.toFixed(1)}ms), decreasing interval to ${currentPollingInterval/1000}s`);
+              restartPollingWithNewInterval();
+            }
+          }
+        }
+        
+        // Restart polling with new interval
+        function restartPollingWithNewInterval() {
+          if (pollingInterval) {
+            stopPolling();
+            startPolling();
+          }
+        }
+        
+        // Start polling with dynamic interval
         function startPolling() {
           if (pollingInterval) {
             return; // Already polling
           }
           
-          // Poll every 10 seconds
+          // Poll with current dynamic interval
           pollingInterval = setInterval(() => {
             // Re-check if we still need to poll before each check
-            checkIfEmailPollingNeeded();
             checkIfUpdatePollingNeeded();
             
-            if (!shouldPollForEmail && !shouldPollForUpdates) {
+            if (!shouldPollForUpdates) {
               stopPolling();
               return;
             }
             
             checkStatus();
-          }, 10000);
+          }, currentPollingInterval);
         }
         
         // Stop polling when page is hidden
