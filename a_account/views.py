@@ -1,18 +1,24 @@
+# Standard library imports
 import logging
-import stripe
 from datetime import datetime
+
+# Third-party imports
+import stripe
+
+# Django imports
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.conf import settings as django_settings
 
-logger = logging.getLogger(__name__)
-
+# Local application imports
 from a_family.models import Family, User
 from a_subscription.models import Subscription
 from a_subscription.utils import get_family_subscription, get_tier_from_price_id
+
+logger = logging.getLogger(__name__)
 
 
 def _get_billing_period_from_price_id(price_id):
@@ -40,16 +46,11 @@ def _get_billing_period_from_price_id(price_id):
 
 def _sanitize_error_message(error_msg):
     """Always return generic user-friendly error message"""
-    return "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee"
+    from django.conf import settings
+    return f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}"
 
 
-def _get_family_for_user(user):
-    family = None
-    if hasattr(user, "families"):
-        family = user.families.first()
-    if family is None:
-        family = Family.objects.filter(owner=user).first()
-    return family
+from a_family.utils import get_family_for_user as _get_family_for_user
 
 
 @login_required
@@ -406,15 +407,15 @@ def subscription_settings(request):
             ).first()
             
             if not subscription:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not hasattr(subscription, 'stripe_customer_id') or not subscription.stripe_customer_id:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -448,7 +449,7 @@ def subscription_settings(request):
             except (AttributeError, TypeError) as e:
                 # Handle case where billing_portal API might not be available
                 logger.error(f"Stripe billing_portal API not available: {str(e)}", exc_info=True)
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             except Exception as e:
                 error_msg = str(e)
@@ -465,7 +466,7 @@ def subscription_settings(request):
                         return redirect(portal_session.url)
                     except Exception as retry_error:
                         logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
-                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                        messages.error(request, _sanitize_error_message(str(e)))
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     logger.error(f"Stripe error: {error_msg}", exc_info=True)
@@ -507,7 +508,7 @@ def subscription_settings(request):
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -516,7 +517,7 @@ def subscription_settings(request):
                 # Check if billing_portal exists before accessing it
                 if not hasattr(stripe, 'billing_portal'):
                     logger.error("Stripe billing_portal API not available in this Stripe SDK version")
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, _sanitize_error_message(str(e)))
                     return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 
                 # Build return URL - use STRIPE_BASE_URL if set, otherwise use request
@@ -550,7 +551,7 @@ def subscription_settings(request):
             except (AttributeError, TypeError) as e:
                 # Handle case where billing_portal API might not be available or accessed incorrectly
                 logger.error(f"Stripe billing_portal API error: {str(e)}", exc_info=True)
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             except Exception as e:
                 # Catch all Stripe errors (InvalidRequestError, etc.) and other exceptions
@@ -570,11 +571,11 @@ def subscription_settings(request):
                         return redirect(portal_session.url)
                     except Exception as retry_error:
                         logger.error(f"Stripe portal error (retry failed): {str(retry_error)}", exc_info=True)
-                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                        messages.error(request, _sanitize_error_message(str(e)))
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     logger.error(f"Stripe portal error: {error_msg}", exc_info=True)
-                    messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                    messages.error(request, _sanitize_error_message(str(e)))
                     return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         elif action == 'upgrade':
@@ -582,7 +583,7 @@ def subscription_settings(request):
             billing_period = request.POST.get('billing_period', 'monthly')
             
             if tier not in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             # Get appropriate price ID
@@ -592,7 +593,7 @@ def subscription_settings(request):
                 price_id = django_settings.PRO_MONTHLY_PRICE_ID if billing_period == 'monthly' else django_settings.PRO_YEARLY_PRICE_ID
             
             if not django_settings.STRIPE_SECRET_KEY:
-                messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                messages.error(request, _sanitize_error_message(str(e)))
                 return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
             
             stripe.api_key = django_settings.STRIPE_SECRET_KEY
@@ -630,7 +631,7 @@ def subscription_settings(request):
                     except Exception as e:
                         error_msg = str(e)
                         logger.error(f"Error finding/creating customer: {error_msg}", exc_info=True)
-                        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                        messages.error(request, _sanitize_error_message(str(e)))
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                 else:
                     try:
@@ -667,7 +668,7 @@ def subscription_settings(request):
                         new_price_tier = get_tier_from_price_id(price_id)
                         if not new_price_tier or new_price_tier != tier:
                             logger.error(f"Price ID {price_id} does not match tier {tier}")
-                            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+                            messages.error(request, _sanitize_error_message(str(e)))
                             return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
                         
                         # Update subscription with new price (prorated)
@@ -826,7 +827,7 @@ def delete_account(request):
         return redirect(f"{reverse('a_account:settings')}?section=general")
     
     if request.method != 'POST':
-        messages.error(request, "Midagi läks valesti.")
+        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {django_settings.SUPPORT_EMAIL}")
         return redirect(f"{reverse('a_account:settings')}?section=general")
     delete_children_choice = request.POST.get('delete_children', 'delete')
     if delete_children_choice not in ('delete', 'keep'):

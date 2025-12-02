@@ -1,19 +1,22 @@
+# Standard library imports
 import logging
-import stripe
 from datetime import datetime
+
+# Third-party imports
+import stripe
+
+# Django imports
+from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Sum, Q
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.conf import settings as django_settings
 
-logger = logging.getLogger(__name__)
-
+# Local application imports
 from a_family.models import Family, User
 from a_rewards.models import Reward
 from a_shopping.models import ShoppingListItem
-from a_tasks.models import Task
 from a_subscription.models import Subscription
 from a_subscription.utils import (
     get_family_subscription,
@@ -21,15 +24,12 @@ from a_subscription.utils import (
     get_tier_limits,
     has_shopping_list_access,
 )
+from a_tasks.models import Task
+
+logger = logging.getLogger(__name__)
 
 
-def _get_family_for_user(user):
-    family = None
-    if hasattr(user, "families"):
-        family = user.families.first()
-    if family is None:
-        family = Family.objects.filter(owner=user).first()
-    return family
+from a_family.utils import get_family_for_user as _get_family_for_user
 
 
 @login_required
@@ -142,14 +142,30 @@ def dashboard(request):
         if family.owner_id not in [member.id for member in members]:
             members.append(family.owner)
 
+        # Optimize queries: Use aggregation to avoid N+1 queries
+        from django.db.models import Count, Q
+        
+        # Get task counts per member in one query
+        member_task_stats = tasks_qs.values('assigned_to').annotate(
+            total_assigned=Count('id')
+        )
+        member_completed_stats = tasks_qs.filter(
+            completed=True,
+            approved=True
+        ).values('completed_by').annotate(
+            completed_count=Count('id')
+        )
+        
+        # Create lookup dictionaries
+        assigned_counts = {stat['assigned_to']: stat['total_assigned'] for stat in member_task_stats if stat['assigned_to']}
+        completed_counts = {stat['completed_by']: stat['completed_count'] for stat in member_completed_stats if stat['completed_by']}
+        
+        total_tasks_fallback = stats["active_tasks"] or tasks_qs.count()
+        
         for member in members:
-            total_tasks = tasks_qs.filter(assigned_to=member).count()
-            total_tasks_display = total_tasks if total_tasks else stats["active_tasks"] or tasks_qs.count()
-            completed_count = tasks_qs.filter(
-                completed=True,
-                approved=True,
-                completed_by=member,
-            ).count()
+            total_tasks = assigned_counts.get(member.id, 0)
+            total_tasks_display = total_tasks if total_tasks else total_tasks_fallback
+            completed_count = completed_counts.get(member.id, 0)
             progress_ratio = completed_count / total_tasks_display if total_tasks_display else 0
 
             display_name = member.get_display_name()

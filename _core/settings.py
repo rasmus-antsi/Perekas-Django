@@ -32,7 +32,12 @@ AUTH_USER_MODEL = 'a_family.User'
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm*3lk0o+u)ge6^zd-tp+*yqd0')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ValueError("SECRET_KEY must be set in production! Set it via environment variable.")
+    # Only for local development
+    SECRET_KEY = 'django-insecure-dev-only-key-change-in-production'
 
 # ALLOWED_HOSTS - in production/staging, set this via environment variable
 # For Railway: Set ALLOWED_HOSTS=yourdomain.com,your-app.railway.app
@@ -40,16 +45,12 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ly*fpjg)@3k3&7-7mbnxx$qfsm
 if DEBUG:
     ALLOWED_HOSTS = ['*']
 else:
-    allowed_hosts = os.getenv('ALLOWED_HOSTS', '')
-    if allowed_hosts:
-        ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()]
-    else:
-        # If no ALLOWED_HOSTS is set in production, allow all (not recommended but prevents 400 errors)
-        # This should be overridden with proper domain names
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning('ALLOWED_HOSTS not set in production! Allowing all hosts. This is insecure - set ALLOWED_HOSTS environment variable.')
-        ALLOWED_HOSTS = ['*']
+    allowed_hosts = os.getenv('ALLOWED_HOSTS')
+    if not allowed_hosts:
+        raise ValueError("ALLOWED_HOSTS must be set in production! Set it via environment variable (comma-separated list of domains).")
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()]
+    if not ALLOWED_HOSTS:
+        raise ValueError("ALLOWED_HOSTS is set but empty. Provide at least one domain.")
 
 # Security Settings for Production
 if not DEBUG:
@@ -177,6 +178,9 @@ ACCOUNT_EMAIL_SUBJECT_PREFIX = '[Perekas] '
 # In production/staging: Set SMTP environment variables
 # In local development: Uses console backend (emails print to terminal)
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@perekas.ee')
+
+# Support email address (used in error messages)
+SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'tugi@perekas.ee')
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 if os.getenv('EMAIL_HOST'):
@@ -291,9 +295,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Stripe Configuration
-# Use environment variables if set, otherwise use test keys for development
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_51SUVq28TJMYKOD9HDgvJAisHGUNAB2HWnKWIGIX1eBghmcTUuuHdF9HOXYKO3kqBiJpBRH39eeReXdgJt0krBuE700g12Z1sUs')
-STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', 'sk_test_51SUVq28TJMYKOD9HorPp8q9vBlmCBnuDUasLvbmoVw4NK6gcGbEjdNjAUNRHl2kDdTEWlgkKQm64ZkrG0UgiHOQB00pEzmrc0e')
+# In production, all Stripe keys must be set via environment variables
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+if not DEBUG:
+    # In production, require all Stripe keys
+    if not STRIPE_PUBLIC_KEY:
+        raise ValueError("STRIPE_PUBLIC_KEY must be set in production! Set it via environment variable.")
+    if not STRIPE_SECRET_KEY:
+        raise ValueError("STRIPE_SECRET_KEY must be set in production! Set it via environment variable.")
+else:
+    # In development, use test keys if not set
+    if not STRIPE_PUBLIC_KEY:
+        STRIPE_PUBLIC_KEY = 'pk_test_51SUVq28TJMYKOD9HDgvJAisHGUNAB2HWnKWIGIX1eBghmcTUuuHdF9HOXYKO3kqBiJpBRH39eeReXdgJt0krBuE700g12Z1sUs'
+    if not STRIPE_SECRET_KEY:
+        STRIPE_SECRET_KEY = 'sk_test_51SUVq28TJMYKOD9HorPp8q9vBlmCBnuDUasLvbmoVw4NK6gcGbEjdNjAUNRHl2kDdTEWlgkKQm64ZkrG0UgiHOQB00pEzmrc0e'
+
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', None)
 
 # Stripe URL settings - use production URL if set, otherwise use request.build_absolute_uri()
@@ -303,13 +320,25 @@ STRIPE_BASE_URL = os.getenv('STRIPE_BASE_URL', None)
 
 
 # Stripe Price IDs
-STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HkQsG0t55')
-STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HFKxIhmjq')
-PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HJwhR8zvK')
-PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HgHoCVqds')
-
-# Stripe Customer Portal
-STRIPE_CUSTOMER_PORTAL_ID = os.getenv('STRIPE_CUSTOMER_PORTAL_ID', 'bpc_1SVHy37Bxzw7NSMsZQonrHVo')
+# In production, these should be set via environment variables (production price IDs)
+# In development, use test price IDs if not set
+if not DEBUG:
+    # In production, require price IDs to be set
+    STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID')
+    STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID')
+    PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID')
+    PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID')
+    STRIPE_CUSTOMER_PORTAL_ID = os.getenv('STRIPE_CUSTOMER_PORTAL_ID')
+    
+    if not all([STARTER_MONTHLY_PRICE_ID, STARTER_YEARLY_PRICE_ID, PRO_MONTHLY_PRICE_ID, PRO_YEARLY_PRICE_ID, STRIPE_CUSTOMER_PORTAL_ID]):
+        raise ValueError("All Stripe Price IDs and Customer Portal ID must be set in production via environment variables!")
+else:
+    # In development, use test IDs as defaults
+    STARTER_MONTHLY_PRICE_ID = os.getenv('STARTER_MONTHLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HkQsG0t55')
+    STARTER_YEARLY_PRICE_ID = os.getenv('STARTER_YEARLY_PRICE_ID', 'price_1SUdLt8TJMYKOD9HFKxIhmjq')
+    PRO_MONTHLY_PRICE_ID = os.getenv('PRO_MONTHLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HJwhR8zvK')
+    PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HgHoCVqds')
+    STRIPE_CUSTOMER_PORTAL_ID = os.getenv('STRIPE_CUSTOMER_PORTAL_ID', 'bpc_1SVHy37Bxzw7NSMsZQonrHVo')
 
 # Logging Configuration
 LOGGING = {
