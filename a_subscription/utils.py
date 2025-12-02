@@ -21,7 +21,7 @@ TIER_LIMITS = {
     Subscription.TIER_STARTER: {
         'max_parents': 2,
         'max_children': 2,
-        'max_tasks_per_month': 45,
+        'max_tasks_per_month': 100,
         'max_rewards_per_month': 10,
         'max_recurring_tasks': 10,
         'shopping_list_enabled': True,
