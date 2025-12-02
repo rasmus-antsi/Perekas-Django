@@ -8,7 +8,7 @@
       <p>Logi sisse, et hoida kogu pere tegemised sünkroonis.</p>
     </div>
 
-    <form method="post" action="{% url 'account_login' %}" class="auth-form-minimal">
+    <form method="post" action="{% url 'account_login' %}" class="auth-form-minimal" id="login-form">
       {% csrf_token %}
       {% if form.non_field_errors %}
         <div class="auth-error-minimal">{{ form.non_field_errors|join:", " }}</div>
@@ -41,7 +41,7 @@
 
     <p class="auth-switch-minimal">
       {% url 'account_signup' as signup_url %}
-      Pole veel kontot? <a href="{{ signup_url }}">Loo see siin</a>.
+      Pole veel kontot? <a href="{{ signup_url }}" onclick="if(window.HapticFeedback){window.HapticFeedback.trigger('navigation');}">Loo see siin</a>.
     </p>
   </div>
 
@@ -121,5 +121,30 @@
         });
       }
     });
+    
+    // Add haptic feedback to login form submission
+    const loginForm = document.getElementById('login-form');
+    if (loginForm && window.HapticFeedback) {
+      loginForm.addEventListener('submit', function() {
+        window.HapticFeedback.trigger('formSubmit');
+      });
+      
+      // Add haptic feedback to submit button
+      const submitButton = loginForm.querySelector('button[type="submit"]');
+      if (submitButton) {
+        submitButton.addEventListener('click', function() {
+          window.HapticFeedback.trigger('buttonPress');
+        });
+      }
+    }
+    
+    // Debug: Log haptic support status (remove in production)
+    if (window.HapticFeedback) {
+      console.log('HapticFeedback support:', window.HapticFeedback.isSupported());
+      console.log('HapticFeedback enabled:', window.HapticFeedback.isEnabled());
+      console.log('User agent:', navigator.userAgent);
+      // Test haptic on page load (optional - remove if too annoying)
+      // window.HapticFeedback.test();
+    }
   </script>
 {% endblock %}

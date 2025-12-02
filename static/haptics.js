@@ -5,7 +5,26 @@
  */
 class HapticFeedback {
   static isSupported() {
-    return 'vibrate' in navigator;
+    // Check for Vibration API support
+    const hasVibrate = 'vibrate' in navigator;
+    
+    if (!hasVibrate) {
+      return false;
+    }
+    
+    // Additional check: some browsers might have vibrate but not actually support it
+    // Opera on iOS might not support it properly
+    const userAgent = navigator.userAgent || '';
+    const isOpera = userAgent.includes('OPR') || userAgent.includes('Opera') || userAgent.includes('OPiOS');
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+    
+    // Opera on iOS might not support vibration properly - but we'll still try
+    if (isOpera && isIOS) {
+      console.debug('HapticFeedback: Opera on iOS detected - vibration may not be fully supported');
+      // Still return true to attempt vibration, but it might not work
+    }
+    
+    return hasVibrate;
   }
 
   static isDisabled() {
@@ -103,11 +122,42 @@ class HapticFeedback {
     }
 
     try {
-      navigator.vibrate(vibrationPattern);
+      const result = navigator.vibrate(vibrationPattern);
+      // Some browsers return false if vibration is not supported
+      if (result === false) {
+        console.debug('HapticFeedback: Vibration API returned false - may not be supported on this device/browser');
+        // Try alternative: some browsers need a different approach
+        // For Opera on iOS, we might need to use a longer pattern
+        if (vibrationPattern.length === 1 && vibrationPattern[0] < 100) {
+          // Try with a slightly longer vibration for better compatibility
+          navigator.vibrate([100]);
+        }
+      } else {
+        // Success - log for debugging (remove in production)
+        console.debug('HapticFeedback: Vibration triggered successfully', vibrationPattern);
+      }
     } catch (error) {
       // Silently fail if vibration is not supported or blocked
-      console.debug('Haptic feedback not available:', error);
+      console.debug('HapticFeedback: Vibration error:', error);
     }
+  }
+  
+  /**
+   * Test haptic feedback - useful for debugging
+   * @returns {boolean} True if vibration was triggered
+   */
+  static test() {
+    if (!this.isSupported()) {
+      console.log('HapticFeedback: Not supported on this device/browser');
+      return false;
+    }
+    if (this.isDisabled()) {
+      console.log('HapticFeedback: Disabled by user');
+      return false;
+    }
+    this.trigger('tap');
+    console.log('HapticFeedback: Test vibration triggered');
+    return true;
   }
 
   /**

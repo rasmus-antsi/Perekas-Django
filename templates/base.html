@@ -330,6 +330,15 @@
           sessionStorage.removeItem('hasAnimatedSettings'); // Allow animation on first entry
         }
       });
+      
+      // Debug: Log haptic support on page load (for testing)
+      if (window.HapticFeedback) {
+        console.log('HapticFeedback support:', window.HapticFeedback.isSupported());
+        console.log('HapticFeedback enabled:', window.HapticFeedback.isEnabled());
+        console.log('Browser:', navigator.userAgent);
+        // Uncomment to test haptic on page load:
+        // setTimeout(() => window.HapticFeedback.test(), 1000);
+      }
     </script>
     {% block extra_scripts %}{% endblock %}
   </body>
