@@ -1373,10 +1373,10 @@
             const subscriptionsUrl = "{% url 'a_account:subscriptions' %}";
             autocompleteDropdown.innerHTML = `
               <div class="autocomplete-item autocomplete-limit-message" role="option" style="padding: 1rem; color: #fca5a5; border-bottom: 1px solid rgba(239, 68, 68, 0.2);">
-                <div style="font-weight: 600; margin-bottom: 0.25rem;">Korduvate ülesannete piir saavutatud</div>
+                <div style="font-weight: 600; margin-bottom: 0.25rem;">Aktiivsete korduvate ülesannete piir saavutatud</div>
                 <div style="font-size: 0.875rem; opacity: 0.9;">
                   Oled jõudnud oma limiidini (${recurringLimitInfo.current}/${recurringLimitInfo.limit} ${tierName} paketis).
-                  <a href="${subscriptionsUrl}" style="color: #fca5a5; text-decoration: underline; display: inline-block; margin-top: 0.5rem;">Uuenda tellimust</a>, et luua rohkem korduvaid ülesandeid.
+                  <a href="${subscriptionsUrl}" style="color: #fca5a5; text-decoration: underline; display: inline-block; margin-top: 0.5rem;">Uuenda tellimust</a>, et luua rohkem aktiivseid korduvaid ülesandeid.
                 </div>
               </div>
             `;

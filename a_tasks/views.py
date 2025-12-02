@@ -325,8 +325,8 @@ def index(request):
                             tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
                             messages.error(
                                 request,
-                                f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
-                                f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                                f"Olete jõudnud oma aktiivsete korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                f"Kõrgendage paketti, et luua rohkem aktiivseid korduvaid ülesandeid."
                             )
                             # Transaction will rollback task creation automatically
                             return redirect("a_tasks:index")
@@ -445,8 +445,8 @@ def index(request):
                             tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
                             messages.error(
                                 request,
-                                f"Olete jõudnud oma korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
-                                f"Kõrgendage paketti, et luua rohkem korduvaid ülesandeid."
+                                f"Olete jõudnud oma aktiivsete korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                f"Kõrgendage paketti, et luua rohkem aktiivseid korduvaid ülesandeid."
                             )
                             return redirect("a_tasks:index")
                     
