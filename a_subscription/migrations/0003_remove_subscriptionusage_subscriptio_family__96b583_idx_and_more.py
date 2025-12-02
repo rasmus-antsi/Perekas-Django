@@ -10,10 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='subscriptionusage',
-            name='subscriptio_family__96b583_idx',
-        ),
+        # Index was already removed in 0002, so we just rename the new one
         migrations.RenameIndex(
             model_name='subscriptionusage',
             new_name='subscriptio_family__9d0616_idx',

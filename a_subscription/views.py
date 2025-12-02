@@ -24,11 +24,11 @@ def upgrade_success(request):
     """Handle successful subscription upgrade"""
     session_id = request.GET.get('session_id')
     if not session_id:
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     if not settings.STRIPE_SECRET_KEY:
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -40,7 +40,7 @@ def upgrade_success(request):
         tier_from_metadata = session.metadata.get('tier')
 
         if str(request.user.id) != str(user_id):
-            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
         # Extract tier from price ID (primary method, scalable)
@@ -72,7 +72,7 @@ def upgrade_success(request):
             logger.info(f"Using tier {tier} from metadata for session {session_id}")
         
         if not tier:
-            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             logger.error(f"Could not determine tier for session {session_id}")
             return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
@@ -80,7 +80,7 @@ def upgrade_success(request):
         customer_id = getattr(session, 'customer', None)
         if not customer_id:
             logger.error(f"No customer ID found in session {session_id}")
-            messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+            messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
         
         # Get subscription details from Stripe
@@ -170,11 +170,11 @@ def upgrade_success(request):
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error in upgrade_success: {str(e)}", exc_info=True)
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
     except Exception as e:
         logger.error(f"Unexpected error in upgrade_success: {str(e)}", exc_info=True)
-        messages.error(request, "Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: tugi@perekas.ee")
+        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
 
@@ -278,7 +278,17 @@ def _update_subscription_from_stripe(subscription, subscription_obj):
 
 @csrf_exempt
 def webhook(request):
-    """Handle Stripe webhooks"""
+    """
+    Handle Stripe webhooks.
+    
+    CSRF protection is exempted here because Stripe webhooks come from external servers
+    and cannot include CSRF tokens. Instead, security is ensured through:
+    1. Webhook signature verification using STRIPE_WEBHOOK_SECRET
+    2. Event payload validation
+    3. Idempotency checks to prevent duplicate processing
+    
+    This is the standard and secure approach for handling Stripe webhooks.
+    """
     if not settings.STRIPE_SECRET_KEY:
         return HttpResponse(status=400)
 

@@ -5,6 +5,13 @@ Send template emails one by one for verification
 import os
 import django
 import sys
+import logging
+from pathlib import Path
+
+# Change to project root directory (parent of scripts/)
+script_dir = Path(__file__).parent
+project_root = script_dir.parent
+os.chdir(project_root)
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', '_core.settings')
@@ -21,6 +28,13 @@ from django.conf import settings
 from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.utils import user_pk_to_url_str
 
+# Setup logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
 # Create a mock request
 factory = RequestFactory()
 request = factory.get('/', SERVER_NAME='perekas.ee')
@@ -30,23 +44,23 @@ request.META['wsgi.url_scheme'] = 'https'
 # Get user
 user = User.objects.filter(email='rasmus435@icloud.com').first()
 if not user:
-    print("User not found!")
+    logger.error("User not found!")
     exit(1)
 
 family = Family.objects.filter(owner=user).first() or user.families.first()
 if not family:
-    print("Family not found!")
+    logger.error("Family not found!")
     exit(1)
 
 child = family.members.filter(role='child', email__isnull=True).first() or family.members.filter(role='child').first()
 if not child:
-    print("Child not found!")
+    logger.error("Child not found!")
     exit(1)
 
-print(f"User: {user.get_display_name()} ({user.email})")
-print(f"Family: {family.name} (Code: {family.join_code})")
-print(f"Child: {child.get_display_name()} (Role: {child.role}, Email: {child.email or 'None'})")
-print("\n" + "="*60)
+logger.info(f"User: {user.get_display_name()} ({user.email})")
+logger.info(f"Family: {family.name} (Code: {family.join_code})")
+logger.info(f"Child: {child.get_display_name()} (Role: {child.role}, Email: {child.email or 'None'})")
+logger.info("="*60)
 
 # Helper to send email synchronously
 def send_email_sync(subject, template_name, context, recipients):
@@ -75,9 +89,7 @@ def send_email_sync(subject, template_name, context, recipients):
         email.send(fail_silently=False)
         return True
     except Exception as e:
-        print(f"   ✗ Error: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error sending email: {e}", exc_info=True)
         return False
 
 # Send emails one by one
@@ -138,31 +150,30 @@ if len(sys.argv) > 1:
     email_num = int(sys.argv[1])
     if 1 <= email_num <= len(emails_to_send):
         email_config = emails_to_send[email_num - 1]
-        print(f"\nSending: {email_config['name']}")
+        logger.info(f"Sending: {email_config['name']}")
         context = email_config['context_func']()
-        print(f"Context keys: {list(context.keys())}")
+        logger.info(f"Context keys: {list(context.keys())}")
         if send_email_sync(
             subject=email_config['subject'],
             template_name=email_config['template'],
             context=context,
             recipients=[user.email]
         ):
-            print(f"✓ Sent to {user.email}")
+            logger.info(f"✓ Sent to {user.email}")
         else:
-            print(f"✗ Failed to send")
+            logger.error("✗ Failed to send")
     else:
-        print(f"Invalid email number. Choose 1-{len(emails_to_send)}")
+        logger.error(f"Invalid email number. Choose 1-{len(emails_to_send)}")
 else:
     # List all emails
-    print("\nAvailable emails to send:")
-    print("="*60)
+    logger.info("Available emails to send:")
+    logger.info("="*60)
     for i, email_config in enumerate(emails_to_send, 1):
-        print(f"{i}. {email_config['name']}")
-        print(f"   Template: {email_config['template']}")
-        print(f"   Subject: {email_config['subject']}")
-        print()
-    print("="*60)
-    print(f"\nTo send an email, run:")
-    print(f"  python send_template_emails.py <number>")
-    print(f"\nExample: python send_template_emails.py 1")
+        logger.info(f"{i}. {email_config['name']}")
+        logger.info(f"   Template: {email_config['template']}")
+        logger.info(f"   Subject: {email_config['subject']}")
+    logger.info("="*60)
+    logger.info(f"\nTo send an email, run:")
+    logger.info(f"  python send_template_emails.py <number>")
+    logger.info(f"\nExample: python send_template_emails.py 1")
 
