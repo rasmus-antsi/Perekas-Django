@@ -20,20 +20,11 @@
 - Customizable notification preferences per user
 - **Impact:** Improves task completion rates significantly
 
-### 3. **Activity Feed & Family Timeline**
-**Why it helps:** See what everyone's been up to, celebrate achievements
-- Real-time activity feed (who completed what, when)
-- Achievement highlights (milestones, streaks)
-- Family member highlights
-- Photo sharing for completed tasks
-- Weekly/monthly family summaries
-- **Impact:** Increases engagement and motivation
-
 ---
 
 ## 📊 Analytics & Insights
 
-### 4. **Family Reports & Analytics**
+### 3. **Family Reports & Analytics**
 **Why it helps:** Understand patterns, celebrate progress, identify areas for improvement
 - Weekly/monthly family reports
 - Task completion rates by member
@@ -43,7 +34,7 @@
 - Export reports as PDF
 - **Impact:** Data-driven family management decisions
 
-### 5. **Streaks & Achievements**
+### 4. **Streaks & Achievements**
 **Why it helps:** Gamification increases motivation, especially for kids
 - Daily task completion streaks
 - Weekly/monthly completion goals
@@ -52,7 +43,7 @@
 - Milestone celebrations
 - **Impact:** Significantly increases engagement, especially for children
 
-### 6. **Points History & Transactions**
+### 5. **Points History & Transactions**
 **Why it helps:** Transparency and accountability
 - Detailed points ledger (earned, spent, reason)
 - Points balance history over time
@@ -64,7 +55,7 @@
 
 ## 💬 Communication & Collaboration
 
-### 7. **Family Messaging/Notes**
+### 6. **Family Messaging/Notes**
 **Why it helps:** Quick communication without switching apps
 - In-app messaging between family members
 - Notes on tasks (instructions, tips)
@@ -396,29 +387,27 @@
 
 ### **Phase 1 (Next 3-6 months):**
 1. Smart Notifications & Reminders
-2. Activity Feed & Family Timeline
-3. Mobile App (at least responsive mobile web)
+2. Mobile App (at least responsive mobile web)
 
 ### **Phase 2 (6-12 months):**
-4. Family Calendar & Events
-5. Family Reports & Analytics
-6. Streaks & Achievements
-7. Points History & Transactions
+3. Family Calendar & Events
+4. Family Reports & Analytics
+5. Streaks & Achievements
+6. Points History & Transactions
 
 ### **Phase 3 (12+ months):**
-8. Family Messaging/Notes
-9. Task Scheduling & Time Blocks
-10. Native Mobile Apps
-11. Calendar Integration
+7. Family Messaging/Notes
+8. Task Scheduling & Time Blocks
+9. Native Mobile Apps
+10. Calendar Integration
 
 ---
 
 ## 💡 Quick Wins (Easy to Implement, High Impact)
 
-1. **Activity Feed** - Log model + simple timeline view
-2. **Points History** - Transaction log model
-3. **Email Notifications** - Already have email backend, just need templates
-4. **Streaks** - Calculate on-the-fly from task completion dates
+1. **Points History** - Transaction log model
+2. **Email Notifications** - Already have email backend, just need templates
+3. **Streaks** - Calculate on-the-fly from task completion dates
 
 ---
 
@@ -427,7 +416,6 @@
 | Feature | User Value | Implementation Effort | Priority |
 |---------|-----------|----------------------|----------|
 | Notifications | ⭐⭐⭐⭐⭐ | Medium | High |
-| Activity Feed | ⭐⭐⭐⭐ | Medium | Medium |
 | Family Calendar | ⭐⭐⭐⭐⭐ | High | Medium |
 | Mobile App | ⭐⭐⭐⭐⭐ | Very High | High |
 | Analytics | ⭐⭐⭐⭐ | Medium | Medium |
