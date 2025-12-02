@@ -326,6 +326,282 @@
           sessionStorage.removeItem('hasAnimatedSettings'); // Allow animation on first entry
         }
       });
+
+      // Auto-refresh polling - only when needed:
+      // 1. Email verification pending
+      // 2. Multiple family members might be viewing same page
+      (function() {
+        // Only poll if user is authenticated
+        {% if user.is_authenticated %}
+        let lastUpdateTimestamp = null;
+        let lastEmailVerified = null;
+        let pollingInterval = null;
+        let isPolling = false;
+        let shouldPollForEmail = false;
+        let shouldPollForUpdates = false;
+        let hasMultipleMembers = false;
+        const statusCheckUrl = '{% url "a_family:status_check" %}';
+        
+        // Check if we need to poll for email verification
+        // Only poll if email verification banner is visible
+        function checkIfEmailPollingNeeded() {
+          const emailBanner = document.querySelector('.email-verification-banner');
+          shouldPollForEmail = emailBanner !== null && emailBanner.offsetParent !== null;
+          return shouldPollForEmail;
+        }
+        
+        // Check if we should poll for multi-user updates
+        // Only poll if there are multiple family members AND we're on a specific page
+        // This ensures users on different pages don't poll each other
+        function checkIfUpdatePollingNeeded() {
+          // Determine current page
+          const path = window.location.pathname;
+          let currentPage = '';
+          
+          if (path.includes('/tasks/') || path.endsWith('/tasks')) {
+            currentPage = 'tasks';
+          } else if (path.includes('/rewards/') || path.endsWith('/rewards')) {
+            currentPage = 'rewards';
+          } else if (path.includes('/shopping/') || path.endsWith('/shopping')) {
+            currentPage = 'shopping';
+          } else if (path.includes('/dashboard/') || path.endsWith('/dashboard') || path === '/') {
+            currentPage = 'dashboard';
+          }
+          
+          // Only poll if family has multiple members AND we're on a relevant page
+          shouldPollForUpdates = hasMultipleMembers && currentPage !== '';
+          return shouldPollForUpdates;
+        }
+        
+        // Get current page for status check
+        function getCurrentPage() {
+          const path = window.location.pathname;
+          if (path.includes('/tasks/') || path.endsWith('/tasks')) {
+            return 'tasks';
+          } else if (path.includes('/rewards/') || path.endsWith('/rewards')) {
+            return 'rewards';
+          } else if (path.includes('/shopping/') || path.endsWith('/shopping')) {
+            return 'shopping';
+          } else if (path.includes('/dashboard/') || path.endsWith('/dashboard') || path === '/') {
+            return 'dashboard';
+          }
+          return '';
+        }
+        
+        function checkStatus() {
+          // Don't poll if already polling or if page is hidden
+          if (isPolling || document.hidden) {
+            return;
+          }
+          
+          // Re-check if we still need to poll
+          const needsEmailPoll = checkIfEmailPollingNeeded();
+          const needsUpdatePoll = checkIfUpdatePollingNeeded();
+          
+          // Stop polling if neither is needed
+          if (!needsEmailPoll && !needsUpdatePoll) {
+            stopPolling();
+            return;
+          }
+          
+          isPolling = true;
+          
+          // Include current page in request
+          const currentPage = getCurrentPage();
+          const url = statusCheckUrl + (currentPage ? '?page=' + encodeURIComponent(currentPage) : '');
+          
+          console.log('[Polling] Status check:', { currentPage, url, needsEmailPoll, needsUpdatePoll });
+          
+          fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            // Update has_multiple_members from API response
+            if (data.has_multiple_members !== undefined) {
+              hasMultipleMembers = data.has_multiple_members;
+            }
+            
+            // Check email verification status (only if we're polling for it)
+            if (needsEmailPoll) {
+              if (lastEmailVerified !== null && !lastEmailVerified && data.email_verified) {
+                // Email was just verified - refresh page
+                window.location.reload();
+                return;
+              }
+              lastEmailVerified = data.email_verified;
+              
+              // If email is now verified, stop polling for email
+              if (data.email_verified) {
+                shouldPollForEmail = false;
+              }
+            }
+            
+            // Check for data updates (only if we're polling for it)
+            if (needsUpdatePoll && data.last_update) {
+              const currentUpdate = data.last_update;
+              if (lastUpdateTimestamp !== null && lastUpdateTimestamp !== currentUpdate) {
+                // Data has changed - refresh page
+                window.location.reload();
+                return;
+              }
+              // Set baseline on first check or update if changed
+              if (lastUpdateTimestamp === null || lastUpdateTimestamp !== currentUpdate) {
+                lastUpdateTimestamp = currentUpdate;
+              }
+            } else if (needsUpdatePoll && !data.last_update) {
+              // No updates yet - initialize to null if not already set
+              if (lastUpdateTimestamp === null) {
+                lastUpdateTimestamp = null;
+              }
+            }
+          })
+          .catch(error => {
+            // Silently fail - don't spam console
+            console.debug('Status check failed:', error);
+          })
+          .finally(() => {
+            isPolling = false;
+          });
+        }
+        
+        // Initial check to get hasMultipleMembers before starting polling
+        function initialStatusCheck() {
+          const currentPage = getCurrentPage();
+          
+          // Always check if we're on a relevant page - if so, make initial request
+          // This ensures we get hasMultipleMembers even if it starts as false
+          if (!currentPage && !checkIfEmailPollingNeeded()) {
+            // Not on a relevant page and no email verification needed
+            return;
+          }
+          
+          const url = statusCheckUrl + (currentPage ? '?page=' + encodeURIComponent(currentPage) : '');
+          
+          console.log('[Polling] Initial status check:', { currentPage, url, pathname: window.location.pathname });
+          
+          fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('[Polling] Initial status response:', data);
+            
+            // Set hasMultipleMembers from first response
+            if (data.has_multiple_members !== undefined) {
+              hasMultipleMembers = data.has_multiple_members;
+            }
+            
+            // Set email verification status
+            if (data.email_verified !== undefined) {
+              lastEmailVerified = data.email_verified;
+            }
+            
+            // Set baseline timestamp
+            if (data.last_update) {
+              lastUpdateTimestamp = data.last_update;
+            }
+            
+            // Now start polling if needed
+            checkIfEmailPollingNeeded();
+            checkIfUpdatePollingNeeded();
+            
+            console.log('[Polling] Should poll:', { shouldPollForEmail, shouldPollForUpdates, hasMultipleMembers, currentPage });
+            
+            if (shouldPollForEmail || shouldPollForUpdates) {
+              startPolling();
+            }
+          })
+          .catch(error => {
+            console.error('[Polling] Initial status check failed:', error);
+            // Still try to start polling after a delay if on relevant page
+            setTimeout(() => {
+              checkIfEmailPollingNeeded();
+              // Assume multiple members if on relevant page (will be corrected on next check)
+              const currentPage = getCurrentPage();
+              if (currentPage) {
+                hasMultipleMembers = true; // Optimistic - will be corrected by API
+                checkIfUpdatePollingNeeded();
+              }
+              if (shouldPollForEmail || shouldPollForUpdates) {
+                startPolling();
+              }
+            }, 5000);
+          });
+        }
+        
+        // Start polling every 10 seconds
+        function startPolling() {
+          if (pollingInterval) {
+            return; // Already polling
+          }
+          
+          // Poll every 10 seconds
+          pollingInterval = setInterval(() => {
+            // Re-check if we still need to poll before each check
+            checkIfEmailPollingNeeded();
+            checkIfUpdatePollingNeeded();
+            
+            if (!shouldPollForEmail && !shouldPollForUpdates) {
+              stopPolling();
+              return;
+            }
+            
+            checkStatus();
+          }, 10000);
+        }
+        
+        // Stop polling when page is hidden
+        function stopPolling() {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+          }
+        }
+        
+        // Start polling when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+          if (document.hidden) {
+            stopPolling();
+          } else {
+            // Re-check status when page becomes visible
+            initialStatusCheck();
+          }
+        });
+        
+        // Start initial check on page load if visible
+        if (document.visibilityState === 'visible') {
+          initialStatusCheck();
+        }
+        
+        // Also check when user comes back to tab (focus event)
+        window.addEventListener('focus', function() {
+          if (!pollingInterval) {
+            initialStatusCheck();
+          } else {
+            checkStatus();
+          }
+        });
+        {% endif %}
+      })();
     </script>
     {% block extra_scripts %}{% endblock %}
   </body>
