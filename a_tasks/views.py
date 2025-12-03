@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # Django imports
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import models, transaction
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -567,8 +567,6 @@ def index(request):
                 messages.warning(request, "See ülesanne on juba teise lapse poolt alustatud.")
             elif task.assigned_to and task.assigned_to_id != user.id:
                 messages.warning(request, "See ülesanne on määratud teisele lapsele.")
-            elif task.due_date and task.due_date > timezone.now().date():
-                messages.warning(request, "Sa saad alustada ainult täna või varem tähtaegadega ülesandeid.")
             else:
                 task.assigned_to = user
                 task.started_at = timezone.now()
@@ -599,8 +597,6 @@ def index(request):
                 messages.warning(request, "See ülesanne on juba täidetud.")
             elif not task.is_in_progress or task.assigned_to_id != user.id:
                 messages.warning(request, "Sa saad täita ainult enda alustatud ülesandeid.")
-            elif task.due_date and task.due_date > timezone.now().date():
-                messages.warning(request, "Sa saad täita ainult täna või varem tähtaegadega ülesandeid.")
             else:
                 task.completed = True
                 task.completed_by = user
@@ -728,37 +724,20 @@ def index(request):
             "approved_by",
         ).prefetch_related('recurrences')
         
-        today = timezone.now().date()
-        
-        # For children, only show active tasks that are due today or earlier (or have no due date)
-        if is_child:
-            active_tasks = list(tasks_qs.filter(
-                completed=False
-            ).filter(
-                models.Q(due_date__lte=today) | models.Q(due_date__isnull=True)
-            ))
-        else:
-            active_tasks = list(tasks_qs.filter(completed=False))
-        
+        active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
 
         for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
             if is_child:
-                # Can start if: not completed, not in progress, (not assigned or assigned to this user), 
-                # and (no due date or due date is today or earlier)
+                # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
                 task.can_child_start = (
                     not task.completed and
                     not task.is_in_progress and
-                    (task.assigned_to is None or task.assigned_to_id == user.id) and
-                    (task.due_date is None or task.due_date <= today)
+                    (task.assigned_to is None or task.assigned_to_id == user.id)
                 )
-                # Can complete if: in progress, assigned to this user, and (no due date or due date is today or earlier)
-                task.can_child_complete = (
-                    task.is_in_progress and 
-                    task.assigned_to_id == user.id and
-                    (task.due_date is None or task.due_date <= today)
-                )
+                # Can complete if: in progress and assigned to this user
+                task.can_child_complete = task.is_in_progress and task.assigned_to_id == user.id
                 # Can cancel if: in progress and assigned to this user
                 task.can_child_cancel = task.is_in_progress and task.assigned_to_id == user.id
             else:
@@ -847,11 +826,11 @@ def index(request):
 @require_http_methods(["POST", "GET"])
 def create_recurring_tasks_endpoint(request):
     """
-    HTTP endpoint to trigger maintenance tasks.
-    This can be called manually or by external cron services if needed.
+    HTTP endpoint to trigger daily maintenance tasks.
+    This endpoint should be called daily at 00:00 by a cron service (e.g., Railway Cron).
     
-    Note: Maintenance tasks now run automatically on login, so this endpoint
-    is mainly for manual triggering or backup purposes.
+    Note: This replaces the old login-based maintenance. Use the daily_maintenance
+    management command instead for scheduled jobs.
     
     Requires RAILWAY_CRON_SECRET environment variable to be set for security.
     """
@@ -863,21 +842,19 @@ def create_recurring_tasks_endpoint(request):
             return JsonResponse({'error': 'Unauthorized'}, status=401)
     
     try:
-        # Use the maintenance function (runs both recurring tasks and cleanup)
-        from .maintenance import run_maintenance_tasks
-        result = run_maintenance_tasks()
+        # Call the daily maintenance command
+        from django.core.management import call_command
+        from io import StringIO
         
-        if result.get('skipped'):
-            return JsonResponse({
-                'status': 'skipped',
-                'message': result.get('message', 'Maintenance already ran today')
-            })
+        # Capture output
+        out = StringIO()
+        call_command('daily_maintenance', stdout=out)
+        output = out.getvalue()
         
         return JsonResponse({
             'status': 'success',
-            'message': result.get('message', 'Maintenance tasks completed'),
-            'recurring_tasks_created': result.get('recurring_tasks_created', 0),
-            'old_tasks_deleted': result.get('old_tasks_deleted', 0),
+            'message': 'Daily maintenance completed',
+            'output': output
         })
     except Exception as e:
         import logging
