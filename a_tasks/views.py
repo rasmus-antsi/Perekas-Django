@@ -55,6 +55,7 @@ def _parse_task_text(text, family):
     parsed = {
         'name': '',
         'assigned_to_id': None,
+        'assign_to_all_children': False,  # Flag for creating tasks for all children
         'priority': Task.PRIORITY_MEDIUM,  # Default to medium
         'points': 25,  # Default points
         'due_date': None,
@@ -73,9 +74,10 @@ def _parse_task_text(text, family):
         if family.owner_id:
             family_members.append(family.owner)
         
-        # Handle "everyone" special case
-        if mention_name == 'everyone' or mention_name == 'kõik':
-            parsed['assigned_to_id'] = None  # None means open task
+        # Handle "kõigile" or "everyone" special case - create task for each child
+        if mention_name in ['kõigile', 'everyone', 'kõik', 'all']:
+            parsed['assign_to_all_children'] = True
+            parsed['assigned_to_id'] = None
         else:
             # Try to find family member by display name or username
             for member in family_members:
@@ -271,8 +273,18 @@ def index(request):
                 recurring = request.POST.get("recurring_frequency", "").strip() or None
 
             if name:
+                # Get all children in the family
+                family_children = list(family.members.filter(role=User.ROLE_CHILD))
+                if family.owner_id and family.owner.role == User.ROLE_CHILD:
+                    if family.owner not in family_children:
+                        family_children.append(family.owner)
+                
+                # Determine how many tasks to create
+                assign_to_all = parsed.get('assign_to_all_children', False) if task_text else False
+                num_tasks_to_create = len(family_children) if assign_to_all and family_children else 1
+                
                 # Check subscription limit before creating
-                can_create, current_count, limit, tier = check_subscription_limit(family, 'tasks', 1)
+                can_create, current_count, limit, tier = check_subscription_limit(family, 'tasks', num_tasks_to_create)
                 if not can_create:
                     tier_name = "Tasuta" if tier == "FREE" else "Alustaja" if tier == "STARTER" else "Pro"
                     messages.error(
@@ -297,77 +309,152 @@ def index(request):
                     priority_value = priority
                     # points_value already set from parsed dict
 
-                assigned_user = None
-                if assigned_id:
-                    assigned_user = family.members.filter(id=assigned_id).first()
-                    if not assigned_user and str(family.owner_id) == str(assigned_id):
-                        assigned_user = family.owner
-
                 # Use transaction to ensure task creation and usage increment are atomic
                 with transaction.atomic():
-                    task = Task.objects.create(
-                        name=name,
-                        description=description,
-                        family=family,
-                        assigned_to=assigned_user,
-                        created_by=user,
-                        due_date=due,
-                        priority=priority_value,
-                        points=points_value,
-                    )
+                    tasks_created = []
                     
-                    # Handle recurring tasks (from quick add or modal)
-                    recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
-                    if recurring_frequency:
-                        # Check recurring task limit
-                        can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
-                        if not can_create_recurring:
-                            tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
-                            messages.error(
-                                request,
-                                f"Olete jõudnud oma aktiivsete korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
-                                f"Kõrgendage paketti, et luua rohkem aktiivseid korduvaid ülesandeid."
+                    if assign_to_all and family_children:
+                        # Create a task for each child
+                        for child in family_children:
+                            task = Task.objects.create(
+                                name=name,
+                                description=description,
+                                family=family,
+                                assigned_to=child,
+                                created_by=user,
+                                due_date=due,
+                                priority=priority_value,
+                                points=points_value,
                             )
-                            # Transaction will rollback task creation automatically
-                            return redirect("a_tasks:index")
+                            tasks_created.append(task)
+                            
+                            # Handle recurring tasks for each child task
+                            recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
+                            if recurring_frequency:
+                                # Check recurring task limit (only check once, not per task)
+                                if len(tasks_created) == 1:  # Only check on first task
+                                    can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                                    # Check if we have room for all the recurring tasks we want to create
+                                    if not can_create_recurring or (current_recurring_count + num_tasks_to_create) > recurring_limit:
+                                        tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                                        messages.error(
+                                            request,
+                                            f"Olete jõudnud oma aktiivsete korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                            f"Kõrgendage paketti, et luua rohkem aktiivseid korduvaid ülesandeid."
+                                        )
+                                        # Transaction will rollback task creation automatically
+                                        return redirect("a_tasks:index")
+                                
+                                from .models import TaskRecurrence
+                                from .recurrence_utils import calculate_next_occurrence
+                                
+                                recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                                recurring_end_date = None
+                                if recurring_end_date_str:
+                                    try:
+                                        recurring_end_date = parse_date(recurring_end_date_str)
+                                    except (ValueError, TypeError):
+                                        pass
+                                
+                                # Get day_of_week and day_of_month if provided
+                                recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                                recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                                
+                                # day_of_month is now a number input (1-31)
+                                recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                                recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                                
+                                # Calculate next occurrence based on due_date or selected day
+                                next_due_date, next_occurrence = calculate_next_occurrence(
+                                    task.due_date, recurring_frequency, 
+                                    day_of_week=recurring_day_of_week,
+                                    day_of_month=recurring_day_of_month
+                                )
+                                
+                                TaskRecurrence.objects.create(
+                                    task=task,
+                                    frequency=recurring_frequency,
+                                    day_of_week=recurring_day_of_week,
+                                    day_of_month=recurring_day_of_month,
+                                    end_date=recurring_end_date,
+                                    next_occurrence=next_occurrence,
+                                )
+                    else:
+                        # Create single task (existing behavior)
+                        assigned_user = None
+                        if assigned_id:
+                            assigned_user = family.members.filter(id=assigned_id).first()
+                            if not assigned_user and str(family.owner_id) == str(assigned_id):
+                                assigned_user = family.owner
                         
-                        from .models import TaskRecurrence
-                        from .recurrence_utils import calculate_next_occurrence
-                        
-                        recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
-                        recurring_end_date = None
-                        if recurring_end_date_str:
-                            try:
-                                recurring_end_date = parse_date(recurring_end_date_str)
-                            except (ValueError, TypeError):
-                                pass
-                        
-                        # Get day_of_week and day_of_month if provided
-                        recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
-                        recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
-                        
-                        # day_of_month is now a number input (1-31)
-                        recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
-                        recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
-                        
-                        # Calculate next occurrence based on due_date or selected day
-                        next_due_date, next_occurrence = calculate_next_occurrence(
-                            task.due_date, recurring_frequency, 
-                            day_of_week=recurring_day_of_week,
-                            day_of_month=recurring_day_of_month
+                        task = Task.objects.create(
+                            name=name,
+                            description=description,
+                            family=family,
+                            assigned_to=assigned_user,
+                            created_by=user,
+                            due_date=due,
+                            priority=priority_value,
+                            points=points_value,
                         )
+                        tasks_created.append(task)
                         
-                        TaskRecurrence.objects.create(
-                            task=task,
-                            frequency=recurring_frequency,
-                            day_of_week=recurring_day_of_week,
-                            day_of_month=recurring_day_of_month,
-                            end_date=recurring_end_date,
-                            next_occurrence=next_occurrence,
-                        )
+                        # Handle recurring tasks (from quick add or modal)
+                        recurring_frequency = recurring or request.POST.get("recurring_frequency", "").strip()
+                        if recurring_frequency:
+                            # Check recurring task limit
+                            can_create_recurring, current_recurring_count, recurring_limit, recurring_tier = check_recurring_task_limit(family)
+                            if not can_create_recurring:
+                                tier_name = "Tasuta" if recurring_tier == "FREE" else "Alustaja" if recurring_tier == "STARTER" else "Pro"
+                                messages.error(
+                                    request,
+                                    f"Olete jõudnud oma aktiivsete korduvate ülesannete limiidini ({recurring_limit} {tier_name} paketis). "
+                                    f"Kõrgendage paketti, et luua rohkem aktiivseid korduvaid ülesandeid."
+                                )
+                                # Transaction will rollback task creation automatically
+                                return redirect("a_tasks:index")
+                            
+                            from .models import TaskRecurrence
+                            from .recurrence_utils import calculate_next_occurrence
+                            
+                            recurring_end_date_str = request.POST.get("recurring_end_date", "").strip()
+                            recurring_end_date = None
+                            if recurring_end_date_str:
+                                try:
+                                    recurring_end_date = parse_date(recurring_end_date_str)
+                                except (ValueError, TypeError):
+                                    pass
+                            
+                            # Get day_of_week and day_of_month if provided
+                            recurring_day_of_week = request.POST.get("recurring_day_of_week", "").strip()
+                            recurring_day_of_week = int(recurring_day_of_week) if recurring_day_of_week and recurring_day_of_week.isdigit() else None
+                            
+                            # day_of_month is now a number input (1-31)
+                            recurring_day_of_month = request.POST.get("recurring_day_of_month", "").strip()
+                            recurring_day_of_month = int(recurring_day_of_month) if recurring_day_of_month and recurring_day_of_month.isdigit() and 1 <= int(recurring_day_of_month) <= 31 else None
+                            
+                            # Calculate next occurrence based on due_date or selected day
+                            next_due_date, next_occurrence = calculate_next_occurrence(
+                                task.due_date, recurring_frequency, 
+                                day_of_week=recurring_day_of_week,
+                                day_of_month=recurring_day_of_month
+                            )
+                            
+                            TaskRecurrence.objects.create(
+                                task=task,
+                                frequency=recurring_frequency,
+                                day_of_week=recurring_day_of_week,
+                                day_of_month=recurring_day_of_month,
+                                end_date=recurring_end_date,
+                                next_occurrence=next_occurrence,
+                            )
                     
-                    # Increment usage counter (within same transaction)
-                    increment_usage(family, 'tasks', 1)
+                    # Increment usage counter for all tasks created (within same transaction)
+                    increment_usage(family, 'tasks', len(tasks_created))
+                    
+                    # Show success message
+                    if len(tasks_created) > 1:
+                        messages.success(request, f"Loodud {len(tasks_created)} ülesannet: '{name}'")
 
         elif action == "update" and is_parent:
             task = _get_task()

@@ -157,6 +157,7 @@
                 <p class="task-help-examples-title">Näited:</p>
                 <ul class="task-help-examples-list">
                   <li><code>"Võta prügi välja @Emma homme !kõrge"</code></li>
+                  <li><code>"Pese hambad ära @kõigile"</code> - loob iga lapse jaoks sama ülesanne</li>
                   <li>
                     <code>"Pesu *nädalaselt"</code>
                     <svg class="task-status-icon recurring-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Korduv" style="display: inline-block; vertical-align: middle; margin-left: 0.5rem; color: rgba(6, 182, 212, 0.9);">
@@ -210,6 +211,14 @@
               <div class="task-help-options">
                 <p class="task-help-examples-title">Võimalikud väärtused:</p>
                 <div class="task-help-options-list">
+                  <div class="task-help-option-group">
+                    <strong>Määramine:</strong>
+                    <div class="task-help-option-values">
+                      <code>@nimi</code>
+                      <code>@kõigile</code>
+                    </div>
+                    <p class="task-help-option-note">@nimi - määra lapsele, @kõigile - loo iga lapse jaoks sama ülesanne</p>
+                  </div>
                   <div class="task-help-option-group">
                     <strong>Tähtsus:</strong>
                     <div class="task-help-option-values">
@@ -1274,24 +1283,59 @@
         // Autocomplete options for different symbols
         const autocompleteOptions = {
           '@': {
-            items: familyMembers,
-            getDisplayText: (item) => item.display_text,
-            getInsertText: (item) => `@${item.username || item.first_name || 'kõik'}`,
+            items: [
+              // Special option for creating tasks for all children
+              { 
+                type: 'everyone', 
+                display_text: 'Iga lapse jaoks', 
+                username: 'kõigile',
+                first_name: 'kõigile',
+                search_text: 'kõigile everyone kõik all iga lapse jaoks'
+              },
+              ...familyMembers
+            ],
+            getDisplayText: (item) => {
+              if (item.type === 'everyone') {
+                return item.display_text;
+              }
+              return item.display_text;
+            },
+            getInsertText: (item) => {
+              if (item.type === 'everyone') {
+                return '@kõigile';
+              }
+              return `@${item.username || item.first_name || 'kõik'}`;
+            },
             filter: (query, items) => {
               if (!query || query.length < 1) {
-                return items.slice(0, 8); // Show first 8 if no query
+                // Show "everyone" option first, then first 7 family members
+                const everyoneItem = items.find(item => item.type === 'everyone');
+                const otherItems = items.filter(item => item.type !== 'everyone').slice(0, 7);
+                return everyoneItem ? [everyoneItem, ...otherItems] : otherItems;
               }
               const lowerQuery = query.toLowerCase();
-              return items.filter(member => {
-                const searchText = (member.search_text || '').toLowerCase();
-                const displayText = (member.display_text || '').toLowerCase();
-                const username = (member.username || '').toLowerCase();
-                const firstName = (member.first_name || '').toLowerCase();
+              const filtered = items.filter(item => {
+                if (item.type === 'everyone') {
+                  // Match "kõigile", "everyone", "kõik", "all"
+                  return item.search_text.includes(lowerQuery) || 
+                         'kõigile'.includes(lowerQuery) ||
+                         'everyone'.includes(lowerQuery) ||
+                         'kõik'.includes(lowerQuery) ||
+                         'all'.includes(lowerQuery);
+                }
+                const searchText = (item.search_text || '').toLowerCase();
+                const displayText = (item.display_text || '').toLowerCase();
+                const username = (item.username || '').toLowerCase();
+                const firstName = (item.first_name || '').toLowerCase();
                 return searchText.includes(lowerQuery) || 
                        displayText.includes(lowerQuery) ||
                        username.includes(lowerQuery) || 
                        firstName.includes(lowerQuery);
-              }).slice(0, 8);
+              });
+              // Always show "everyone" first if it matches, then other results
+              const everyoneItem = filtered.find(item => item.type === 'everyone');
+              const otherItems = filtered.filter(item => item.type !== 'everyone');
+              return everyoneItem ? [everyoneItem, ...otherItems] : otherItems;
             }
           },
           '!': {
