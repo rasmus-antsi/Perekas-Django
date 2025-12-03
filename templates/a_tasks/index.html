@@ -276,7 +276,7 @@
                         {% if task.is_in_progress %}
                           {% if task.assigned_to == user %}
                             Teeb: Sina
-                          {% else %}
+                          {% elif task.assigned_to %}
                             Teeb: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                           {% endif %}
                         {% elif task.assigned_to == user %}
@@ -287,7 +287,7 @@
                           Määratud: Kõigile
                         {% endif %}
                       {% else %}
-                        {% if task.is_in_progress %}
+                        {% if task.is_in_progress and task.assigned_to %}
                           Teeb: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
                         {% elif task.assigned_to %}
                           Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
@@ -448,13 +448,13 @@
                         {% if task.assigned_to == user %}
                           Määratud: Sinule
                         {% elif task.assigned_to %}
-                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
+                          Määratud: {{ task.assigned_to.first_name|default:task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
                       {% else %}
                         {% if task.assigned_to %}
-                          Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
+                          Määratud: {{ task.assigned_to.first_name|default:task.assigned_to.display_name }}
                         {% else %}
                           Määratud: Kõigile
                         {% endif %}
@@ -481,7 +481,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% if task.completed_by.username %} @{{ task.completed_by.username }}{% endif %}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"d.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"d.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">
@@ -572,11 +572,11 @@
                         {% if is_child %}
                           {% if winner == user %}
                             Punktid teenis: Sina
-                          {% else %}
-                            Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% if winner.username %} @{{ winner.username }}{% endif %}{% else %}{{ winner.display_name }}{% endif %}
+                          {% elif winner %}
+                            Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
                           {% endif %}
-                        {% else %}
-                          Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% if winner.username %} @{{ winner.username }}{% endif %}{% else %}{{ winner.display_name }}{% endif %}
+                        {% elif winner %}
+                          Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
                         {% endif %}
                       {% endwith %}
                     </p>
@@ -601,7 +601,7 @@
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
-                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% if task.approved_by.username %} @{{ task.approved_by.username }}{% endif %}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"d.m.Y H:i" }}</span>
+                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"d.m.Y H:i" }}</span>
                   </div>
                   {% if task.due_date %}
                     <div class="task-meta-item">

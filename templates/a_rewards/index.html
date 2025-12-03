@@ -136,7 +136,7 @@
                   <div>
                     <h3 class="reward-name">{{ reward.name }}</h3>
                     <p class="reward-description">
-                      Lunastas {{ reward.claimed_by.display_name }}
+                      Lunastas {% if reward.claimed_by.first_name %}{{ reward.claimed_by.first_name }}{% else %}{{ reward.claimed_by.display_name }}{% endif %}
                       {% if reward.claimed_at %}
                         {{ reward.claimed_at|date:"d.m.Y H:i" }}
                       {% endif %}

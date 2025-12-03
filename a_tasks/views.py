@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # Django imports
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db import models, transaction
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -567,6 +567,8 @@ def index(request):
                 messages.warning(request, "See ülesanne on juba teise lapse poolt alustatud.")
             elif task.assigned_to and task.assigned_to_id != user.id:
                 messages.warning(request, "See ülesanne on määratud teisele lapsele.")
+            elif task.due_date and task.due_date > timezone.now().date():
+                messages.warning(request, "Sa saad alustada ainult täna või varem tähtaegadega ülesandeid.")
             else:
                 task.assigned_to = user
                 task.started_at = timezone.now()
@@ -597,6 +599,8 @@ def index(request):
                 messages.warning(request, "See ülesanne on juba täidetud.")
             elif not task.is_in_progress or task.assigned_to_id != user.id:
                 messages.warning(request, "Sa saad täita ainult enda alustatud ülesandeid.")
+            elif task.due_date and task.due_date > timezone.now().date():
+                messages.warning(request, "Sa saad täita ainult täna või varem tähtaegadega ülesandeid.")
             else:
                 task.completed = True
                 task.completed_by = user
@@ -723,20 +727,38 @@ def index(request):
             "completed_by",
             "approved_by",
         ).prefetch_related('recurrences')
-        active_tasks = list(tasks_qs.filter(completed=False))
+        
+        today = timezone.now().date()
+        
+        # For children, only show active tasks that are due today or earlier (or have no due date)
+        if is_child:
+            active_tasks = list(tasks_qs.filter(
+                completed=False
+            ).filter(
+                models.Q(due_date__lte=today) | models.Q(due_date__isnull=True)
+            ))
+        else:
+            active_tasks = list(tasks_qs.filter(completed=False))
+        
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
 
         for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
             if is_child:
-                # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
+                # Can start if: not completed, not in progress, (not assigned or assigned to this user), 
+                # and (no due date or due date is today or earlier)
                 task.can_child_start = (
                     not task.completed and
                     not task.is_in_progress and
-                    (task.assigned_to is None or task.assigned_to_id == user.id)
+                    (task.assigned_to is None or task.assigned_to_id == user.id) and
+                    (task.due_date is None or task.due_date <= today)
                 )
-                # Can complete if: in progress and assigned to this user
-                task.can_child_complete = task.is_in_progress and task.assigned_to_id == user.id
+                # Can complete if: in progress, assigned to this user, and (no due date or due date is today or earlier)
+                task.can_child_complete = (
+                    task.is_in_progress and 
+                    task.assigned_to_id == user.id and
+                    (task.due_date is None or task.due_date <= today)
+                )
                 # Can cancel if: in progress and assigned to this user
                 task.can_child_cancel = task.is_in_progress and task.assigned_to_id == user.id
             else:
