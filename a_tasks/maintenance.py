@@ -148,3 +148,27 @@ def delete_completed_tasks():
     
     logger.info("No completed and approved tasks to delete")
     return 0
+
+
+def clear_shopping_cart():
+    """
+    Deletes all items in the shopping cart (in_cart=True).
+    Returns the number of items deleted.
+    """
+    try:
+        from a_shopping.models import ShoppingListItem
+        
+        cart_items = ShoppingListItem.objects.filter(in_cart=True)
+        
+        count = cart_items.count()
+        
+        if count > 0:
+            deleted_count, _ = cart_items.delete()
+            logger.info(f"Deleted {deleted_count} item(s) from shopping cart")
+            return deleted_count
+        
+        logger.info("No items in shopping cart to delete")
+        return 0
+    except Exception as e:
+        logger.error(f"Error clearing shopping cart: {e}")
+        return 0
