@@ -130,20 +130,21 @@ def create_recurring_tasks_for_today(today):
 
 def delete_completed_tasks():
     """
-    Deletes all completed tasks (daily cleanup, not 48 hours).
+    Deletes tasks that have been both completed and approved by a parent.
     Returns the number of tasks deleted.
     """
-    completed_tasks = Task.objects.filter(
+    completed_and_approved_tasks = Task.objects.filter(
         completed=True,
-        completed_at__isnull=False
+        completed_at__isnull=False,
+        approved=True
     )
     
-    count = completed_tasks.count()
+    count = completed_and_approved_tasks.count()
     
     if count > 0:
-        deleted_count, _ = completed_tasks.delete()
-        logger.info(f"Deleted {deleted_count} completed task(s)")
+        deleted_count, _ = completed_and_approved_tasks.delete()
+        logger.info(f"Deleted {deleted_count} completed and approved task(s)")
         return deleted_count
     
-    logger.info("No completed tasks to delete")
+    logger.info("No completed and approved tasks to delete")
     return 0
