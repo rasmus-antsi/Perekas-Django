@@ -9,7 +9,12 @@ from apscheduler.triggers.cron import CronTrigger
 from django.utils import timezone
 import pytz
 
-from a_tasks.maintenance import create_recurring_tasks_for_today, delete_completed_tasks, clear_shopping_cart
+from a_tasks.maintenance import (
+    create_recurring_tasks_for_today,
+    delete_completed_tasks,
+    clear_shopping_cart,
+    reset_assigned_to_for_all_tasks,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +58,19 @@ def run_daily_maintenance():
         logger.info(f"Starting scheduled daily maintenance at {timezone.now()} (Tallinn time)")
         logger.info("=" * 60)
         
-        # 1. Create recurring tasks for today
-        created_count = create_recurring_tasks_for_today(today)
-        logger.info(f"Created {created_count} recurring task(s) for {today}")
+        # 1. Reset assigned_to for all incomplete tasks (so children can't lock tasks)
+        reset_count = reset_assigned_to_for_all_tasks()
+        logger.info(f"Reset {reset_count} task assignment(s)")
         
-        # 2. Delete all completed tasks
+        # 2. Create recurring tasks for today
+        created_count = create_recurring_tasks_for_today(today)
+        logger.info(f"Created/updated {created_count} recurring task(s) for {today}")
+        
+        # 3. Delete all completed tasks
         deleted_count = delete_completed_tasks()
         logger.info(f"Deleted {deleted_count} completed task(s)")
         
-        # 3. Clear shopping cart
+        # 4. Clear shopping cart
         cart_cleared_count = clear_shopping_cart()
         logger.info(f"Cleared {cart_cleared_count} item(s) from shopping cart")
         

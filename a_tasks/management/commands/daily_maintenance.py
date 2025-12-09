@@ -4,7 +4,12 @@ The scheduler runs this automatically at 00:00 Tallinn time.
 """
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from a_tasks.maintenance import create_recurring_tasks_for_today, delete_completed_tasks, clear_shopping_cart
+from a_tasks.maintenance import (
+    create_recurring_tasks_for_today,
+    delete_completed_tasks,
+    clear_shopping_cart,
+    reset_assigned_to_for_all_tasks,
+)
 
 
 class Command(BaseCommand):
@@ -34,18 +39,22 @@ class Command(BaseCommand):
             self.stdout.write("Would clear shopping cart")
             return
         
-        # 1. Create recurring tasks for today
+        # 1. Reset assigned_to for all incomplete tasks (so children can't lock tasks)
+        reset_count = reset_assigned_to_for_all_tasks()
+        
+        # 2. Create recurring tasks for today
         created_count = create_recurring_tasks_for_today(today)
         
-        # 2. Delete completed tasks
+        # 3. Delete completed tasks
         deleted_count = delete_completed_tasks()
         
-        # 3. Clear shopping cart
+        # 4. Clear shopping cart
         cart_cleared_count = clear_shopping_cart()
         
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created {created_count} recurring task(s), "
+                f"Successfully reset {reset_count} task assignment(s), "
+                f"created/updated {created_count} recurring task(s), "
                 f"deleted {deleted_count} completed task(s), and "
                 f"cleared {cart_cleared_count} item(s) from shopping cart."
             )
