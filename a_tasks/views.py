@@ -806,7 +806,7 @@ def index(request):
         active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
-        
+
         # Combine all tasks into one list (active first, then pending, then approved)
         all_tasks = active_tasks + pending_tasks + approved_tasks
 
