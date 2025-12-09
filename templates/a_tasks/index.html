@@ -288,7 +288,7 @@
                     <p class="task-assigned">
                       {% if task.completed and task.approved %}
                         {% with winner=task.assigned_to|default:task.completed_by %}
-                          {% if is_child %}
+                      {% if is_child %}
                             {% if winner == user %}
                               Punktid teenis: Sina
                             {% elif winner %}
@@ -468,27 +468,27 @@
                   {% endif %}
                   {% if is_parent %}
                     {% if not task.completed %}
-                      <button
-                        type="button"
-                        class="icon-button"
-                        data-open-task-modal="edit"
-                        data-task-id="{{ task.id }}"
-                        data-task-name="{{ task.name|escape }}"
-                        data-task-description="{{ task.description|default_if_none:''|escape }}"
-                        data-task-assigned="{{ task.assigned_to_id|default:'' }}"
-                        data-task-points="{{ task.points }}"
-                        data-task-priority="{{ task.priority }}"
-                        data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
-                        data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
-                        data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
-                        data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
-                        data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M12 20h9"></path>
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                        </svg>
-                      </button>
+                    <button
+                      type="button"
+                      class="icon-button"
+                      data-open-task-modal="edit"
+                      data-task-id="{{ task.id }}"
+                      data-task-name="{{ task.name|escape }}"
+                      data-task-description="{{ task.description|default_if_none:''|escape }}"
+                      data-task-assigned="{{ task.assigned_to_id|default:'' }}"
+                      data-task-points="{{ task.points }}"
+                      data-task-priority="{{ task.priority }}"
+                      data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
+                      data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
+                      data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
+                      data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
+                      data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                      </svg>
+                    </button>
                     {% endif %}
                     <form method="post" class="icon-form" data-confirm="{% if task.recurrences.exists %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See kustutab ainult selle ülesande, mitte korduvat ülesannet. Korduva ülesande peatamiseks muuda ülesannet ja vali 'Ei kordu'.{% else %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.{% endif %}">
                       {% csrf_token %}
