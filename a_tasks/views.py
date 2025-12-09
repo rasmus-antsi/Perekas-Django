@@ -6,6 +6,7 @@ import re
 from datetime import datetime, timedelta
 
 # Django imports
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -646,7 +647,6 @@ def index(request):
         elif action == "start" and is_child:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
@@ -663,7 +663,6 @@ def index(request):
         elif action == "cancel" and is_child:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
@@ -678,7 +677,6 @@ def index(request):
         elif action == "complete" and is_child:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif task.completed:
                 messages.warning(request, "See ülesanne on juba täidetud.")
@@ -704,7 +702,6 @@ def index(request):
         elif action == "reopen" and is_parent:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.completed:
                 messages.warning(request, "See ülesanne pole täidetud.")
@@ -731,13 +728,11 @@ def index(request):
                         task.save(update_fields=["completed", "completed_by", "completed_at", "approved", "approved_by", "approved_at", "started_at", "assigned_to"])
                         messages.success(request, f"Ülesanne '{task.name}' avatud uuesti.")
                 except Exception as e:
-                    from django.conf import settings
-                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         elif action == "approve" and is_parent:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.completed:
                 messages.error(request, "Saab kinnitada ainult täidetud ülesandeid.")
@@ -771,13 +766,11 @@ def index(request):
                                 logger = logging.getLogger(__name__)
                                 logger.warning(f"Failed to send task approved notification: {e}", exc_info=True)
                 except Exception as e:
-                    from django.conf import settings
-                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         elif action == "unapprove" and is_parent:
             task = _get_task()
             if not task:
-                from django.conf import settings
                 messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             elif not task.approved:
                 messages.warning(request, "See ülesanne pole kinnitatud.")
@@ -798,8 +791,7 @@ def index(request):
                         task.save(update_fields=["approved", "approved_by", "approved_at"])
                         messages.success(request, f"Ülesande '{task.name}' kinnitamine tühistatud.")
                 except Exception as e:
-                    from django.conf import settings
-                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
 
         return redirect("a_tasks:index")
 
@@ -814,8 +806,11 @@ def index(request):
         active_tasks = list(tasks_qs.filter(completed=False))
         pending_tasks = list(tasks_qs.filter(completed=True, approved=False))
         approved_tasks = list(tasks_qs.filter(approved=True))
+        
+        # Combine all tasks into one list (active first, then pending, then approved)
+        all_tasks = active_tasks + pending_tasks + approved_tasks
 
-        for task in itertools.chain(active_tasks, pending_tasks, approved_tasks):
+        for task in all_tasks:
             if is_child:
                 # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
                 task.can_child_start = (
@@ -848,6 +843,7 @@ def index(request):
         active_tasks = []
         pending_tasks = []
         approved_tasks = []
+        all_tasks = []
         family_members = []
 
     # Prepare family members data for autocomplete (first name + username format)
@@ -901,6 +897,7 @@ def index(request):
         "active_tasks": active_tasks,
         "pending_tasks": pending_tasks,
         "approved_tasks": approved_tasks,
+        "all_tasks": all_tasks,
         "task_limit_info": task_limit_info,
         "recurring_limit_info": recurring_limit_info,
         "task_limit_info_json": mark_safe(json.dumps(task_limit_info)) if task_limit_info else None,

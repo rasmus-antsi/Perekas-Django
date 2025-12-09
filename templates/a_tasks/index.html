@@ -261,18 +261,23 @@
       {% endif %}
       
       <section class="task-section">
-        <header class="list-section-header">
-          <span class="list-section-icon need-icon" aria-hidden="true"></span>
-          <h2>Aktiivsed ülesanded</h2>
-        </header>
         <div class="task-grid">
-          {% if active_tasks %}
-            {% for task in active_tasks %}
-              <article class="task-card priority-{{ task.priority }}{% if task.is_in_progress %} in-progress{% endif %}">
+          {% if all_tasks %}
+            {% for task in all_tasks %}
+              <article class="task-card priority-{{ task.priority }}{% if task.is_in_progress %} in-progress{% endif %}{% if task.completed and task.approved %} approved{% elif task.completed and not task.approved %} awaiting{% endif %}">
                 <div class="task-card-header">
                   <div>
                     <h3 class="task-name">
-                      {% if task.is_in_progress %}
+                      {% if task.completed and task.approved %}
+                        <svg class="task-status-icon approved-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Kinnitatud">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                      {% elif task.completed and not task.approved %}
+                        <svg class="task-status-icon completed-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Lõpetatud">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      {% elif task.is_in_progress %}
                         <svg class="task-status-icon in-progress-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Pooleli">
                           <circle cx="12" cy="12" r="10"></circle>
                           <polyline points="12 6 12 12 16 14"></polyline>
@@ -281,7 +286,35 @@
                       {{ task.name }}
                     </h3>
                     <p class="task-assigned">
-                      {% if is_child %}
+                      {% if task.completed and task.approved %}
+                        {% with winner=task.assigned_to|default:task.completed_by %}
+                          {% if is_child %}
+                            {% if winner == user %}
+                              Punktid teenis: Sina
+                            {% elif winner %}
+                              Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
+                            {% endif %}
+                          {% elif winner %}
+                            Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
+                          {% endif %}
+                        {% endwith %}
+                      {% elif task.completed and not task.approved %}
+                        {% if is_child %}
+                          {% if task.assigned_to == user %}
+                            Määratud: Sinule
+                          {% elif task.assigned_to %}
+                            Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
+                          {% else %}
+                            Määratud: Kõigile
+                          {% endif %}
+                        {% else %}
+                          {% if task.assigned_to %}
+                            Määratud: {% if task.assigned_to.first_name %}{{ task.assigned_to.first_name }}{% else %}{{ task.assigned_to.display_name }}{% endif %}
+                          {% else %}
+                            Määratud: Kõigile
+                          {% endif %}
+                        {% endif %}
+                      {% elif is_child %}
                         {% if task.is_in_progress %}
                           {% if task.assigned_to == user %}
                             Teeb: Sina
@@ -321,6 +354,24 @@
                     </svg>
                     <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
                   </div>
+                  {% if task.completed %}
+                    <div class="task-meta-item">
+                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                  {% endif %}
+                  {% if task.approved %}
+                    <div class="task-meta-item">
+                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                  {% endif %}
                   {% if task.due_date %}
                     <div class="task-meta-item">
                       <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -353,6 +404,31 @@
                   {% endif %}
                 </div>
                 <div class="task-actions">
+                  {% if task.completed and not task.approved and is_parent %}
+                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kinnitada? See annab {{ task.points }} punkti ja märgib ülesande kinnitatud.">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="approve">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button success" aria-label="Kinnita {{ task.name }}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      </button>
+                    </form>
+                    <form method="post" class="icon-form" data-confirm="Kas soovid ülesande '{{ task.name }}' tagasi lükata? See eemaldab täitmise staatuse.">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="reopen">
+                      <input type="hidden" name="task_id" value="{{ task.id }}">
+                      <button type="submit" class="icon-button" aria-label="Ava {{ task.name }} uuesti">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                          <path d="M21 3v5h-5"></path>
+                          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                          <path d="M3 21v-5h5"></path>
+                        </svg>
+                      </button>
+                    </form>
+                  {% endif %}
                   {% if task.can_child_start %}
                     <form method="post" class="icon-form" data-confirm="Kas soovid ülesande '{{ task.name }}' alustada?">
                       {% csrf_token %}
@@ -391,27 +467,29 @@
                     </form>
                   {% endif %}
                   {% if is_parent %}
-                    <button
-                      type="button"
-                      class="icon-button"
-                      data-open-task-modal="edit"
-                      data-task-id="{{ task.id }}"
-                      data-task-name="{{ task.name|escape }}"
-                      data-task-description="{{ task.description|default_if_none:''|escape }}"
-                      data-task-assigned="{{ task.assigned_to_id|default:'' }}"
-                      data-task-points="{{ task.points }}"
-                      data-task-priority="{{ task.priority }}"
-                      data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
-                      data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
-                      data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
-                      data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
-                      data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
-                    >
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
-                      </svg>
-                    </button>
+                    {% if not task.completed %}
+                      <button
+                        type="button"
+                        class="icon-button"
+                        data-open-task-modal="edit"
+                        data-task-id="{{ task.id }}"
+                        data-task-name="{{ task.name|escape }}"
+                        data-task-description="{{ task.description|default_if_none:''|escape }}"
+                        data-task-assigned="{{ task.assigned_to_id|default:'' }}"
+                        data-task-points="{{ task.points }}"
+                        data-task-priority="{{ task.priority }}"
+                        data-task-due="{{ task.due_date|date:'Y-m-d'|default_if_none:'' }}"
+                        data-task-recurring-frequency="{% if task.recurrences.exists %}{{ task.recurrences.first.frequency }}{% endif %}"
+                        data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
+                        data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
+                        data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
+                        </svg>
+                      </button>
+                    {% endif %}
                     <form method="post" class="icon-form" data-confirm="{% if task.recurrences.exists %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See kustutab ainult selle ülesande, mitte korduvat ülesannet. Korduva ülesande peatamiseks muuda ülesannet ja vali 'Ei kordu'.{% else %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.{% endif %}">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete">
@@ -431,239 +509,6 @@
             {% endfor %}
           {% else %}
             <p class="empty-state full-row">Aktiivseid ülesandeid pole. Võta hetk puhkuseks!</p>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="task-section">
-        <header class="list-section-header">
-          <span class="list-section-icon accent-icon" aria-hidden="true"></span>
-          <h2>Ootab kinnitust</h2>
-        </header>
-        <div class="task-grid">
-          {% if pending_tasks %}
-            {% for task in pending_tasks %}
-              <article class="task-card awaiting priority-{{ task.priority }}">
-                <div class="task-card-header">
-                  <div>
-                    <h3 class="task-name">
-                      <svg class="task-status-icon completed-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Lõpetatud">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      {{ task.name }}
-                    </h3>
-                    <p class="task-assigned">
-                      {% if is_child %}
-                        {% if task.assigned_to == user %}
-                          Määratud: Sinule
-                        {% elif task.assigned_to %}
-                          Määratud: {{ task.assigned_to.first_name|default:task.assigned_to.display_name }}
-                        {% else %}
-                          Määratud: Kõigile
-                        {% endif %}
-                      {% else %}
-                        {% if task.assigned_to %}
-                          Määratud: {{ task.assigned_to.first_name|default:task.assigned_to.display_name }}
-                        {% else %}
-                          Määratud: Kõigile
-                        {% endif %}
-                      {% endif %}
-                    </p>
-                    {% if task.description %}
-                      <p class="task-description">{{ task.description }}</p>
-                    {% endif %}
-                  </div>
-                  <span class="task-points points-chip">
-                    <span class="points-value">{{ task.points }}</span>
-                    <span class="points-label">pts</span>
-                  </span>
-                </div>
-                <div class="task-meta">
-                  <div class="task-meta-item">
-                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                    </svg>
-                    <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
-                  </div>
-                  <div class="task-meta-item">
-                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span class="task-meta-label">Lõpetas {% if task.completed_by.first_name %}{{ task.completed_by.first_name }}{% else %}{{ task.completed_by.display_name }}{% endif %} {{ task.completed_at|date:"d.m.Y H:i" }}</span>
-                  </div>
-                  {% if task.due_date %}
-                    <div class="task-meta-item">
-                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"d.m" }}</span>
-                    </div>
-                  {% endif %}
-                  {% if task.recurrences.exists %}
-                    {% with recurrence=task.recurrences.first %}
-                      <div class="task-meta-item">
-                        <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M1 4v6h6"></path>
-                          <path d="M23 20v-6h-6"></path>
-                          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                        </svg>
-                        <span class="task-meta-label">
-                          {% if recurrence.frequency == 'daily' %}Iga päev
-                          {% elif recurrence.frequency == 'business_daily' %}Iga tööpäev
-                          {% elif recurrence.frequency == 'every_other_day' %}Iga teine päev
-                          {% elif recurrence.frequency == 'weekly' %}Iga nädal
-                          {% elif recurrence.frequency == 'monthly' %}Iga kuu
-                          {% else %}Korduv{% endif %}
-                        </span>
-                      </div>
-                    {% endwith %}
-                  {% endif %}
-                </div>
-                <div class="task-actions">
-                  {% if is_parent %}
-                    <form method="post" class="icon-form" data-confirm="Kas oled kindel, et soovid ülesande '{{ task.name }}' kinnitada? See annab {{ task.points }} punkti ja märgib ülesande kinnitatud.">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="approve">
-                      <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button success" aria-label="Kinnita {{ task.name }}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                      </button>
-                    </form>
-                    <form method="post" class="icon-form" data-confirm="Kas soovid ülesande '{{ task.name }}' tagasi lükata? See eemaldab täitmise staatuse.">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="reopen">
-                      <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button" aria-label="Ava {{ task.name }} uuesti">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-                          <path d="M21 3v5h-5"></path>
-                          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
-                          <path d="M3 21v-5h5"></path>
-                        </svg>
-                      </button>
-                    </form>
-                  {% endif %}
-                </div>
-              </article>
-            {% endfor %}
-          {% else %}
-            <p class="empty-state full-row">Kinnitust ootavaid ülesandeid pole.</p>
-          {% endif %}
-        </div>
-      </section>
-
-      <section class="task-section">
-        <header class="list-section-header">
-          <span class="list-section-icon cart-icon" aria-hidden="true"></span>
-          <h2>Kinnitatud ülesanded</h2>
-        </header>
-        <div class="task-grid">
-          {% if approved_tasks %}
-            {% for task in approved_tasks %}
-              <article class="task-card approved priority-{{ task.priority }}">
-                <div class="task-card-header">
-                  <div>
-                    <h3 class="task-name">
-                      <svg class="task-status-icon approved-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Kinnitatud">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                      </svg>
-                      {{ task.name }}
-                    </h3>
-                    <p class="task-assigned">
-                      {% with winner=task.assigned_to|default:task.completed_by %}
-                        {% if is_child %}
-                          {% if winner == user %}
-                            Punktid teenis: Sina
-                          {% elif winner %}
-                            Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
-                          {% endif %}
-                        {% elif winner %}
-                          Punktid teenis: {% if winner.first_name %}{{ winner.first_name }}{% else %}{{ winner.display_name }}{% endif %}
-                        {% endif %}
-                      {% endwith %}
-                    </p>
-                    {% if task.description %}
-                      <p class="task-description">{{ task.description }}</p>
-                    {% endif %}
-                  </div>
-                  <span class="task-points points-chip">
-                    <span class="points-value">{{ task.points }}</span>
-                    <span class="points-label">pts</span>
-                  </span>
-                </div>
-                <div class="task-meta">
-                  <div class="task-meta-item">
-                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
-                    </svg>
-                    <span class="task-meta-label">{% if task.priority == 0 %}Madal{% elif task.priority == 1 %}Keskmine{% else %}Kõrge{% endif %}</span>
-                  </div>
-                  <div class="task-meta-item">
-                    <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    <span class="task-meta-label">Kinnitas {% if task.approved_by.first_name %}{{ task.approved_by.first_name }}{% else %}{{ task.approved_by.display_name }}{% endif %} {{ task.approved_at|date:"d.m.Y H:i" }}</span>
-                  </div>
-                  {% if task.due_date %}
-                    <div class="task-meta-item">
-                      <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                      </svg>
-                      <span class="task-meta-label">{{ task.due_date|date:"d.m" }}</span>
-                    </div>
-                  {% endif %}
-                  {% if task.recurrences.exists %}
-                    {% with recurrence=task.recurrences.first %}
-                      <div class="task-meta-item">
-                        <svg class="task-meta-icon" viewBox="0 0 24 24" aria-hidden="true" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M1 4v6h6"></path>
-                          <path d="M23 20v-6h-6"></path>
-                          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
-                        </svg>
-                        <span class="task-meta-label">
-                          {% if recurrence.frequency == 'daily' %}Iga päev
-                          {% elif recurrence.frequency == 'business_daily' %}Iga tööpäev
-                          {% elif recurrence.frequency == 'every_other_day' %}Iga teine päev
-                          {% elif recurrence.frequency == 'weekly' %}Iga nädal
-                          {% elif recurrence.frequency == 'monthly' %}Iga kuu
-                          {% else %}Korduv{% endif %}
-                        </span>
-                      </div>
-                    {% endwith %}
-                  {% endif %}
-                </div>
-                {% if is_parent %}
-                  <div class="task-actions">
-                    <form method="post" class="icon-form" data-confirm="{% if task.recurrences.exists %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? See kustutab ainult selle ülesande, mitte korduvat ülesannet. Korduva ülesande peatamiseks muuda ülesannet ja vali 'Ei kordu'.{% else %}Kas oled kindel, et soovid ülesande '{{ task.name }}' kustutada? Seda ei saa tagasi võtta.{% endif %}">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="delete">
-                      <input type="hidden" name="task_id" value="{{ task.id }}">
-                      <button type="submit" class="icon-button" aria-label="Kustuta {{ task.name }}">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          <line x1="10" y1="11" x2="10" y2="17"></line>
-                          <line x1="14" y1="11" x2="14" y2="17"></line>
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                {% endif %}
-              </article>
-            {% endfor %}
-          {% else %}
-            <p class="empty-state full-row">Kinnitatud ülesandeid veel pole. Jätkake samas vaimus!</p>
           {% endif %}
         </div>
       </section>
