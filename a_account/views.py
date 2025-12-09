@@ -46,8 +46,7 @@ def _get_billing_period_from_price_id(price_id):
 
 def _sanitize_error_message(error_msg):
     """Always return generic user-friendly error message"""
-    from django.conf import settings
-    return f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}"
+    return f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {django_settings.SUPPORT_EMAIL}"
 
 
 from a_family.utils import get_family_for_user as _get_family_for_user
