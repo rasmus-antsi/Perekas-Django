@@ -2,6 +2,7 @@
 import logging
 
 # Django imports
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
@@ -79,7 +80,6 @@ def onboarding(request):
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.error(f"Error creating family: {e}", exc_info=True)
-                    from django.conf import settings
                     messages.error(request, f"Midagi läks valesti pere loomisel. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
                     return redirect('a_family:onboarding')
                 try:
@@ -134,7 +134,6 @@ def onboarding(request):
                 except Family.DoesNotExist:
                     error_message = 'Vale peresissekood. Palun kontrolli ja proovi uuesti.'
                 except Exception as e:
-                    from django.conf import settings
                     messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
         
         else:
@@ -331,12 +330,10 @@ def resend_verification_email(request):
             
             return redirect('account_verification_sent')
         except EmailAddress.DoesNotExist:
-            from django.conf import settings
             messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
         except Exception as e:
             logger.error(f"Failed to resend verification email: {str(e)}", exc_info=True)
-            from django.conf import settings
             messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
             return redirect('account_verification_sent')
     
