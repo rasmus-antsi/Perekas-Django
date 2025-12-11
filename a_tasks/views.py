@@ -245,6 +245,7 @@ def index(request):
                 name = parsed['name']
                 description = ""
                 assigned_id = parsed['assigned_to_id']
+                assign_to_all_children = parsed.get('assign_to_all_children', False)
                 due = parsed['due_date']
                 priority = parsed['priority']
                 points_value = parsed['points']
@@ -253,6 +254,7 @@ def index(request):
                 # Modal form (backward compatibility)
                 description = request.POST.get("description", "").strip()
                 assigned_id = request.POST.get("assigned_to")
+                assign_to_all_children = False  # Modal form doesn't support @kõigile
                 due_date_str = request.POST.get("due_date", "").strip()
                 due = None
                 if due_date_str:
@@ -281,7 +283,8 @@ def index(request):
                         family_children.append(family.owner)
                 
                 # Determine how many tasks to create
-                assign_to_all = parsed.get('assign_to_all_children', False) if task_text else False
+                # Check if @kõigile was used (from parsed dict if task_text)
+                assign_to_all = assign_to_all_children
                 num_tasks_to_create = len(family_children) if assign_to_all and family_children else 1
                 
                 # Check subscription limit before creating
@@ -812,16 +815,21 @@ def index(request):
 
         for task in all_tasks:
             if is_child:
+                # Check if task is in progress and assigned to this user
+                is_assigned_to_me = task.assigned_to_id == user.id
+                is_my_task_in_progress = task.is_in_progress and is_assigned_to_me
+                
                 # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
+                # But NOT if it's already in progress by this user
                 task.can_child_start = (
                     not task.completed and
                     not task.is_in_progress and
-                    (task.assigned_to is None or task.assigned_to_id == user.id)
+                    (task.assigned_to is None or is_assigned_to_me)
                 )
-                # Can complete if: in progress and assigned to this user
-                task.can_child_complete = task.is_in_progress and task.assigned_to_id == user.id
-                # Can cancel if: in progress and assigned to this user
-                task.can_child_cancel = task.is_in_progress and task.assigned_to_id == user.id
+                # Can complete if: in progress AND assigned to this user AND not completed
+                task.can_child_complete = is_my_task_in_progress and not task.completed
+                # Can cancel if: in progress AND assigned to this user AND not completed
+                task.can_child_cancel = is_my_task_in_progress and not task.completed
             else:
                 task.can_child_start = False
                 task.can_child_complete = False
