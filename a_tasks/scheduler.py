@@ -54,8 +54,10 @@ def start_scheduler():
 def run_daily_maintenance():
     """Run the daily maintenance tasks"""
     try:
-        today = timezone.now().date()
-        logger.info(f"Starting scheduled daily maintenance at {timezone.now()} (Tallinn time)")
+        # Use Tallinn timezone to get today's date
+        tallinn_now = timezone.now().astimezone(TALLINN_TZ)
+        today = tallinn_now.date()
+        logger.info(f"Starting scheduled daily maintenance at {tallinn_now} (Tallinn time), today={today}")
         logger.info("=" * 60)
         
         # 1. Reset assigned_to for all incomplete tasks (so children can't lock tasks)

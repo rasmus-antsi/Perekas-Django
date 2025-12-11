@@ -35,144 +35,89 @@ def reset_assigned_to_for_all_tasks():
 def create_recurring_tasks_for_today(today):
     """
     Creates recurring tasks that should occur today.
-    If next_occurrence is in the past, creates task for today or updates due_date.
-    If a new task is created for today and there's an old uncompleted task for the same recurrence,
-    the old task is deleted.
+    
+    Logic:
+    1. If the task referenced by recurrence is completed and approved, delete it and create a new one for today
+    2. If the task is not completed and due_date is in the past, update due_date to today
+    3. If no task exists for today, create one
+    4. Always update next_occurrence to the next occurrence date
+    
+    The task's due_date should always match the recurrence's next_occurrence date.
     Returns the number of tasks created/updated.
     """
     created_count = 0
     updated_count = 0
+    deleted_count = 0
     
-    # Find all recurrences where next_occurrence is today or earlier
+    # Find all recurrences where next_occurrence date is today or earlier
+    # We need to filter by date, not datetime, since next_occurrence is stored in UTC
+    # but we want to compare dates in Tallinn timezone
     from datetime import datetime as dt
-    today_start = timezone.make_aware(dt.combine(today, dt.min.time()))
-    due_recurrences = TaskRecurrence.objects.filter(
-        next_occurrence__lte=today_start + timedelta(days=1)
-    ).select_related('task', 'task__family', 'task__assigned_to', 'task__created_by')
+    import pytz
+    
+    # Get all recurrences and filter by date in Python to avoid timezone issues
+    all_recurrences = TaskRecurrence.objects.select_related(
+        'task', 'task__family', 'task__assigned_to', 'task__created_by'
+    ).all()
+    
+    # Filter recurrences where next_occurrence date is today or earlier
+    due_recurrences = []
+    for recurrence in all_recurrences:
+        # Get the date part of next_occurrence (this handles timezone conversion correctly)
+        next_date = recurrence.next_occurrence.date()
+        if next_date <= today:
+            due_recurrences.append(recurrence)
     
     for recurrence in due_recurrences:
+        # Store family and task name before we might delete the task
+        # Get from recurrence.task if it exists, otherwise we can't process this recurrence
+        if not recurrence.task:
+            logger.warning(f"Recurrence {recurrence.id} has no task, skipping")
+            continue
+        
+        task_family = recurrence.task.family
+        task_name = recurrence.task.name
+        task_description = recurrence.task.description
+        task_created_by = recurrence.task.created_by
+        task_priority = recurrence.task.priority
+        task_points = recurrence.task.points
+        
         # Check if end_date has passed
         if recurrence.end_date and recurrence.end_date < today:
+            # Delete the recurrence and its task if it exists
+            if recurrence.task:
+                task_name_for_log = recurrence.task.name
+                recurrence.task.delete()
             recurrence.delete()
             logger.info(
-                f"Deleted expired recurrence for task '{recurrence.task.name}' "
+                f"Deleted expired recurrence for task '{task_name_for_log}' "
                 f"(end date {recurrence.end_date} passed)"
             )
             continue
         
-        # Calculate the due date for the new task
-        new_due_date = recurrence.next_occurrence.date()
+        # Get the current task referenced by this recurrence
+        current_task = recurrence.task
         
-        # If next_occurrence is in the past, we need to create/update task for today
-        if new_due_date < today:
-            # Find existing uncompleted task for this recurrence (same name, same family)
-            existing_task = Task.objects.filter(
-                family=recurrence.task.family,
-                name=recurrence.task.name,
-                completed=False
-            ).exclude(id=recurrence.task.id).order_by('-due_date').first()
-            
-            if existing_task:
-                # Update due_date to today if task exists but is in the past
-                if existing_task.due_date < today:
-                    existing_task.due_date = today
-                    existing_task.assigned_to = None  # Reset assignment
-                    existing_task.completed = False
-                    existing_task.completed_by = None
-                    existing_task.completed_at = None
-                    existing_task.approved = False
-                    existing_task.approved_by = None
-                    existing_task.approved_at = None
-                    existing_task.started_at = None
-                    existing_task.save()
-                    updated_count += 1
-                    logger.info(
-                        f"Updated due_date to {today} for existing task '{existing_task.name}' (ID: {existing_task.id})"
-                    )
-                # Even if due_date is today, we still need to update next_occurrence
-            else:
-                # Create new task for today
-                new_task = Task.objects.create(
-                    name=recurrence.task.name,
-                    description=recurrence.task.description,
-                    family=recurrence.task.family,
-                    assigned_to=None,  # Don't copy assigned_to, let it be None
-                    created_by=recurrence.task.created_by,
-                    due_date=today,
-                    priority=recurrence.task.priority,
-                    points=recurrence.task.points,
-                    completed=False,
-                    completed_by=None,
-                    completed_at=None,
-                    approved=False,
-                    approved_by=None,
-                    approved_at=None,
-                    started_at=None,
-                )
-                created_count += 1
-                logger.info(
-                    f"Created recurring task '{new_task.name}' (ID: {new_task.id}) "
-                    f"for {today} (was due {new_due_date})"
-                )
-            
-            # Calculate next occurrence from today (always update if next_occurrence was in the past)
-            next_due_date, next_occurrence = calculate_next_occurrence(
-                today, recurrence.frequency, recurrence.interval,
-                day_of_week=recurrence.day_of_week,
-                day_of_month=recurrence.day_of_month
+        # If task is completed and approved, delete it and create a new one
+        if current_task and current_task.completed and current_task.approved:
+            logger.info(
+                f"Task '{current_task.name}' (ID: {current_task.id}) is completed and approved, "
+                f"deleting and creating new one for {today}"
             )
-            recurrence.next_occurrence = next_occurrence
-            recurrence.save()
-            continue
-        
-        # If it's due today
-        if new_due_date == today:
-            # Check if a task for today already exists for this recurrence
-            existing_task_today = Task.objects.filter(
-                family=recurrence.task.family,
-                name=recurrence.task.name,
-                due_date=today,
-                completed=False
-            ).exclude(id=recurrence.task.id).first()
+            # Store old task ID for deletion
+            old_task_id = current_task.id
             
-            if existing_task_today:
-                # Task for today already exists, just update the recurrence to next occurrence
-                next_due_date, next_occurrence = calculate_next_occurrence(
-                    today, recurrence.frequency, recurrence.interval,
-                    day_of_week=recurrence.day_of_week,
-                    day_of_month=recurrence.day_of_month
-                )
-                recurrence.next_occurrence = next_occurrence
-                recurrence.save()
-                continue
-            
-            # Find old uncompleted tasks for this recurrence (same name, same family, but different due date)
-            old_uncompleted_tasks = Task.objects.filter(
-                family=recurrence.task.family,
-                name=recurrence.task.name,
-                completed=False,
-                due_date__lt=today
-            ).exclude(id=recurrence.task.id)
-            
-            # Delete old uncompleted tasks
-            old_tasks_deleted = 0
-            if old_uncompleted_tasks.exists():
-                old_tasks_deleted, _ = old_uncompleted_tasks.delete()
-                logger.info(
-                    f"Deleted {old_tasks_deleted} old uncompleted task(s) for '{recurrence.task.name}' "
-                    f"before creating new one for {today}"
-                )
-            
-            # Create new task instance for today
+            # Create new task for today FIRST (before deleting old one)
+            # This ensures recurrence.task is never None (CASCADE would delete recurrence if task is deleted)
             new_task = Task.objects.create(
-                name=recurrence.task.name,
-                description=recurrence.task.description,
-                family=recurrence.task.family,
-                assigned_to=None,  # Don't copy assigned_to, let it be None
-                created_by=recurrence.task.created_by,
+                name=task_name,
+                description=task_description,
+                family=task_family,
+                assigned_to=None,
+                created_by=task_created_by,
                 due_date=today,
-                priority=recurrence.task.priority,
-                points=recurrence.task.points,
+                priority=task_priority,
+                points=task_points,
                 completed=False,
                 completed_by=None,
                 completed_at=None,
@@ -183,23 +128,132 @@ def create_recurring_tasks_for_today(today):
             )
             created_count += 1
             
-            # Calculate next occurrence
+            # Update recurrence to point to new task BEFORE deleting old task
+            # This prevents CASCADE from deleting the recurrence
+            recurrence.task = new_task
+            
+            # Calculate and update next occurrence
             next_due_date, next_occurrence = calculate_next_occurrence(
                 today, recurrence.frequency, recurrence.interval,
                 day_of_week=recurrence.day_of_week,
                 day_of_month=recurrence.day_of_month
             )
-            
-            # Update recurrence to point to new task and set next occurrence
-            recurrence.task = new_task
             recurrence.next_occurrence = next_occurrence
             recurrence.save()
             
+            # Now delete the old task (recurrence is already pointing to new task, so CASCADE won't affect it)
+            Task.objects.filter(id=old_task_id).delete()
+            deleted_count += 1
+            
             logger.info(
-                f"Created recurring task '{new_task.name}' (ID: {new_task.id}) "
-                f"for {today}, deleted {old_tasks_deleted} old task(s)"
+                f"Created new task '{new_task.name}' (ID: {new_task.id}) for {today} "
+                f"to replace completed task (deleted old task {old_task_id})"
             )
+            
+            # Continue to next recurrence
+            continue
+        
+        # Check if task for today already exists (excluding the current task if it's not for today)
+        existing_task_today = None
+        if current_task and current_task.due_date == today:
+            # Current task is for today, use it
+            existing_task_today = current_task
+        else:
+            # Look for another task for today (only incomplete ones)
+            existing_task_today = Task.objects.filter(
+                family=task_family,
+                name=task_name,
+                due_date=today,
+                completed=False
+            ).exclude(id=current_task.id if current_task else None).first()
+        
+        # If we have an existing task for today, use it
+        if existing_task_today:
+            # Update recurrence to point to this task
+            if recurrence.task != existing_task_today:
+                recurrence.task = existing_task_today
+                recurrence.save()
+            # Task already exists for today, just update next_occurrence
+            next_due_date, next_occurrence = calculate_next_occurrence(
+                today, recurrence.frequency, recurrence.interval,
+                day_of_week=recurrence.day_of_week,
+                day_of_month=recurrence.day_of_month
+            )
+            recurrence.next_occurrence = next_occurrence
+            recurrence.save()
+            logger.info(
+                f"Task '{existing_task_today.name}' (ID: {existing_task_today.id}) already exists for {today}, "
+                f"updated next_occurrence to {next_occurrence.date()}"
+            )
+            continue
+        
+        # No task for today exists - need to create or update
+        if current_task and not current_task.completed:
+            # Task exists but is not completed and due_date is in the past, update it to today
+            if current_task.due_date < today:
+                current_task.due_date = today
+                current_task.assigned_to = None  # Reset assignment
+                current_task.started_at = None  # Reset started_at
+                current_task.save()
+                updated_count += 1
+                logger.info(
+                    f"Updated due_date to {today} for existing task '{current_task.name}' (ID: {current_task.id})"
+                )
+        else:
+            # Create new task for today
+            # First, delete any old uncompleted tasks for this recurrence (same name, same family)
+            old_tasks = Task.objects.filter(
+                family=task_family,
+                name=task_name,
+                completed=False,
+                due_date__lt=today
+            )
+            if old_tasks.exists():
+                old_count, _ = old_tasks.delete()
+                deleted_count += old_count
+                logger.info(
+                    f"Deleted {old_count} old uncompleted task(s) for '{task_name}' "
+                    f"before creating new one for {today}"
+                )
+            
+            # Create new task for today
+            new_task = Task.objects.create(
+                name=task_name,
+                description=task_description,
+                family=task_family,
+                assigned_to=None,
+                created_by=task_created_by,
+                due_date=today,
+                priority=task_priority,
+                points=task_points,
+                completed=False,
+                completed_by=None,
+                completed_at=None,
+                approved=False,
+                approved_by=None,
+                approved_at=None,
+                started_at=None,
+            )
+            created_count += 1
+            
+            # Update recurrence to point to new task
+            recurrence.task = new_task
+            logger.info(
+                f"Created recurring task '{new_task.name}' (ID: {new_task.id}) for {today}"
+            )
+        
+        # Calculate and update next occurrence
+        next_due_date, next_occurrence = calculate_next_occurrence(
+            today, recurrence.frequency, recurrence.interval,
+            day_of_week=recurrence.day_of_week,
+            day_of_month=recurrence.day_of_month
+        )
+        recurrence.next_occurrence = next_occurrence
+        recurrence.save()
     
+    logger.info(
+        f"Recurring tasks processed: {created_count} created, {updated_count} updated, {deleted_count} deleted"
+    )
     return created_count + updated_count
 
 
