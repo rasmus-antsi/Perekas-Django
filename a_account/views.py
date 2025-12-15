@@ -82,6 +82,18 @@ def _get_billing_period_from_price_id(price_id):
     return None
 
 
+def _get_promo_code_for_tier(tier):
+    """
+    Map subscription tier to Stripe promotion code ID.
+    These promotion codes are configured in Stripe to be single-use per customer.
+    """
+    if tier == Subscription.TIER_STARTER:
+        return 'promo_1SeYbP7Bxzw7NSMs1ONBIMqU'  # coupon EYpkHhmi
+    if tier == Subscription.TIER_PRO:
+        return 'promo_1SeYcP7Bxzw7NSMsXzDMN6ed'  # coupon igyReatB
+    return None
+
+
 def _sanitize_error_message(error_msg):
     """Always return generic user-friendly error message"""
     return f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {django_settings.SUPPORT_EMAIL}"
@@ -780,6 +792,19 @@ def subscription_settings(request):
                     cancel_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
                     return_url = request.build_absolute_uri('/account/settings/?section=subscriptions')
                 
+                # Apply promo code automatically for new subscriptions (let Stripe enforce one-time usage)
+                discounts = []
+                promo_code = None
+                # Only apply if no existing active paid subscription
+                had_paid_subscription = Subscription.objects.filter(
+                    owner=user,
+                    tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+                ).exists()
+                if not had_paid_subscription:
+                    promo_code = _get_promo_code_for_tier(tier)
+                    if promo_code:
+                        discounts = [{'promotion_code': promo_code}]
+                
                 checkout_session = stripe.checkout.Session.create(
                     customer=customer_id,
                     payment_method_types=['card'],
@@ -792,10 +817,12 @@ def subscription_settings(request):
                     cancel_url=cancel_url,
                     locale='et',
                     allow_promotion_codes=True,
+                    discounts=discounts,
                     metadata={
                         'user_id': str(user.id),
                         'family_id': str(family.id),
                         'tier': tier,
+                        'applied_promo_code': promo_code or '',
                     }
                 )
                 
