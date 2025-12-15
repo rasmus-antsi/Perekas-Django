@@ -10,6 +10,15 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.utils import timezone
+from a_api.meta_capi import (
+    MetaCapiConfigError,
+    MetaCapiSendError,
+    build_event_payload,
+    build_user_data,
+    default_event_id,
+    default_event_time,
+    send_events_to_meta,
+)
 
 from .models import Subscription
 from .utils import get_tier_from_price_id
@@ -17,6 +26,36 @@ from .utils import get_tier_from_price_id
 logger = logging.getLogger(__name__)
 
 
+def _client_ip(request):
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+def _send_meta_event(request, *, event_name, event_source_url, email=None, currency=None, value=None, custom_data=None, attribution_data=None, original_event_data=None, event_id=None):
+    client_ip = _client_ip(request)
+    client_user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_data = build_user_data(email, client_ip, client_user_agent)
+    evt_custom_data = custom_data or {}
+    if event_name == 'Purchase' and currency and value is not None:
+        evt_custom_data.update({'currency': currency, 'value': value})
+    payload = build_event_payload(
+        event_name=event_name,
+        event_time=default_event_time(),
+        event_source_url=event_source_url,
+        action_source='website',
+        event_id=event_id or default_event_id(),
+        user_data=user_data,
+        custom_data=evt_custom_data or None,
+        attribution_data=attribution_data,
+        original_event_data=original_event_data,
+    )
+    try:
+        send_events_to_meta([payload])
+    except (MetaCapiConfigError, MetaCapiSendError, Exception):
+        return None
+    return payload.get('event_id')
 
 
 @login_required
@@ -166,6 +205,31 @@ def upgrade_success(request):
 
         messages.success(request, f"Pakett uuendati tasemele {subscription.get_tier_display()}!")
         logger.info(f"Subscription successfully created/updated for user {request.user.id}, tier: {subscription.tier}")
+        # Send Meta Purchase event
+        currency = None
+        value = None
+        try:
+            if line_items.data and len(line_items.data) > 0:
+                price_obj = getattr(line_items.data[0], 'price', None)
+                if price_obj:
+                    currency = getattr(price_obj, 'currency', None)
+                    unit_amount = getattr(price_obj, 'unit_amount', None) or getattr(price_obj, 'unit_amount_decimal', None)
+                    if unit_amount is not None:
+                        try:
+                            value = float(unit_amount) / 100
+                        except Exception:
+                            value = None
+        except Exception:
+            pass
+        event_source_url = request.build_absolute_uri()
+        _send_meta_event(
+            request,
+            event_name='Purchase',
+            event_source_url=event_source_url,
+            email=request.user.email,
+            currency=currency,
+            value=value,
+        )
         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")
 
     except stripe.error.StripeError as e:

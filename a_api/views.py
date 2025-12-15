@@ -46,6 +46,37 @@ def _client_ip(request):
 ALLOWED_META_EVENTS = {"Purchase", "ViewContent", "Lead", "CompleteRegistration"}
 
 
+def _send_meta_event(request, *, event_name, event_source_url, email=None, currency=None, value=None, custom_data=None, attribution_data=None, original_event_data=None, event_id=None):
+    """Build and send a single Meta CAPI event. Swallows Meta errors to avoid breaking UX."""
+    client_ip = _client_ip(request)
+    client_user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_data = build_user_data(email, client_ip, client_user_agent)
+    evt_custom_data = custom_data or {}
+    if event_name == 'Purchase' and currency and value is not None:
+        evt_custom_data.update({'currency': currency, 'value': value})
+    payload = build_event_payload(
+        event_name=event_name,
+        event_time=default_event_time(),
+        event_source_url=event_source_url,
+        action_source='website',
+        event_id=event_id or default_event_id(),
+        user_data=user_data,
+        custom_data=evt_custom_data or None,
+        attribution_data=attribution_data,
+        original_event_data=original_event_data,
+    )
+    try:
+        response = send_events_to_meta([payload])
+        return {
+            'event_id': payload['event_id'],
+            'fbtrace_id': response.get('fbtrace_id'),
+            'events_received': response.get('events_received'),
+            'messages': response.get('messages'),
+        }
+    except (MetaCapiConfigError, MetaCapiSendError, Exception):
+        return None
+
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def meta_events(request):
@@ -346,7 +377,21 @@ def register(request):
                     'members': members_data,
                     'created_at': family.created_at.isoformat(),
                 }
-            
+            # Fire Meta CAPI events for signup
+            event_source_url = request.build_absolute_uri()
+            _send_meta_event(
+                request,
+                event_name='Lead',
+                event_source_url=event_source_url,
+                email=email,
+            )
+            _send_meta_event(
+                request,
+                event_name='CompleteRegistration',
+                event_source_url=event_source_url,
+                email=email,
+            )
+
             return _json_response({
                 'user': {
                     'id': user.id,

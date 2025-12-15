@@ -17,8 +17,46 @@ from django.utils import timezone
 from a_family.models import Family, User
 from a_subscription.models import Subscription
 from a_subscription.utils import get_family_subscription, get_tier_from_price_id
+from a_api.meta_capi import (
+    MetaCapiConfigError,
+    MetaCapiSendError,
+    build_event_payload,
+    build_user_data,
+    default_event_id,
+    default_event_time,
+    send_events_to_meta,
+)
 
 logger = logging.getLogger(__name__)
+
+
+def _client_ip(request):
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+def _send_meta_event(request, *, event_name, event_source_url, email=None, custom_data=None, event_id=None, attribution_data=None, original_event_data=None):
+    client_ip = _client_ip(request)
+    client_user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_data = build_user_data(email, client_ip, client_user_agent)
+    payload = build_event_payload(
+        event_name=event_name,
+        event_time=default_event_time(),
+        event_source_url=event_source_url,
+        action_source='website',
+        event_id=event_id or default_event_id(),
+        user_data=user_data,
+        custom_data=custom_data or None,
+        attribution_data=attribution_data,
+        original_event_data=original_event_data,
+    )
+    try:
+        send_events_to_meta([payload])
+    except (MetaCapiConfigError, MetaCapiSendError, Exception):
+        return None
+    return payload.get('event_id')
 
 
 def _get_billing_period_from_price_id(price_id):
@@ -390,6 +428,15 @@ def subscription_settings(request):
         if referer and request.build_absolute_uri('/').split('/')[2] in referer:
             return redirect(referer)
         return redirect(reverse('a_dashboard:dashboard'))
+
+    # Log a ViewContent event when the subscription settings page is viewed by the owner
+    if request.method == 'GET':
+        _send_meta_event(
+            request,
+            event_name='ViewContent',
+            event_source_url=request.build_absolute_uri(),
+            email=user.email,
+        )
 
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
