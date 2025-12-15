@@ -429,15 +429,6 @@ def subscription_settings(request):
             return redirect(referer)
         return redirect(reverse('a_dashboard:dashboard'))
 
-    # Log a ViewContent event when the subscription settings page is viewed by the owner
-    if request.method == 'GET':
-        _send_meta_event(
-            request,
-            event_name='ViewContent',
-            event_source_url=request.build_absolute_uri(),
-            email=user.email,
-        )
-
     # Check if we should show upgrade modal (from shopping redirect)
     show_upgrade_modal = request.GET.get('upgrade') == '1'
 
