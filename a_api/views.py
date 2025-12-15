@@ -1,4 +1,6 @@
 import json
+import time
+import uuid
 from django.contrib.auth import authenticate
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +14,15 @@ from a_tasks.models import Task
 from a_rewards.models import Reward
 from a_shopping.models import ShoppingListItem
 from a_subscription.utils import check_subscription_limit, increment_usage, has_shopping_list_access
+from .meta_capi import (
+    MetaCapiConfigError,
+    MetaCapiSendError,
+    build_event_payload,
+    build_user_data,
+    default_event_id,
+    default_event_time,
+    send_events_to_meta,
+)
 
 
 def _get_user_from_request(request):
@@ -24,6 +35,81 @@ def _get_user_from_request(request):
 def _json_response(data, status=200):
     """Helper to return JSON response"""
     return JsonResponse(data, status=status, safe=False)
+
+def _client_ip(request):
+    forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+    if forwarded:
+        return forwarded.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR')
+
+
+ALLOWED_META_EVENTS = {"Purchase", "ViewContent", "Lead", "CompleteRegistration"}
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def meta_events(request):
+    """Accept Meta CAPI events (server-side) and forward to Meta."""
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return _json_response({'error': 'Invalid JSON'}, status=400)
+
+    event_name = payload.get('event_name')
+    if event_name not in ALLOWED_META_EVENTS:
+        return _json_response({'error': 'Unsupported event_name'}, status=400)
+
+    event_time = default_event_time(payload.get('event_time'))
+    event_source_url = payload.get('event_source_url')
+    if not event_source_url:
+        return _json_response({'error': 'event_source_url is required'}, status=400)
+
+    action_source = payload.get('action_source', 'website')
+    event_id = payload.get('event_id') or default_event_id()
+    email = payload.get('email')
+    currency = payload.get('currency')
+    value = payload.get('value')
+    attribution_data = payload.get('attribution_data')
+    original_event_data = payload.get('original_event_data')
+    test_event_code = payload.get('test_event_code')
+
+    client_ip = _client_ip(request)
+    client_user_agent = request.META.get('HTTP_USER_AGENT', '')
+    user_data = build_user_data(email, client_ip, client_user_agent)
+
+    custom_data = payload.get('custom_data') or {}
+    if event_name == 'Purchase':
+        if not currency or value is None:
+            return _json_response({'error': 'currency and value are required for Purchase'}, status=400)
+        custom_data.update({'currency': currency, 'value': value})
+
+    event_payload = build_event_payload(
+        event_name=event_name,
+        event_time=event_time,
+        event_source_url=event_source_url,
+        action_source=action_source,
+        event_id=event_id,
+        user_data=user_data,
+        custom_data=custom_data or None,
+        attribution_data=attribution_data,
+        original_event_data=original_event_data,
+    )
+
+    try:
+        meta_response = send_events_to_meta([event_payload], test_event_code=test_event_code)
+    except MetaCapiConfigError as exc:
+        return _json_response({'error': str(exc)}, status=500)
+    except MetaCapiSendError as exc:
+        return _json_response({'error': 'Meta CAPI error', 'details': getattr(exc, 'args', [''])[0]}, status=502)
+    except Exception as exc:
+        return _json_response({'error': str(exc)}, status=500)
+
+    return _json_response({
+        'event_id': event_id,
+        'events_received': meta_response.get('events_received'),
+        'fbtrace_id': meta_response.get('fbtrace_id'),
+        'messages': meta_response.get('messages'),
+    })
 
 
 @csrf_exempt
