@@ -34,7 +34,9 @@ def build_user_data(email: Optional[str], ip: Optional[str], ua: Optional[str]) 
     if ip:
         user_data["client_ip_address"] = ip
     if email:
-        user_data["em"] = [hash_email(email)]
+        normalized_email = email.strip()
+        if normalized_email:
+            user_data["em"] = [hash_email(normalized_email)]
     return user_data
 
 
