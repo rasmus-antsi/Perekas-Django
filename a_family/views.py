@@ -95,7 +95,7 @@ def onboarding(request):
                     logging.getLogger(__name__).warning(
                         "Unable to send admin family created notification: %s", email_error, exc_info=True
                     )
-                return redirect('a_dashboard:dashboard')
+                return redirect('a_family:index')
         
         elif action == 'join':
             join_form = JoinFamilyForm(request.POST)

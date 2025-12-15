@@ -5871,6 +5871,22 @@ body.modal-open {
   color: rgba(148, 163, 184, 0.8);
 }
 
+.plan-price-modern .plan-price-discount {
+  color: #22c55e !important;
+  font-weight: 700 !important;
+  font-size: 2rem !important;
+  display: inline-block !important;
+}
+
+.plan-price-modern .plan-price-original-inline {
+  color: rgba(148, 163, 184, 0.7) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  margin-left: 0.5rem !important;
+  display: inline-block !important;
+  vertical-align: baseline !important;
+}
+
 .plan-features-modern {
   list-style: none;
   padding: 0;

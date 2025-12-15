@@ -88,7 +88,7 @@ def _get_promo_code_for_tier(tier):
     These promotion codes are configured in Stripe to be single-use per customer.
     """
     if tier == Subscription.TIER_STARTER:
-        return 'promo_1SeYbP7Bxzw7NSMs1ONBIMqU'  # coupon EYpkHhmi
+        return 'promo_1SeZ0o7Bxzw7NSMsOLqkTz71'  # coupon 994URhEg
     if tier == Subscription.TIER_PRO:
         return 'promo_1SeYcP7Bxzw7NSMsXzDMN6ed'  # coupon igyReatB
     return None
@@ -805,26 +805,32 @@ def subscription_settings(request):
                     if promo_code:
                         discounts = [{'promotion_code': promo_code}]
                 
-                checkout_session = stripe.checkout.Session.create(
-                    customer=customer_id,
-                    payment_method_types=['card'],
-                    line_items=[{
+                checkout_params = {
+                    'customer': customer_id,
+                    'payment_method_types': ['card'],
+                    'line_items': [{
                         'price': price_id,
                         'quantity': 1,
                     }],
-                    mode='subscription',
-                    success_url=success_url,
-                    cancel_url=cancel_url,
-                    locale='et',
-                    allow_promotion_codes=True,
-                    discounts=discounts,
-                    metadata={
+                    'mode': 'subscription',
+                    'success_url': success_url,
+                    'cancel_url': cancel_url,
+                    'locale': 'et',
+                    'metadata': {
                         'user_id': str(user.id),
                         'family_id': str(family.id),
                         'tier': tier,
                         'applied_promo_code': promo_code or '',
                     }
-                )
+                }
+                
+                # Only add discounts if we have a promo code, otherwise allow manual promotion codes
+                if discounts:
+                    checkout_params['discounts'] = discounts
+                else:
+                    checkout_params['allow_promotion_codes'] = True
+                
+                checkout_session = stripe.checkout.Session.create(**checkout_params)
                 
                 return redirect(checkout_session.url)
                 
