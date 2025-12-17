@@ -843,6 +843,7 @@ def subscription_settings(request):
 
     # Get subscription data if user can manage it
     subscription_data = None
+    show_promo_pricing = True  # Default to showing promo pricing for new users
     if can_manage_subscription and family:
         try:
             tier = get_family_subscription(family)
@@ -853,6 +854,14 @@ def subscription_settings(request):
                 owner=user,
                 tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
             ).first()
+            
+            # Check if user has ever had a paid subscription (promo already used)
+            # If they have/had a paid subscription, show normal pricing
+            had_paid_subscription = Subscription.objects.filter(
+                owner=user,
+                tier__in=[Subscription.TIER_STARTER, Subscription.TIER_PRO]
+            ).exists()
+            show_promo_pricing = not had_paid_subscription
             
             # Get display tier safely
             tier_choices = dict(Subscription.TIER_CHOICES)
@@ -878,6 +887,7 @@ def subscription_settings(request):
         "subscription_data": subscription_data,
         "can_manage_subscription": can_manage_subscription,
         "show_upgrade_modal": show_upgrade_modal,
+        "show_promo_pricing": show_promo_pricing,
         "current_section": "subscriptions",
         "family": family,
         "user": user,
