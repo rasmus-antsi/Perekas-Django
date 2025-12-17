@@ -222,4 +222,3 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
             logger.info(f"Confirmation email sent synchronously to {emailconfirmation.email_address.email} for user {emailconfirmation.email_address.user_id}, key: {emailconfirmation.key[:30]}...")
         except Exception:
             logger.exception("Failed to send confirmation email to %s", emailconfirmation.email_address.email)
-
