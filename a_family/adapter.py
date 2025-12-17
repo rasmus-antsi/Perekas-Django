@@ -4,6 +4,8 @@ import threading
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account import app_settings
 
+from a_family.emails import send_welcome_email
+
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +105,13 @@ class AsyncAccountAdapter(DefaultAccountAdapter):
                         "Database schema is out of date. Please contact support or run migrations."
                     ) from e
                 raise
+            
+            # Send welcome email to parents only (async, won't block signup)
+            if user.email and request and user.role == 'parent':
+                try:
+                    send_welcome_email(request, user)
+                except Exception:
+                    logger.exception("Failed to send welcome email to %s", user.email)
         
         return user
     

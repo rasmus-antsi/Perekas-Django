@@ -301,3 +301,73 @@ def send_shopping_item_added_notification(request, item):
         recipients=recipients,
     )
 
+
+def send_welcome_email(request, user):
+    """
+    Send welcome email to new users after signup.
+    Only sends if user has an email address.
+    """
+    if not user.email:
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    
+    context = {
+        'user': user,
+        'user_name': user.get_display_name(),
+        'dashboard_url': dashboard_url,
+        'logo_url': _get_logo_url(request),
+    }
+    
+    _send_branded_email(
+        subject="Tere tulemast Perekasse!",
+        template_name='email/welcome.html',
+        context=context,
+        recipients=[user.email],
+    )
+
+
+def send_bulk_email(template, users, base_url=None):
+    """
+    Send email using an EmailTemplate to a list of users.
+    
+    Args:
+        template: EmailTemplate instance with subject and body_html
+        users: QuerySet or list of User instances
+        base_url: Base URL for building absolute URLs (e.g., 'https://perekas.ee')
+    
+    Returns:
+        tuple: (sent_count, skipped_count)
+    """
+    sent_count = 0
+    skipped_count = 0
+    
+    # Default base URL
+    if not base_url:
+        base_url = 'https://perekas.ee'
+    
+    logo_url = f"{base_url}/static/logos/perekas-logo.png"
+    
+    for user in users:
+        if not user.email:
+            skipped_count += 1
+            continue
+        
+        context = {
+            'user': user,
+            'user_name': user.get_display_name(),
+            'base_url': base_url,
+            'logo_url': logo_url,
+            'body_content': template.body_html,
+        }
+        
+        _send_branded_email(
+            subject=template.subject,
+            template_name='email/bulk_template.html',
+            context=context,
+            recipients=[user.email],
+        )
+        sent_count += 1
+    
+    return sent_count, skipped_count
+

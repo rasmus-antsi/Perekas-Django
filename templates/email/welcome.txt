@@ -1,0 +1,39 @@
+Tere tulemast Perekasse, {{ user_name|default:"Perekas kasutaja" }}!
+
+Sinu pere organiseerimise teekond algab siit.
+
+Oled nüüd Perekas kogukonna liige! Perekas aitab sul hallata pere ülesandeid, preemiaid ja palju muud - kõik ühes kohas.
+
+
+KUIDAS ALUSTADA
+---------------
+1. Loo pere või liitu olemasolevaga liitumiskoodiga
+2. Kutsu pereliikmed - jaga neile liitumiskoodi
+3. Lisa esimesed ülesanded ja preemiad
+4. Jälgi pere edusamme töölaualt!
+
+
+PEAMISED FUNKTSIOONID
+---------------------
+* Ülesanded - Loo korduvaid või ühekordseid ülesandeid, määra punkte ja jälgi täitmist
+
+* Preemiad - Loo preemiaid, mida lapsed saavad kogutud punktide eest lunastada
+
+* Punktisüsteem - Motiveeri lapsi ülesandeid täitma ja jälgi nende edusamme
+
+* Ostunimekiri - Ühine ostunimekiri, kuhu kõik pereliikmed saavad lisada
+
+
+Alusta kohe: {{ dashboard_url }}
+
+
+OLEME VEEL ARENDUSJÄRGUS
+------------------------
+Perekas on aktiivses arenduses ja me lisame pidevalt uusi funktsioone. Kui leiad vea või sul on ideid, kuidas rakendust paremaks muuta, siis anna meile kindlasti teada! Sinu tagasiside aitab meil Perekast paremaks teha.
+
+
+Küsimused, vead või ideed?
+Kirjuta meile: tugi@perekas.ee
+
+---
+© {% now "Y" %} Perekas

@@ -104,3 +104,38 @@ class Family(models.Model):
         """Check if this family has access to shopping list feature"""
         from a_subscription.utils import has_shopping_list_access
         return has_shopping_list_access(self)
+
+
+class EmailTemplate(models.Model):
+    """
+    Reusable email templates for bulk email campaigns.
+    These can be sent via Django Admin or management command.
+    """
+    name = models.CharField(
+        max_length=100, 
+        unique=True, 
+        db_index=True,
+        help_text="Internal identifier for this template (e.g., 'welcome_back', 'promo_summer')"
+    )
+    subject = models.CharField(
+        max_length=200,
+        help_text="Email subject line"
+    )
+    body_html = models.TextField(
+        help_text="HTML content for the email body. Use inline styles for email compatibility."
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Only active templates can be used to send emails"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'family_email_template'
+        verbose_name = 'email template'
+        verbose_name_plural = 'email templates'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.subject[:50]}"

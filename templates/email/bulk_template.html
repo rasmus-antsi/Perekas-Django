@@ -1,0 +1,16 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}Perekas{% endblock %}
+{% block email_heading %}{% endblock %}
+
+{% block email_content %}
+  <!-- Dynamic content from EmailTemplate -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0;">
+        {{ body_content|safe }}
+      </td>
+    </tr>
+  </table>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Tere tulemast Perekasse!" %}{% endblock %}
+{% block email_heading %}{% blocktrans with user_name=user_name|default:"Perekas kasutaja" %}Tere tulemast, {{ user_name }}!{% endblocktrans %}{% endblock %}
+{% block email_subheading %}
+  <p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #94a3b8; text-align: center;">
+    {% trans "Sinu pere organiseerimise teekond algab siit." %}
+  </p>
+{% endblock %}
+
+{% block email_content %}
+  <!-- Main message -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0 0 24px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% trans "Oled nüüd Perekas kogukonna liige! Perekas aitab sul hallata pere ülesandeid, preemiaid ja palju muud - kõik ühes kohas." %}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Getting Started Steps -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; line-height: 1.6; color: #f8fafc;">
+          {% trans "Kuidas alustada:" %}
+        </p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 8px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; text-align: center; line-height: 24px; color: #fff; font-weight: 600; font-size: 12px; margin-right: 10px;">1</span>
+              {% trans "Loo pere või liitu olemasolevaga liitumiskoodiga" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; text-align: center; line-height: 24px; color: #fff; font-weight: 600; font-size: 12px; margin-right: 10px;">2</span>
+              {% trans "Kutsu pereliikmed - jaga neile liitumiskoodi" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; text-align: center; line-height: 24px; color: #fff; font-weight: 600; font-size: 12px; margin-right: 10px;">3</span>
+              {% trans "Lisa esimesed ülesanded ja preemiad" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <span style="display: inline-block; width: 24px; height: 24px; background: linear-gradient(135deg, #8b5cf6, #ec4899); border-radius: 50%; text-align: center; line-height: 24px; color: #fff; font-weight: 600; font-size: 12px; margin-right: 10px;">4</span>
+              {% trans "Jälgi pere edusamme töölaualt!" %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Features overview -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; line-height: 1.6; color: #f8fafc;">
+          {% trans "Peamised funktsioonid:" %}
+        </p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <strong style="color: #f8fafc;">{% trans "Ülesanded" %}</strong> - {% trans "Loo korduvaid või ühekordseid ülesandeid, määra punkte ja jälgi täitmist" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <strong style="color: #f8fafc;">{% trans "Preemiad" %}</strong> - {% trans "Loo preemiaid, mida lapsed saavad kogutud punktide eest lunastada" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <strong style="color: #f8fafc;">{% trans "Punktisüsteem" %}</strong> - {% trans "Motiveeri lapsi ülesandeid täitma ja jälgi nende edusamme" %}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-size: 14px; line-height: 1.8; color: #94a3b8;">
+              <strong style="color: #f8fafc;">{% trans "Ostunimekiri" %}</strong> - {% trans "Ühine ostunimekiri, kuhu kõik pereliikmed saavad lisada" %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- CTA Button -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="border-radius: 8px; background: linear-gradient(135deg, #8b5cf6, #ec4899);">
+              <a href="{{ dashboard_url }}" target="_blank" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 8px;">
+                {% trans "Alusta kohe" %}
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Work in Progress Notice -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #1e293b; border: 1px solid #475569; border-radius: 12px; margin-bottom: 24px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; line-height: 1.6; color: #fbbf24;">
+          {% trans "Oleme veel arendusjärgus" %}
+        </p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #94a3b8;">
+          {% trans "Perekas on aktiivses arenduses ja me lisame pidevalt uusi funktsioone. Kui leiad vea või sul on ideid, kuidas rakendust paremaks muuta, siis anna meile kindlasti teada! Sinu tagasiside aitab meil Perekast paremaks teha." %}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Help text -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0; text-align: center;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 1.65; color: #f8fafc;">
+          {% trans "Küsimused, vead või ideed?" %}
+        </p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.65; color: #94a3b8;">
+          {% trans "Kirjuta meile:" %} <a href="mailto:tugi@perekas.ee" style="color: #60a5fa; text-decoration: none; font-weight: 500;">tugi@perekas.ee</a>
+        </p>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
