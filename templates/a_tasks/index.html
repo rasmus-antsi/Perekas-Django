@@ -467,7 +467,7 @@
                     </form>
                   {% endif %}
                   {% if is_parent %}
-                    {% if not task.completed %}
+                    {% if not task.completed and not task.approved %}
                     <button
                       type="button"
                       class="icon-button"
@@ -483,6 +483,7 @@
                       data-task-recurring-day-of-week="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_week|default_if_none:'' }}{% endif %}"
                       data-task-recurring-day-of-month="{% if task.recurrences.exists %}{{ task.recurrences.first.day_of_month|default_if_none:'' }}{% endif %}"
                       data-task-recurring-end-date="{% if task.recurrences.exists %}{{ task.recurrences.first.end_date|date:'Y-m-d'|default_if_none:'' }}{% endif %}"
+                      aria-label="Muuda {{ task.name }}"
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M12 20h9"></path>
@@ -558,9 +559,6 @@
               {% for member in family_members %}
                 <option value="{{ member.id }}">
                   {{ member.display_name }}
-                  {% if member.role %}
-                    ({{ member.get_role_display }})
-                  {% endif %}
                 </option>
               {% endfor %}
             </select>

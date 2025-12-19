@@ -387,9 +387,13 @@ def index(request):
                         # Create single task (existing behavior)
                         assigned_user = None
                         if assigned_id:
-                            assigned_user = family.members.filter(id=assigned_id).first()
-                            if not assigned_user and str(family.owner_id) == str(assigned_id):
+                            # Only allow assignment to children
+                            assigned_user = family.members.filter(id=assigned_id, role=User.ROLE_CHILD).first()
+                            if not assigned_user and str(family.owner_id) == str(assigned_id) and family.owner.role == User.ROLE_CHILD:
                                 assigned_user = family.owner
+                            if not assigned_user and assigned_id:
+                                messages.error(request, "Ülesandeid saab määrata ainult lastele.")
+                                return redirect("a_tasks:index")
                         
                         task = Task.objects.create(
                             name=name,
@@ -463,6 +467,14 @@ def index(request):
         elif action == "update" and is_parent:
             task = _get_task()
             if task:
+                # Prevent updating completed or approved tasks
+                if task.completed:
+                    messages.error(request, "Ei saa muuta täidetud ülesandeid.")
+                    return redirect("a_tasks:index")
+                if task.approved:
+                    messages.error(request, "Ei saa muuta kinnitatud ülesandeid.")
+                    return redirect("a_tasks:index")
+                
                 previous_points = task.points
                 previous_assigned = task.assigned_to
 
@@ -472,9 +484,13 @@ def index(request):
                 assigned_id = request.POST.get("assigned_to")
                 assignment_changed = False
                 if assigned_id:
-                    new_assigned = family.members.filter(id=assigned_id).first()
-                    if not new_assigned and str(family.owner_id) == str(assigned_id):
+                    # Only allow assignment to children
+                    new_assigned = family.members.filter(id=assigned_id, role=User.ROLE_CHILD).first()
+                    if not new_assigned and str(family.owner_id) == str(assigned_id) and family.owner.role == User.ROLE_CHILD:
                         new_assigned = family.owner
+                    if not new_assigned and assigned_id:
+                        messages.error(request, "Ülesandeid saab määrata ainult lastele.")
+                        return redirect("a_tasks:index")
                     if task.assigned_to_id != (new_assigned.id if new_assigned else None):
                         assignment_changed = True
                     task.assigned_to = new_assigned
@@ -648,20 +664,28 @@ def index(request):
                 task.delete()
 
         elif action == "start" and is_child:
-            task = _get_task()
-            if not task:
-                messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
-            elif task.completed:
-                messages.warning(request, "See ülesanne on juba täidetud.")
-            elif task.is_in_progress:
-                messages.warning(request, "See ülesanne on juba teise lapse poolt alustatud.")
-            elif task.assigned_to and task.assigned_to_id != user.id:
-                messages.warning(request, "See ülesanne on määratud teisele lapsele.")
-            else:
-                task.assigned_to = user
-                task.started_at = timezone.now()
-                task.save(update_fields=["assigned_to", "started_at"])
-                messages.success(request, f"Ülesanne '{task.name}' alustatud!")
+            # Use select_for_update to prevent race conditions
+            with transaction.atomic():
+                if not task_id:
+                    messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                else:
+                    # Lock the task row to prevent race conditions
+                    task = Task.objects.select_for_update().filter(family=family, id=task_id).first()
+                    if not task:
+                        messages.error(request, f"Midagi läks valesti. Kui probleem püsib, palun võta ühendust tugiteenusega: {settings.SUPPORT_EMAIL}")
+                    elif task.completed:
+                        messages.warning(request, "See ülesanne on juba täidetud.")
+                    elif task.approved:
+                        messages.warning(request, "See ülesanne on juba kinnitatud.")
+                    elif task.is_in_progress:
+                        messages.warning(request, "See ülesanne on juba teise lapse poolt alustatud.")
+                    elif task.assigned_to and task.assigned_to_id != user.id:
+                        messages.warning(request, "See ülesanne on määratud teisele lapsele.")
+                    else:
+                        task.assigned_to = user
+                        task.started_at = timezone.now()
+                        task.save(update_fields=["assigned_to", "started_at"])
+                        messages.success(request, f"Ülesanne '{task.name}' alustatud!")
 
         elif action == "cancel" and is_child:
             task = _get_task()
@@ -819,10 +843,11 @@ def index(request):
                 is_assigned_to_me = task.assigned_to_id == user.id
                 is_my_task_in_progress = task.is_in_progress and is_assigned_to_me
                 
-                # Can start if: not completed, not in progress, and (not assigned or assigned to this user)
+                # Can start if: not completed, not approved, not in progress, and (not assigned or assigned to this user)
                 # But NOT if it's already in progress by this user
                 task.can_child_start = (
                     not task.completed and
+                    not task.approved and
                     not task.is_in_progress and
                     (task.assigned_to is None or is_assigned_to_me)
                 )

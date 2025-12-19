@@ -37,19 +37,21 @@ def create_recurring_tasks_for_today(today):
     Creates recurring tasks that should occur today.
     
     Logic:
-    1. If the task referenced by recurrence is completed and approved, delete it and create a new one for today
-    2. If the task is not completed and due_date is in the past, update due_date to today
-    3. If no task exists for today, create one
-    4. Always update next_occurrence to the next occurrence date
+    1. Only processes recurrences where next_occurrence date is exactly today
+    2. If the task referenced by recurrence is completed and approved, delete it and create a new one for today
+    3. If the task is not completed and due_date doesn't match today, update due_date to today
+    4. If no task exists for today, create one
+    5. Always update next_occurrence to the next occurrence date
     
     The task's due_date should always match the recurrence's next_occurrence date.
+    Only processes recurrences on their actual recurrence date, not every day.
     Returns the number of tasks created/updated.
     """
     created_count = 0
     updated_count = 0
     deleted_count = 0
     
-    # Find all recurrences where next_occurrence date is today or earlier
+    # Find all recurrences where next_occurrence date is exactly today
     # We need to filter by date, not datetime, since next_occurrence is stored in UTC
     # but we want to compare dates in Tallinn timezone
     from datetime import datetime as dt
@@ -60,12 +62,13 @@ def create_recurring_tasks_for_today(today):
         'task', 'task__family', 'task__assigned_to', 'task__created_by'
     ).all()
     
-    # Filter recurrences where next_occurrence date is today or earlier
+    # Filter recurrences where next_occurrence date is exactly today
+    # Only process recurrences that are due today, not ones that are in the past
     due_recurrences = []
     for recurrence in all_recurrences:
         # Get the date part of next_occurrence (this handles timezone conversion correctly)
         next_date = recurrence.next_occurrence.date()
-        if next_date <= today:
+        if next_date == today:
             due_recurrences.append(recurrence)
     
     for recurrence in due_recurrences:
@@ -188,9 +191,11 @@ def create_recurring_tasks_for_today(today):
             continue
         
         # No task for today exists - need to create or update
+        # Only update due_date if next_occurrence is exactly today (which we've already filtered for)
         if current_task and not current_task.completed:
-            # Task exists but is not completed and due_date is in the past, update it to today
-            if current_task.due_date < today:
+            # Task exists but is not completed and due_date doesn't match today
+            # Since next_occurrence is today, we should update the due_date to today
+            if current_task.due_date != today:
                 current_task.due_date = today
                 current_task.assigned_to = None  # Reset assignment
                 current_task.started_at = None  # Reset started_at

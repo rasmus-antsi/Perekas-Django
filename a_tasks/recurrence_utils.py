@@ -32,7 +32,8 @@ def calculate_next_occurrence(due_date, frequency, interval=1, day_of_week=None,
     elif frequency == 'business_daily':
         # Recur on weekdays only (Monday-Friday)
         base_date = due_date if due_date else today
-        next_due_date = base_date + timedelta(days=1)
+        # Move forward by interval days, then skip weekends
+        next_due_date = base_date + timedelta(days=interval)
         # Skip weekends - if next day is Saturday or Sunday, move to next Monday
         while next_due_date.weekday() >= 5:  # Saturday=5, Sunday=6
             next_due_date += timedelta(days=1)
@@ -52,8 +53,11 @@ def calculate_next_occurrence(due_date, frequency, interval=1, day_of_week=None,
             days_ahead = day_of_week - current_weekday
             if days_ahead <= 0:  # Target day already happened this week
                 days_ahead += 7 * interval
-            # If days_ahead is positive and less than 7*interval, use it (it's this week)
-            # Otherwise, it's already set correctly for next interval
+            else:
+                # If days_ahead is positive, we need to check if we should skip weeks
+                # For interval > 1, if days_ahead < 7, we're in the same week, so move to next interval
+                if interval > 1 and days_ahead < 7:
+                    days_ahead += 7 * (interval - 1)
             next_due_date = base_date + timedelta(days=days_ahead)
         elif due_date:
             # Use due_date's day of week
@@ -65,13 +69,15 @@ def calculate_next_occurrence(due_date, frequency, interval=1, day_of_week=None,
         # Use specified day_of_month or derive from due_date
         if day_of_month is not None:
             # Find next occurrence of this day of month
-            year = today.year
-            month = today.month
+            # Use due_date as base, not today
+            base_date = due_date if due_date else today
+            year = base_date.year
+            month = base_date.month
             
             # Try this month first
             try:
                 candidate_date = dt(year, month, day_of_month).date()
-                if candidate_date > today:
+                if candidate_date > base_date:
                     next_due_date = candidate_date
                 else:
                     # Move to next month
