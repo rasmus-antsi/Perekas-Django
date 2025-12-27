@@ -736,33 +736,14 @@ def subscription_settings(request):
                             }
                         )
                         
-                        # Update local subscription record
-                        existing_subscription.tier = tier
-                        existing_subscription.status = updated_subscription.status
-                        
-                        # Safely update period dates from Stripe subscription object
-                        # These are optional fields, so we catch any errors and continue
-                        try:
-                            period_start = getattr(updated_subscription, 'current_period_start', None)
-                            if period_start:
-                                existing_subscription.current_period_start = timezone.make_aware(
-                                    datetime.fromtimestamp(int(period_start))
-                                )
-                        except Exception as e:
-                            logger.warning(f"Could not update current_period_start: {str(e)}")
-                            # Continue without updating period start - not critical for subscription
-                        
-                        try:
-                            period_end = getattr(updated_subscription, 'current_period_end', None)
-                            if period_end:
-                                existing_subscription.current_period_end = timezone.make_aware(
-                                    datetime.fromtimestamp(int(period_end))
-                                )
-                        except Exception as e:
-                            logger.warning(f"Could not update current_period_end: {str(e)}")
-                            # Continue without updating period end - not critical for subscription
-                        
-                        existing_subscription.save()
+                        # Update local subscription record using helper function
+                        # This ensures immediate tier changes and proper downgrade handling
+                        from a_subscription.views import _update_subscription_from_stripe
+                        _update_subscription_from_stripe(existing_subscription, updated_subscription)
+                        logger.info(
+                            f"Updated subscription {existing_subscription.id} after plan change: "
+                            f"tier={existing_subscription.tier}, status={existing_subscription.status}"
+                        )
                         
                         messages.success(request, f"Pakett uuendati tasemele {existing_subscription.get_tier_display()}! Maksed on proportsionaalsed.")
                         return redirect(f"{reverse('a_account:settings')}?section=subscriptions")

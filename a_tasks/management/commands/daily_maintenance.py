@@ -3,6 +3,7 @@ Daily maintenance command - can be run manually for testing.
 The scheduler runs this automatically at 00:00 Tallinn time.
 """
 from django.core.management.base import BaseCommand
+from django.core.management import call_command
 from django.utils import timezone
 from a_tasks.maintenance import (
     create_recurring_tasks_for_today,
@@ -37,6 +38,7 @@ class Command(BaseCommand):
             self.stdout.write("Would create recurring tasks for today")
             self.stdout.write("Would delete all completed tasks")
             self.stdout.write("Would clear shopping cart")
+            self.stdout.write("Would sync subscriptions with Stripe")
             return
         
         # 1. Reset assigned_to for all incomplete tasks (so children can't lock tasks)
@@ -51,11 +53,22 @@ class Command(BaseCommand):
         # 4. Clear shopping cart
         cart_cleared_count = clear_shopping_cart()
         
+        # 5. Sync subscriptions with Stripe
+        self.stdout.write("Syncing subscriptions with Stripe...")
+        try:
+            call_command('sync_subscriptions', verbosity=0)
+            self.stdout.write("Subscription sync completed")
+        except Exception as e:
+            self.stdout.write(
+                self.style.ERROR(f"Error syncing subscriptions: {str(e)}")
+            )
+        
         self.stdout.write(
             self.style.SUCCESS(
                 f"Successfully reset {reset_count} task assignment(s), "
                 f"created/updated {created_count} recurring task(s), "
-                f"deleted {deleted_count} completed task(s), and "
-                f"cleared {cart_cleared_count} item(s) from shopping cart."
+                f"deleted {deleted_count} completed task(s), "
+                f"cleared {cart_cleared_count} item(s) from shopping cart, "
+                f"and synced subscriptions."
             )
         )

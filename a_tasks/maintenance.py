@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from a_tasks.models import Task, TaskRecurrence
 from a_tasks.recurrence_utils import calculate_next_occurrence
+from a_subscription.utils import increment_usage
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,9 @@ def create_recurring_tasks_for_today(today):
             )
             created_count += 1
             
+            # Increment subscription usage for recurring task creation
+            increment_usage(task_family, 'tasks', 1)
+            
             # Update recurrence to point to new task BEFORE deleting old task
             # This prevents CASCADE from deleting the recurrence
             recurrence.task = new_task
@@ -240,6 +244,9 @@ def create_recurring_tasks_for_today(today):
                 started_at=None,
             )
             created_count += 1
+            
+            # Increment subscription usage for recurring task creation
+            increment_usage(task_family, 'tasks', 1)
             
             # Update recurrence to point to new task
             recurrence.task = new_task

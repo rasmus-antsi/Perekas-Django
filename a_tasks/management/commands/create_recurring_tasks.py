@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from a_tasks.models import Task, TaskRecurrence
+from a_subscription.utils import increment_usage
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,9 @@ class Command(BaseCommand):
             else:
                 new_task.save()
                 created_count += 1
+                
+                # Increment subscription usage for recurring task creation
+                increment_usage(new_task.family, 'tasks', 1)
                 
                 # Update recurrence next_occurrence using utility function
                 from a_tasks.recurrence_utils import calculate_next_occurrence

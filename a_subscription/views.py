@@ -161,25 +161,13 @@ def upgrade_success(request):
             try:
                 stripe_subscription = stripe.Subscription.retrieve(subscription_id)
                 subscription.stripe_subscription_id = stripe_subscription.id
-                subscription.status = stripe_subscription.status
-                if hasattr(stripe_subscription, 'current_period_start') and stripe_subscription.current_period_start:
-                    subscription.current_period_start = timezone.make_aware(
-                        datetime.fromtimestamp(stripe_subscription.current_period_start)
-                    )
-                if hasattr(stripe_subscription, 'current_period_end') and stripe_subscription.current_period_end:
-                    subscription.current_period_end = timezone.make_aware(
-                        datetime.fromtimestamp(stripe_subscription.current_period_end)
-                    )
-                
-                # Update tier from subscription if available (more reliable)
-                tier_from_subscription = _extract_tier_from_subscription(stripe_subscription)
-                if tier_from_subscription:
-                    subscription.tier = tier_from_subscription
-                    logger.info(f"Updated tier to {tier_from_subscription} from subscription object")
+                # Use the helper function to ensure consistent handling of tier changes and downgrades
+                _update_subscription_from_stripe(subscription, stripe_subscription)
+                logger.info(f"Updated subscription {subscription.id} from Stripe subscription {subscription_id}")
             except stripe.error.StripeError as e:
                 logger.error(f"Error retrieving subscription {subscription_id}: {str(e)}", exc_info=True)
-
-        subscription.save()
+        else:
+            subscription.save()
         
         # Cancel any other active subscriptions for this user to prevent duplicates
         other_subscriptions = Subscription.objects.filter(
@@ -296,13 +284,22 @@ def _update_subscription_from_stripe(subscription, subscription_obj):
         }
     
     # Extract tier from price ID or metadata
+    # This will immediately reflect any tier changes (upgrades or downgrades) from Stripe
     tier = _extract_tier_from_subscription(subscription_obj)
     if tier:
+        old_tier = subscription.tier
         subscription.tier = tier
+        if old_tier != tier:
+            logger.info(
+                f"Subscription {subscription.stripe_subscription_id} tier changed from {old_tier} to {tier}"
+            )
     
-    # Update status
+    # Update status (map Stripe 'canceled' to our 'cancelled')
     status = subscription_obj.get('status')
     if status:
+        # Stripe uses 'canceled' (one 'l') but we use 'cancelled' (two 'l's)
+        if status == 'canceled':
+            status = Subscription.STATUS_CANCELLED
         subscription.status = status
     
     # Update period dates
@@ -322,20 +319,47 @@ def _update_subscription_from_stripe(subscription, subscription_obj):
     # Handle cancellation vs expiration
     # Cancelled: Keep tier until period_end (user keeps access)
     # Expired/unpaid: Revert to FREE immediately
-    if status in [Subscription.STATUS_INCOMPLETE_EXPIRED, Subscription.STATUS_UNPAID]:
-        # Payment failed permanently - revert to FREE
-        subscription.tier = Subscription.TIER_FREE
-        logger.info(f"Subscription {subscription.stripe_subscription_id} expired/unpaid, reverting to FREE tier")
-    elif status == Subscription.STATUS_CANCELLED:
+    # Use the mapped status for checks
+    mapped_status = subscription.status if subscription.status else status
+    
+    # Immediately downgrade to FREE for permanent payment failures
+    if mapped_status in [Subscription.STATUS_INCOMPLETE_EXPIRED, Subscription.STATUS_UNPAID]:
+        # Payment failed permanently - revert to FREE immediately
+        if subscription.tier != Subscription.TIER_FREE:
+            old_tier = subscription.tier
+            subscription.tier = Subscription.TIER_FREE
+            logger.info(
+                f"Subscription {subscription.stripe_subscription_id} expired/unpaid, "
+                f"immediately downgraded from {old_tier} to FREE tier"
+            )
+        else:
+            logger.debug(
+                f"Subscription {subscription.stripe_subscription_id} already FREE tier, "
+                f"status: {mapped_status}"
+            )
+    elif mapped_status == Subscription.STATUS_CANCELLED:
         # Cancelled but may still have access until period_end
         # Check if period has ended
         if subscription.current_period_end and subscription.current_period_end < timezone.now():
-            # Period ended, revert to FREE
-            subscription.tier = Subscription.TIER_FREE
-            logger.info(f"Subscription {subscription.stripe_subscription_id} cancelled and period ended, reverting to FREE tier")
+            # Period ended, revert to FREE immediately
+            if subscription.tier != Subscription.TIER_FREE:
+                old_tier = subscription.tier
+                subscription.tier = Subscription.TIER_FREE
+                logger.info(
+                    f"Subscription {subscription.stripe_subscription_id} cancelled and period ended, "
+                    f"immediately downgraded from {old_tier} to FREE tier"
+                )
+            else:
+                logger.debug(
+                    f"Subscription {subscription.stripe_subscription_id} already FREE tier, "
+                    f"cancelled and period ended"
+                )
         else:
-            # Keep tier until period_end
-            logger.info(f"Subscription {subscription.stripe_subscription_id} cancelled, keeping tier until period_end")
+            # Keep tier until period_end (user still has access)
+            logger.debug(
+                f"Subscription {subscription.stripe_subscription_id} cancelled, "
+                f"keeping tier {subscription.tier} until period_end {subscription.current_period_end}"
+            )
     
     subscription.save()
 
@@ -477,7 +501,32 @@ def webhook(request):
                 subscription = Subscription.objects.get(
                     stripe_subscription_id=subscription_id
                 )
+                
+                # Store old tier to detect changes
+                old_tier = subscription.tier
+                old_status = subscription.status
+                
+                # Update subscription from Stripe (this will handle tier changes and downgrades)
                 _update_subscription_from_stripe(subscription, subscription_obj)
+                
+                # Log tier changes immediately
+                if subscription.tier != old_tier:
+                    if subscription.tier == Subscription.TIER_FREE:
+                        logger.info(
+                            f"Subscription {subscription.id} downgraded from {old_tier} to FREE tier "
+                            f"(status: {subscription.status})"
+                        )
+                    else:
+                        logger.info(
+                            f"Subscription {subscription.id} tier changed from {old_tier} to {subscription.tier}"
+                        )
+                
+                # Log status changes
+                if subscription.status != old_status:
+                    logger.info(
+                        f"Subscription {subscription.id} status changed from {old_status} to {subscription.status}"
+                    )
+                
                 logger.info(f"Updated subscription {subscription.id}")
             except Subscription.DoesNotExist:
                 logger.warning(f"Subscription updated event received but subscription not found: {subscription_id}")
@@ -516,14 +565,50 @@ def webhook(request):
                     subscription = Subscription.objects.get(
                         stripe_subscription_id=subscription_id
                     )
-                    # Update status to past_due
-                    subscription.status = Subscription.STATUS_PAST_DUE
                     
-                    # If this is a final failure (after retries), revert to FREE
-                    # Stripe will send multiple payment_failed events during retry period
-                    # We'll let the subscription.updated event handle the final status change
-                    subscription.save()
-                    logger.info(f"Subscription {subscription.id} payment failed, status set to past_due")
+                    # Check if this is a final payment failure
+                    # Stripe retries up to 3 times (4 total attempts: initial + 3 retries)
+                    attempt_count = invoice_obj.get('attempt_count', 0) if isinstance(invoice_obj, dict) else 0
+                    max_attempts = 4  # Stripe's default max attempts
+                    
+                    # Also check the subscription status from Stripe to see if it's already unpaid/expired
+                    try:
+                        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+                        stripe_status = stripe_subscription.status
+                        
+                        # If subscription is already unpaid or incomplete_expired, downgrade immediately
+                        if stripe_status in ['unpaid', 'incomplete_expired']:
+                            subscription.status = Subscription.STATUS_UNPAID if stripe_status == 'unpaid' else Subscription.STATUS_INCOMPLETE_EXPIRED
+                            subscription.tier = Subscription.TIER_FREE
+                            subscription.save()
+                            logger.info(
+                                f"Subscription {subscription.id} payment failed with final status {stripe_status}, "
+                                f"downgraded to FREE tier immediately"
+                            )
+                        elif attempt_count >= max_attempts:
+                            # Final attempt failed - downgrade immediately
+                            subscription.status = Subscription.STATUS_PAST_DUE
+                            subscription.tier = Subscription.TIER_FREE
+                            subscription.save()
+                            logger.info(
+                                f"Subscription {subscription.id} payment failed after {attempt_count} attempts "
+                                f"(max: {max_attempts}), downgraded to FREE tier immediately"
+                            )
+                        else:
+                            # Still in retry period, just update status
+                            subscription.status = Subscription.STATUS_PAST_DUE
+                            subscription.save()
+                            logger.info(
+                                f"Subscription {subscription.id} payment failed (attempt {attempt_count}/{max_attempts}), "
+                                f"status set to past_due"
+                            )
+                    except stripe.error.StripeError as e:
+                        # If we can't retrieve subscription, just set to past_due
+                        logger.warning(f"Could not retrieve Stripe subscription to check status: {str(e)}")
+                        subscription.status = Subscription.STATUS_PAST_DUE
+                        subscription.save()
+                        logger.info(f"Subscription {subscription.id} payment failed, status set to past_due")
+                        
                 except Subscription.DoesNotExist:
                     logger.warning(f"Payment failed event received but subscription not found: {subscription_id}")
                 except Exception as e:
@@ -540,15 +625,50 @@ def webhook(request):
                     subscription = Subscription.objects.get(
                         stripe_subscription_id=subscription_id
                     )
-                    # Payment succeeded - ensure status is active
-                    if subscription.status == Subscription.STATUS_PAST_DUE:
-                        subscription.status = Subscription.STATUS_ACTIVE
-                        subscription.save()
-                        logger.info(f"Subscription {subscription.id} payment succeeded, status set to active")
+                    
+                    # Payment succeeded - refresh subscription from Stripe to ensure tier is correct
+                    try:
+                        stripe_subscription = stripe.Subscription.retrieve(subscription_id)
+                        _update_subscription_from_stripe(subscription, stripe_subscription)
+                        logger.info(
+                            f"Subscription {subscription.id} payment succeeded, "
+                            f"status: {subscription.status}, tier: {subscription.tier}"
+                        )
+                    except stripe.error.StripeError as e:
+                        # Fallback: just update status if we can't retrieve subscription
+                        logger.warning(f"Could not retrieve Stripe subscription: {str(e)}")
+                        if subscription.status == Subscription.STATUS_PAST_DUE:
+                            subscription.status = Subscription.STATUS_ACTIVE
+                            subscription.save()
+                            logger.info(f"Subscription {subscription.id} payment succeeded, status set to active")
+                        
                 except Subscription.DoesNotExist:
                     logger.warning(f"Payment succeeded event received but subscription not found: {subscription_id}")
                 except Exception as e:
                     logger.error(f"Error processing invoice.payment_succeeded: {str(e)}", exc_info=True)
+        
+        elif event_type == 'invoice.payment_action_required':
+            # Payment requires action (e.g., 3D Secure authentication)
+            invoice_obj = event_data.get('object', {}) if isinstance(event_data, dict) else {}
+            subscription_id = invoice_obj.get('subscription') if isinstance(invoice_obj, dict) else None
+            
+            logger.info(f"Processing invoice.payment_action_required for subscription {subscription_id}")
+            
+            if subscription_id:
+                try:
+                    subscription = Subscription.objects.get(
+                        stripe_subscription_id=subscription_id
+                    )
+                    # Don't downgrade yet - payment might still succeed after action
+                    # Just log for monitoring
+                    logger.info(
+                        f"Subscription {subscription.id} payment requires action "
+                        f"(invoice: {invoice_obj.get('id', 'unknown')})"
+                    )
+                except Subscription.DoesNotExist:
+                    logger.warning(f"Payment action required event received but subscription not found: {subscription_id}")
+                except Exception as e:
+                    logger.error(f"Error processing invoice.payment_action_required: {str(e)}", exc_info=True)
 
         else:
             logger.debug(f"Unhandled webhook event type: {event_type}")
