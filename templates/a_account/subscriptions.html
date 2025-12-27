@@ -693,6 +693,11 @@
     
     // Handle upgrade form submission based on current billing period
     function submitUpgrade(tier) {
+      // Track InitiateCheckout event
+      if (typeof fbq !== 'undefined') {
+        fbq('track', 'InitiateCheckout');
+      }
+      
       const billingPeriod = window.isYearly ? 'yearly' : 'monthly';
       const formId = `upgrade-form-${tier}-${billingPeriod}`;
       const form = document.getElementById(formId);
@@ -838,6 +843,18 @@
         form.addEventListener('submit', submitHandler);
       });
     });
+    
+    // Track Purchase event if payment was successful
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('purchase') === 'success') {
+      if (typeof fbq !== 'undefined') {
+        fbq('track', 'Purchase');
+      }
+      // Clean up URL
+      urlParams.delete('purchase');
+      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+      window.history.replaceState({}, '', newUrl);
+    }
   </script>
 {% endblock %}
 

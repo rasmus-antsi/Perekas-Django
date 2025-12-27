@@ -23,7 +23,7 @@
             Palun kinnita, et <strong>{{ confirmation.email_address.email }}</strong> kuulub kontole {{ user_display }}.
           </p>
           
-          <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" style="margin: 0;">
+          <form method="post" action="{% url 'account_confirm_email' confirmation.key %}" id="email-confirm-form" style="margin: 0;">
             {% csrf_token %}
             {% if redirect_field_value %}
               <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
@@ -32,6 +32,15 @@
               Kinnita e-post
             </button>
           </form>
+          
+          <script>
+            // Track CompleteRegistration when email is confirmed
+            document.getElementById('email-confirm-form').addEventListener('submit', function() {
+              if (typeof fbq !== 'undefined') {
+                fbq('track', 'CompleteRegistration');
+              }
+            });
+          </script>
         {% else %}
           <p style="margin-bottom: 1.5rem; color: var(--color-text-secondary); font-size: 0.9375rem;">
             See e-posti aadress on juba kasutusel teise kontoga.

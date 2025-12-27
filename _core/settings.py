@@ -339,6 +339,12 @@ else:
     PRO_YEARLY_PRICE_ID = os.getenv('PRO_YEARLY_PRICE_ID', 'price_1SUdMm8TJMYKOD9HgHoCVqds')
     STRIPE_CUSTOMER_PORTAL_ID = os.getenv('STRIPE_CUSTOMER_PORTAL_ID', 'bpc_1SVHy37Bxzw7NSMsZQonrHVo')
 
+# Meta Pixel Configuration
+# Used for both Meta Pixel (frontend) and Meta Conversions API (backend)
+# In production, set META_PIXEL_ID via environment variable
+# In development, defaults to the current pixel ID
+META_PIXEL_ID = os.getenv('META_PIXEL_ID', '1709109120064941')
+
 # Logging Configuration
 LOGGING = {
     'version': 1,

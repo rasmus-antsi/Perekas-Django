@@ -9,7 +9,6 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('user/', views.get_user, name='user'),
     path('register/', views.register, name='register'),
-    path('meta/events/', views.meta_events, name='meta_events'),
     
     # Tasks
     path('tasks/', views.get_tasks, name='tasks'),
