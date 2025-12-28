@@ -20,6 +20,9 @@ from django.shortcuts import render, redirect
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Import custom admin site (this triggers model registrations)
+from .admin import admin_site
+
 def handler404(request, exception):
     """Custom 404 error handler"""
     return render(request, '404.html', status=404)
@@ -40,7 +43,7 @@ from a_family import views as family_views
 from . import views as core_views
 
 urlpatterns = [
-    path('W01-d8/', admin.site.urls),
+    path('W01-d8/', admin_site.urls),
     path('health/', core_views.health_check, name='health_check'),
     # API endpoints
     path('api/', include('a_api.urls')),

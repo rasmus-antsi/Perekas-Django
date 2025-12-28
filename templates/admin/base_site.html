@@ -1,0 +1,90 @@
+{% extends "admin/base.html" %}
+{% load admin_urls %}
+
+{% block title %}{{ title }} | Perekas Admin{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Model Navigation Bar */
+    .model-navbar {
+        background: #2d3748;
+        border-bottom: 2px solid #417690;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .model-navbar a {
+        color: #e0e0e0;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-size: 14px;
+        border: 1px solid transparent;
+    }
+    
+    .model-navbar a:hover {
+        background: #3a4552;
+        color: #fff;
+        border-color: #417690;
+    }
+    
+    .model-navbar a.dashboard-link {
+        background: #417690;
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    .model-navbar a.dashboard-link:hover {
+        background: #5a9fd4;
+    }
+    
+    .model-navbar .nav-divider {
+        color: #6c757d;
+        padding: 0 5px;
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">Perekas Administration</a></h1>
+{% endblock %}
+
+{% block nav-global %}
+<div style="float: right; margin-top: 10px; margin-right: 20px;">
+    <a href="{% url 'admin:admin_dashboard' %}" style="color: #fff; text-decoration: none; padding: 10px 15px; background: #417690; border-radius: 4px;">
+        📊 Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="model-navbar">
+    <a href="{% url 'admin:admin_dashboard' %}" class="dashboard-link">📊 Dashboard</a>
+    <span class="nav-divider">|</span>
+    {% url 'admin:a_family_user_changelist' as users_url %}
+    {% if users_url %}<a href="{{ users_url }}">👥 Users</a>{% endif %}
+    {% url 'admin:a_family_family_changelist' as families_url %}
+    {% if families_url %}<a href="{{ families_url }}">👨‍👩‍👧‍👦 Families</a>{% endif %}
+    {% url 'admin:a_tasks_task_changelist' as tasks_url %}
+    {% if tasks_url %}<a href="{{ tasks_url }}">✅ Tasks</a>{% endif %}
+    {% url 'admin:a_tasks_taskrecurrence_changelist' as recurrences_url %}
+    {% if recurrences_url %}<a href="{{ recurrences_url }}">🔄 Task Recurrences</a>{% endif %}
+    {% url 'admin:a_rewards_reward_changelist' as rewards_url %}
+    {% if rewards_url %}<a href="{{ rewards_url }}">🎁 Rewards</a>{% endif %}
+    {% url 'admin:a_subscription_subscription_changelist' as subscriptions_url %}
+    {% if subscriptions_url %}<a href="{{ subscriptions_url }}">💳 Subscriptions</a>{% endif %}
+    {% url 'admin:a_subscription_subscriptionusage_changelist' as usage_url %}
+    {% if usage_url %}<a href="{{ usage_url }}">📈 Usage Stats</a>{% endif %}
+    {% url 'admin:a_shopping_shoppinglistitem_changelist' as shopping_url %}
+    {% if shopping_url %}<a href="{{ shopping_url }}">🛒 Shopping Lists</a>{% endif %}
+    {% url 'admin:a_family_emailtemplate_changelist' as templates_url %}
+    {% if templates_url %}<a href="{{ templates_url }}">📧 Email Templates</a>{% endif %}
+</div>
+{{ block.super }}
+{% endblock %}
