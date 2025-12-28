@@ -14,21 +14,30 @@ class Command(BaseCommand):
             action='store_true',
             help='Show what would be deleted without actually deleting',
         )
+        parser.add_argument(
+            '--family-name',
+            type=str,
+            help='Only clean up duplicates for a specific family (searches by name containing this string)',
+        )
 
     def handle(self, *args, **options):
         dry_run = options['dry_run']
+        family_name_filter = options.get('family_name')
         
-        # First, find exact duplicates
-        exact_duplicates = (
-            SubscriptionUsage.objects
-            .values('family', 'period_start')
-            .annotate(count=Count('id'))
-            .filter(count__gt=1)
-        )
+        # Filter by family name if specified
+        from a_family.models import Family
+        family_filter = {}
+        if family_name_filter:
+            families = Family.objects.filter(name__icontains=family_name_filter)
+            if not families.exists():
+                self.stdout.write(self.style.ERROR(f'No family found with "{family_name_filter}" in name'))
+                return
+            family_filter = {'family__in': families}
+            self.stdout.write(f'Filtering for families: {", ".join([f.name for f in families])}')
         
         # Also find near-duplicates (same family, period_start within 1 minute)
         # Group by family and normalized period_start (rounded to minute)
-        all_records = SubscriptionUsage.objects.all().order_by('family', 'period_start')
+        all_records = SubscriptionUsage.objects.filter(**family_filter).order_by('family', 'period_start')
         
         # Group records by family and normalized period_start
         grouped = {}
