@@ -172,24 +172,76 @@ def _extract_tier_from_subscription(subscription_obj):
     Tries to get tier from price ID first, then falls back to metadata.
     
     Args:
-        subscription_obj: Stripe subscription object (dict)
+        subscription_obj: Stripe subscription object (dict or Stripe object)
     
     Returns:
         str: Subscription tier or None
     """
+    # Handle Stripe object - try to_dict first, then access attributes
+    if hasattr(subscription_obj, 'to_dict'):
+        subscription_dict = subscription_obj.to_dict()
+    elif hasattr(subscription_obj, 'items'):
+        # Stripe object with items attribute
+        try:
+            # Try to get items directly
+            items_obj = subscription_obj.items
+            if hasattr(items_obj, 'data') and items_obj.data:
+                # Get first item
+                first_item = items_obj.data[0] if items_obj.data else None
+                if first_item:
+                    price_obj = first_item.price if hasattr(first_item, 'price') else None
+                    if price_obj:
+                        price_id = price_obj.id if hasattr(price_obj, 'id') else str(price_obj) if isinstance(price_obj, str) else None
+                        if price_id:
+                            tier = get_tier_from_price_id(price_id)
+                            if tier:
+                                logger.debug(f"Extracted tier {tier} from Stripe object price ID {price_id}")
+                                return tier
+        except Exception as e:
+            logger.debug(f"Error extracting tier from Stripe object attributes: {str(e)}")
+        
+        # Fallback: try to convert to dict
+        try:
+            subscription_dict = subscription_obj.to_dict() if hasattr(subscription_obj, 'to_dict') else {}
+        except Exception:
+            subscription_dict = {}
+    else:
+        subscription_dict = subscription_obj if isinstance(subscription_obj, dict) else {}
+    
     # Try to get tier from price ID (primary method, scalable)
-    items = subscription_obj.get('items', {}).get('data', [])
-    if items and len(items) > 0:
-        price_id = items[0].get('price', {}).get('id')
+    items = subscription_dict.get('items', {})
+    if isinstance(items, dict):
+        items_data = items.get('data', [])
+    elif hasattr(items, 'data'):
+        items_data = items.data if hasattr(items, 'data') else []
+    else:
+        items_data = []
+    
+    if items_data and len(items_data) > 0:
+        first_item = items_data[0]
+        if isinstance(first_item, dict):
+            price = first_item.get('price', {})
+        elif hasattr(first_item, 'price'):
+            price_obj = first_item.price
+            price = price_obj.to_dict() if hasattr(price_obj, 'to_dict') else {'id': getattr(price_obj, 'id', None)}
+        else:
+            price = {}
+        
+        price_id = price.get('id') if isinstance(price, dict) else (getattr(price, 'id', None) if hasattr(price, 'id') else None)
         if price_id:
             tier = get_tier_from_price_id(price_id)
             if tier:
+                logger.debug(f"Extracted tier {tier} from price ID {price_id}")
                 return tier
     
     # Fallback to metadata
-    metadata = subscription_obj.get('metadata', {})
-    tier = metadata.get('tier')
+    metadata = subscription_dict.get('metadata', {})
+    if not metadata and hasattr(subscription_obj, 'metadata'):
+        metadata = subscription_obj.metadata if hasattr(subscription_obj, 'metadata') else {}
+    
+    tier = metadata.get('tier') if isinstance(metadata, dict) else getattr(metadata, 'tier', None) if metadata else None
     if tier in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+        logger.debug(f"Extracted tier {tier} from metadata")
         return tier
     
     return None
@@ -227,6 +279,12 @@ def _update_subscription_from_stripe(subscription, subscription_obj):
             logger.info(
                 f"Subscription {subscription.stripe_subscription_id} tier changed from {old_tier} to {tier}"
             )
+    elif subscription.tier in [Subscription.TIER_STARTER, Subscription.TIER_PRO]:
+        # If we couldn't extract tier but subscription is currently paid, log warning
+        logger.warning(
+            f"Could not extract tier from Stripe subscription {subscription.stripe_subscription_id}, "
+            f"keeping current tier: {subscription.tier}"
+        )
     
     # Update status (map Stripe 'canceled' to our 'cancelled')
     status = subscription_obj.get('status')

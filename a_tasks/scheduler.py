@@ -15,6 +15,7 @@ from a_tasks.maintenance import (
     clear_shopping_cart,
     reset_assigned_to_for_all_tasks,
 )
+from django.core.management import call_command
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,14 @@ def run_daily_maintenance():
         # 4. Clear shopping cart
         cart_cleared_count = clear_shopping_cart()
         logger.info(f"Cleared {cart_cleared_count} item(s) from shopping cart")
+        
+        # 5. Sync subscriptions with Stripe
+        logger.info("Syncing subscriptions with Stripe...")
+        try:
+            call_command('sync_subscriptions', verbosity=0)
+            logger.info("Subscription sync completed")
+        except Exception as e:
+            logger.error(f"Error syncing subscriptions: {e}", exc_info=True)
         
         logger.info("=" * 60)
         logger.info(f"Daily maintenance completed successfully at {timezone.now()}")

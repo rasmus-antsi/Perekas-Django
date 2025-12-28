@@ -94,15 +94,26 @@ class Command(BaseCommand):
                                         break
                                 
                                 if active_stripe_sub:
-                                    # Found active subscription, update our record
-                                    subscription.stripe_subscription_id = active_stripe_sub.id
-                                    _update_subscription_from_stripe(subscription, active_stripe_sub)
-                                    subscription.save()
-                                    synced_count += 1
-                                    logger.info(
-                                        f"Found and synced Stripe subscription {active_stripe_sub.id} "
-                                        f"for subscription {subscription.id}"
-                                    )
+                                    # Retrieve full subscription with expanded items
+                                    try:
+                                        full_stripe_sub = stripe.Subscription.retrieve(
+                                            active_stripe_sub.id,
+                                            expand=['items.data.price']
+                                        )
+                                        # Found active subscription, update our record
+                                        subscription.stripe_subscription_id = full_stripe_sub.id
+                                        _update_subscription_from_stripe(subscription, full_stripe_sub)
+                                        subscription.save()
+                                        synced_count += 1
+                                        logger.info(
+                                            f"Found and synced Stripe subscription {full_stripe_sub.id} "
+                                            f"for subscription {subscription.id}, tier: {subscription.tier}"
+                                        )
+                                    except stripe.error.StripeError as e:
+                                        logger.error(
+                                            f"Error retrieving full subscription {active_stripe_sub.id}: {str(e)}"
+                                        )
+                                        error_count += 1
                                 else:
                                     # No active subscription found, downgrade to FREE
                                     subscription.tier = Subscription.TIER_FREE
@@ -129,9 +140,12 @@ class Command(BaseCommand):
                             )
                     continue
                 
-                # Retrieve subscription from Stripe
+                # Retrieve subscription from Stripe with expanded items to get price ID
                 try:
-                    stripe_subscription = stripe.Subscription.retrieve(subscription.stripe_subscription_id)
+                    stripe_subscription = stripe.Subscription.retrieve(
+                        subscription.stripe_subscription_id,
+                        expand=['items.data.price']  # Expand items and price to get price ID
+                    )
                 except stripe.error.StripeError as e:
                     if 'No such subscription' in str(e):
                         # Subscription doesn't exist in Stripe, downgrade to FREE
@@ -166,13 +180,52 @@ class Command(BaseCommand):
                     tier_from_stripe = _extract_tier_from_subscription(stripe_subscription)
                     current_tier = subscription.tier
                     
+                    # Try to get price ID for debugging
+                    price_id = None
+                    try:
+                        # Handle both dict and Stripe object formats
+                        if hasattr(stripe_subscription, 'items'):
+                            items_obj = stripe_subscription.items
+                            if hasattr(items_obj, 'data') and items_obj.data:
+                                first_item = items_obj.data[0]
+                                if hasattr(first_item, 'price'):
+                                    price_obj = first_item.price
+                                    if hasattr(price_obj, 'id'):
+                                        price_id = price_obj.id
+                                    elif isinstance(price_obj, str):
+                                        price_id = price_obj
+                                    else:
+                                        # Try to_dict if it's a Stripe object
+                                        try:
+                                            price_dict = price_obj.to_dict()
+                                            price_id = price_dict.get('id')
+                                        except Exception:
+                                            pass
+                        # Also try dict format
+                        elif isinstance(stripe_subscription, dict):
+                            items = stripe_subscription.get('items', {})
+                            if isinstance(items, dict):
+                                items_data = items.get('data', [])
+                                if items_data:
+                                    first_item = items_data[0]
+                                    price = first_item.get('price', {}) if isinstance(first_item, dict) else {}
+                                    price_id = price.get('id') if isinstance(price, dict) else None
+                    except Exception as e:
+                        logger.debug(f"Error extracting price ID in dry-run: {str(e)}")
+                    
                     self.stdout.write(
                         f"DRY RUN: Subscription {subscription.id} (owner: {subscription.owner.get_display_name()}):\n"
                         f"  Current tier: {current_tier}\n"
                         f"  Stripe tier: {tier_from_stripe or 'unknown'}\n"
+                        f"  Stripe price ID: {price_id or 'unknown'}\n"
                         f"  Stripe status: {stripe_status}\n"
                         f"  Would sync and update if needed"
                     )
+                    
+                    if current_tier != tier_from_stripe and tier_from_stripe:
+                        self.stdout.write(
+                            f"  ⚠️  Tier mismatch detected! Would update from {current_tier} to {tier_from_stripe}"
+                        )
                     
                     # Check if should downgrade
                     if stripe_status in ['incomplete_expired', 'unpaid', 'canceled']:
@@ -184,6 +237,42 @@ class Command(BaseCommand):
                     old_tier = subscription.tier
                     old_status = subscription.status
                     
+                    # Extract tier before update to log what we're getting from Stripe
+                    tier_from_stripe = _extract_tier_from_subscription(stripe_subscription)
+                    
+                    # Get price ID for logging
+                    price_id = None
+                    try:
+                        # Handle both dict and Stripe object formats
+                        if hasattr(stripe_subscription, 'items'):
+                            items_obj = stripe_subscription.items
+                            if hasattr(items_obj, 'data') and items_obj.data:
+                                first_item = items_obj.data[0]
+                                if hasattr(first_item, 'price'):
+                                    price_obj = first_item.price
+                                    if hasattr(price_obj, 'id'):
+                                        price_id = price_obj.id
+                                    elif isinstance(price_obj, str):
+                                        price_id = price_obj
+                                    else:
+                                        # Try to_dict if it's a Stripe object
+                                        try:
+                                            price_dict = price_obj.to_dict()
+                                            price_id = price_dict.get('id')
+                                        except Exception:
+                                            pass
+                        # Also try dict format
+                        elif isinstance(stripe_subscription, dict):
+                            items = stripe_subscription.get('items', {})
+                            if isinstance(items, dict):
+                                items_data = items.get('data', [])
+                                if items_data:
+                                    first_item = items_data[0]
+                                    price = first_item.get('price', {}) if isinstance(first_item, dict) else {}
+                                    price_id = price.get('id') if isinstance(price, dict) else None
+                    except Exception as e:
+                        logger.debug(f"Error extracting price ID: {str(e)}")
+                    
                     # Update subscription using the helper function
                     _update_subscription_from_stripe(subscription, stripe_subscription)
                     
@@ -191,15 +280,43 @@ class Command(BaseCommand):
                     if subscription.status != django_status:
                         subscription.status = django_status
                     
+                    # Force tier update if we extracted it from Stripe and it differs
+                    # Also try direct price ID lookup if tier extraction failed
+                    if not tier_from_stripe and price_id:
+                        # Try direct lookup
+                        from a_subscription.utils import get_tier_from_price_id
+                        tier_from_price = get_tier_from_price_id(price_id)
+                        if tier_from_price:
+                            tier_from_stripe = tier_from_price
+                            logger.info(
+                                f"Subscription {subscription.id} extracted tier {tier_from_stripe} "
+                                f"via direct price ID lookup: {price_id}"
+                            )
+                    
+                    if tier_from_stripe and subscription.tier != tier_from_stripe:
+                        logger.warning(
+                            f"Subscription {subscription.id} (owner: {subscription.owner.get_display_name()}) "
+                            f"tier mismatch detected: current={subscription.tier}, Stripe={tier_from_stripe}, "
+                            f"price_id={price_id}. Forcing update to {tier_from_stripe}"
+                        )
+                        subscription.tier = tier_from_stripe
+                    
                     subscription.save()
                     
                     # Check if tier changed
                     if subscription.tier != old_tier:
                         logger.info(
-                            f"Subscription {subscription.id} tier changed from {old_tier} to {subscription.tier}"
+                            f"Subscription {subscription.id} (owner: {subscription.owner.get_display_name()}) "
+                            f"tier changed from {old_tier} to {subscription.tier} "
+                            f"(extracted from Stripe: {tier_from_stripe}, price_id: {price_id})"
                         )
                         if subscription.tier == Subscription.TIER_FREE:
                             downgraded_count += 1
+                    else:
+                        logger.debug(
+                            f"Subscription {subscription.id} tier unchanged: {subscription.tier} "
+                            f"(Stripe tier: {tier_from_stripe}, price_id: {price_id})"
+                        )
                     
                     # Check if status changed
                     if subscription.status != old_status:
