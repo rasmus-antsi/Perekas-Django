@@ -327,6 +327,34 @@ def send_welcome_email(request, user):
     )
 
 
+def send_review_request_email(request, user):
+    """
+    Send review request email to users who created accounts but haven't used the app.
+    This email sells the app and asks for feedback via the review form.
+    Only sends if user has an email address.
+    """
+    if not user.email:
+        return
+    
+    dashboard_url = request.build_absolute_uri(reverse('a_dashboard:dashboard'))
+    review_form_url = request.build_absolute_uri(reverse('a_landing:review_form'))
+    
+    context = {
+        'user': user,
+        'user_name': user.get_display_name(),
+        'dashboard_url': dashboard_url,
+        'review_form_url': review_form_url,
+        'logo_url': _get_logo_url(request),
+    }
+    
+    _send_branded_email(
+        subject="Kas Perekas sobib sinu perele?",
+        template_name='email/review_request.html',
+        context=context,
+        recipients=[user.email],
+    )
+
+
 def send_bulk_email(template, users, base_url=None):
     """
     Send email using an EmailTemplate to a list of users.

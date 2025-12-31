@@ -1,0 +1,172 @@
+{% extends "email/base.html" %}
+{% load i18n %}
+
+{% block email_title %}{% trans "Uus tagasiside" %}{% endblock %}
+{% block email_heading %}{% blocktrans %}Uus tagasiside küsitlusest{% endblocktrans %}{% endblock %}
+{% block email_subheading %}
+  <p style="margin: 8px 0 0; font-size: 16px; line-height: 1.5; color: #94a3b8; text-align: center;">
+    {% trans "Perekas rakendusest" %}
+  </p>
+{% endblock %}
+
+{% block email_content %}
+  <!-- Main message -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0 0 24px 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% blocktrans %}Uus tagasiside on saadud Perekas tagasiside küsitlusest.{% endblocktrans %}
+        </p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Submitter info box -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; line-height: 1.6; color: #8b5cf6;">
+          {% trans "Esitaja andmed" %}
+        </p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <strong style="color: #cbd5e1;">{% trans "E-posti aadress:" %}</strong> 
+              <span style="color: #94a3b8;">{{ email }}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <strong style="color: #cbd5e1;">{% trans "Nimi:" %}</strong> 
+              <span style="color: #94a3b8;">{{ name }}</span>
+            </td>
+          </tr>
+          {% if user %}
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <strong style="color: #cbd5e1;">{% trans "Kasutaja:" %}</strong> 
+              <span style="color: #94a3b8;">{{ user_name }} (ID: {{ user.id }})</span>
+            </td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <strong style="color: #cbd5e1;">{% trans "Esitatud:" %}</strong> 
+              <span style="color: #94a3b8;">{{ submitted_at|date:"d.m.Y H:i" }}</span>
+            </td>
+          </tr>
+          {% if ip_address %}
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <strong style="color: #cbd5e1;">{% trans "IP aadress:" %}</strong> 
+              <span style="color: #94a3b8; font-family: 'Courier New', Courier, monospace;">{{ ip_address }}</span>
+            </td>
+          </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Why created account -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; line-height: 1.6; color: #8b5cf6;">
+          {% trans "Miks loo siis konto?" %}
+        </p>
+        <p style="margin: 0; font-size: 15px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap;">{{ why_created_account }}</p>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Usage checkboxes -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; line-height: 1.6; color: #8b5cf6;">
+          {% trans "Kas kasutasid rakendust?" %}
+        </p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <span style="color: {% if added_family_members %}#22c55e{% else %}#64748b{% endif %}; margin-right: 8px;">{% if added_family_members %}✓{% else %}✗{% endif %}</span>
+              <strong style="color: #cbd5e1;">{% trans "Lisatud pereliikmeid:" %}</strong> 
+              <span style="color: #94a3b8;">{% if added_family_members %}{% trans "Jah" %}{% else %}{% trans "Ei" %}{% endif %}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <span style="color: {% if created_tasks %}#22c55e{% else %}#64748b{% endif %}; margin-right: 8px;">{% if created_tasks %}✓{% else %}✗{% endif %}</span>
+              <strong style="color: #cbd5e1;">{% trans "Loodud ülesandeid:" %}</strong> 
+              <span style="color: #94a3b8;">{% if created_tasks %}{% trans "Jah" %}{% else %}{% trans "Ei" %}{% endif %}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <span style="color: {% if created_rewards %}#22c55e{% else %}#64748b{% endif %}; margin-right: 8px;">{% if created_rewards %}✓{% else %}✗{% endif %}</span>
+              <strong style="color: #cbd5e1;">{% trans "Loodud preemiaid:" %}</strong> 
+              <span style="color: #94a3b8;">{% if created_rewards %}{% trans "Jah" %}{% else %}{% trans "Ei" %}{% endif %}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; font-size: 15px; line-height: 1.8; color: #f8fafc;">
+              <span style="color: {% if created_shopping_lists %}#22c55e{% else %}#64748b{% endif %}; margin-right: 8px;">{% if created_shopping_lists %}✓{% else %}✗{% endif %}</span>
+              <strong style="color: #cbd5e1;">{% trans "Loodud ostunimekirju:" %}</strong> 
+              <span style="color: #94a3b8;">{% if created_shopping_lists %}{% trans "Jah" %}{% else %}{% trans "Ei" %}{% endif %}</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- What prevented usage -->
+  {% if what_prevented_usage and what_prevented_usage != "Pole määratud" %}
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; line-height: 1.6; color: #8b5cf6;">
+          {% trans "Mis takistas sind rakendust kasutamast?" %}
+        </p>
+        <p style="margin: 0; font-size: 15px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap;">{{ what_prevented_usage }}</p>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- Feedback -->
+  {% if feedback and feedback != "Pole määratud" %}
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 0 0 24px 0; background-color: #161f38; border: 1px solid #3b4863; border-radius: 12px;">
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; line-height: 1.6; color: #8b5cf6;">
+          {% trans "Tagasiside või ettepanekud" %}
+        </p>
+        <p style="margin: 0; font-size: 15px; line-height: 1.8; color: #cbd5e1; white-space: pre-wrap;">{{ feedback }}</p>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+
+  <!-- Footer message -->
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <tr>
+      <td style="padding: 0;">
+        <p style="margin: 0; font-size: 16px; line-height: 1.65; color: #f8fafc;">
+          {% trans "Tagasiside on salvestatud andmebaasi. Vaata täpsemaid andmeid admin paneelist." %}
+        </p>
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+
+{% block email_footer %}
+  <p style="margin: 0 0 12px 0; font-size: 13px; line-height: 1.5; color: #94a3b8;">
+    {% trans "See on automaatne teavituse kiri Perekas rakendusest." %}
+  </p>
+  <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #94a3b8;">
+    © {% now "Y" %} Perekas
+  </p>
+{% endblock %}
+
