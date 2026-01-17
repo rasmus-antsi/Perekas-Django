@@ -306,9 +306,12 @@ if not DEBUG:
     if not STRIPE_SECRET_KEY:
         raise ValueError("STRIPE_SECRET_KEY must be set in production! Set it via environment variable.")
 else:
-    # In development, use test keys if not set
+    # In development, keys must be set via environment variables
+    # Never hardcode API keys in source code!
     if not STRIPE_PUBLIC_KEY:
+        STRIPE_PUBLIC_KEY = None  # Must be set via .env file
     if not STRIPE_SECRET_KEY:
+        STRIPE_SECRET_KEY = None  # Must be set via .env file
 
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', None)
 
